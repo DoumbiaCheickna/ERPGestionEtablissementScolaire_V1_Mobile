@@ -1,0 +1,67 @@
+{
+  "expo": {
+    "name": "IIBS School Management",
+    "slug": "iibs-school-management",
+    "scheme": "iibsapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/iibs_logo.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./src/assets/iibs-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.iibs.schoolmanagement",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": ["fetch"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/iibs-logo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "WAKE_LOCK"
+      ],
+      "package": "com.iibs.schoolmanagement",
+      "useNextNotificationsApi": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "notification": {
+      "icon": "./src/assets/iibs_logo.png",
+      "color": "#ffffff",
+      "iosDisplayInForeground": true,
+      "androidMode": "default",
+      "androidCollapsedTitle": "IIBS School Management"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./src/assets/iibs_logo.png",
+          "color": "#ffffff",
+          "defaultChannel": "default",
+          "sounds": []
+        }
+      ],
+      "expo-background-task"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "ab3f1550-1819-4dd6-a0c2-1a861aa88dff"
+      }
+    },
+    "owner": "sonbecks2521"
+  }
+}
