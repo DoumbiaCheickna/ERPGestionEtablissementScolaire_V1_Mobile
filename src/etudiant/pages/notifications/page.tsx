@@ -214,6 +214,68 @@ export default function Notifications({navigation}: Props) {
         }
     }, [userRef, notifications]);
 
+    const deleteAllNotifications = useCallback(async () => {
+        if (!userRef) return;
+
+        const originalNotifications = [...notifications];
+
+        try {
+            setNotifications([]);
+
+            const userDoc = await getDoc(userRef);
+            if (!userDoc.exists()) {
+                setNotifications(originalNotifications); 
+                return;
+            }
+
+            const userData = userDoc.data();
+            const userNotifications = userData.notifications || [];
+
+            if (!Array.isArray(userNotifications)) {
+                setNotifications(originalNotifications); 
+                return;
+            }
+
+            
+            await updateDoc(userRef, {
+            notifications: [],
+            });
+
+            Alert.alert("Toutes les notifications ont été supprimées");
+
+        } catch (err) {
+            // Rollback if failed
+            setNotifications(originalNotifications);
+            Alert.alert("Erreur lors de la suppression de toutes les notifications ❌");
+        }
+    }, [userRef, notifications]);
+
+
+    const confirmDeleteAllNotifications = useCallback(() => {
+
+        if(notifications.length == 0){
+            Alert.alert("Pas de notifications à supprimer");
+            return;
+        }
+
+        Alert.alert(
+            "Confirmation",
+            "Voulez-vous vraiment supprimer toutes les notifications ?",
+            [
+            {
+                text: "Annuler",
+                style: "cancel"
+            },
+            {
+                text: "Supprimer",
+                style: "destructive",
+                onPress: deleteAllNotifications
+            }
+            ]
+        );
+        
+    }, [deleteAllNotifications]);
+
     // Handle long press
     const handleLongPress = useCallback((notificationId: string, event: any) => {
         const { pageY } = event.nativeEvent;
@@ -499,6 +561,16 @@ export default function Notifications({navigation}: Props) {
                         ]}>
                             Tout lire
                         </Text>
+
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={styles.deleteAll} 
+                        onPress={confirmDeleteAllNotifications}
+                    >
+                        <Text style={[styles.deleteAllText]}>
+                            Tout supprimer
+                        </Text>
+                        
                     </TouchableOpacity>
                 </View>
 

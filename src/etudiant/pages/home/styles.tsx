@@ -16,6 +16,24 @@ container: {
     paddingTop: 10,
     paddingBottom: 90,
   },
+  testButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginVertical: 10,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
 
   headerSection: {
     marginBottom: 24,
@@ -176,6 +194,7 @@ container: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    marginBottom: 100
   },
 
   courseCard: {
@@ -238,7 +257,7 @@ container: {
   },
 
   modernEmargerButton: {
-    backgroundColor: theme.colors.primary,
+    backgroundColor: '#2196F3',
     borderRadius: 12,
     paddingVertical: 20,
     paddingHorizontal: 16,

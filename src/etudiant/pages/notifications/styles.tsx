@@ -51,6 +51,17 @@ export const styles = StyleSheet.create({
         borderRadius: 16,
         backgroundColor: '#e0f0ff',
     },
+    deleteAll: {
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 16,
+        backgroundColor: '#f3b6b6ff',
+    },
+    deleteAllText: {
+        color: '#bd1d1dff',
+        fontSize: 11,
+        fontWeight: '600',
+    },
     markAllReadText: {
         color: '#007bff',
         fontSize: 14,

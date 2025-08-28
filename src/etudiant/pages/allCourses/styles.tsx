@@ -7,7 +7,7 @@ export const Cstyles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   content: { flex: 1, paddingHorizontal: 20, paddingVertical: 10 },
   heading: { fontSize: 22, fontWeight: '700', marginBottom: 15, color: '#333' },
-  emargerButton: { backgroundColor: '#333', padding: 6, borderRadius: 6, alignItems: 'center', marginTop: 25 },
+  emargerButton: { backgroundColor: '#2196F3', padding: 6, borderRadius: 6, alignItems: 'center', marginTop: 25 },
   emargerButtonText: { color: '#fff', fontSize: 12 },
   courseItem: {
     backgroundColor: '#fff',
@@ -523,6 +523,7 @@ export const styles = StyleSheet.create({
     marginBottom: 12,
   },
   nextCourseCard: {
+    marginTop: 30,
     backgroundColor: theme.colors.surface,
     borderRadius: 16,
     overflow: 'hidden',

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context'; // ✅ important
 import { theme } from '../../../styles/globalStyles';
-import { Cstyles } from '../../pages/allCourses/styles';
+import { Cstyles } from '../../pages/allCourses/styles'
 
 interface Props {
   activeScreen: string;
@@ -13,7 +13,7 @@ interface Props {
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const navItems: { name: string; icon: IoniconName; screen: string; libelle: string }[] = [
-  { name: 'Home', icon: 'home-outline', screen: 'Home', libelle: 'Accueil' },
+  { name: 'HomeStudent', icon: 'home-outline', screen: 'HomeStudent', libelle: 'Accueil' },
   { name: 'AllCourses', icon: 'calendar-outline', screen: 'AllCourses', libelle: 'Emploi du temps' },
   { name: 'Profile', icon: 'person-outline', screen: 'Profile', libelle: 'Profil' }, 
 ];

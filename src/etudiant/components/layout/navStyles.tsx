@@ -1,0 +1,140 @@
+import { StyleSheet } from 'react-native';
+import { theme } from '../../../styles/globalStyles';
+
+export const styles = StyleSheet.create({
+  topNav: {
+    paddingHorizontal: 15,
+    height: 170,
+    marginTop: -50,
+    backgroundColor: "white",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#d3d3d3ff',
+    paddingTop: 70
+  },
+  profilePic: {
+    marginTop: 25,
+    width: 50,
+    height: 50,
+    borderRadius: 18,
+    backgroundColor: '#ccc',
+    zIndex: 100,
+  },
+  title: {
+    marginTop: 25,
+    fontSize: 18,
+    fontWeight: '600',
+    color: theme.colors.primary,
+    textAlign: 'center',
+    flex: 1, 
+  },
+  hamburgerContainer: {
+    marginTop: 25,
+    position: 'relative',
+    padding: 8,
+  },
+  hamburgerIcon: {
+    width: 24,
+    height: 18,
+    justifyContent: 'space-between',
+  },
+  hamburgerLine: {
+    width: '100%',
+    height: 3,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 2,
+  },
+  combinedBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: '#FF3B30',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  combinedBadgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    paddingTop: 120,
+    paddingRight: 15,
+  },
+  menuContainer: {
+    backgroundColor: 'white',
+    borderRadius: 15,
+    width: 280,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 15,
+  },
+  menuHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  menuTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+  },
+  closeButton: {
+    padding: 4,
+  },
+  menuOptions: {
+    paddingVertical: 10,
+  },
+  menuOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+  },
+  menuOptionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  menuOptionText: {
+    marginLeft: 15,
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
+  menuBadge: {
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuBadgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+});
+

@@ -7,7 +7,9 @@ import { RootStackParamList } from '../../../navigation';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from '../../components/layout/toast';
 import { EmargementSuccessModal } from './EmargementSuccessModal';
-
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../../firebaseConfig'; // adjust path
+import AsyncStorage from '@react-native-async-storage/async-storage';
 type Props = NativeStackScreenProps<RootStackParamList, 'Scanner'>;
 
 type ToastState = {
@@ -25,14 +27,16 @@ export default function Scanner({ navigation, route }: Props) {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const [courseInfo, setCourseInfo] = useState<{
+    matiere_id: string;
     libelle: string;
     start: string;
     end: string;
     enseignant: string;
+    salle: string;
   } | null>(null);
 
   // FIXED: Extract the callback properly
-  const { matiereId, courseLibelle, courseInfo: routeCourseInfo, onEmargementSuccess } = route.params; 
+  const { matiereId, courseLibelle, courseInfo: routeCourseInfo } = route.params; 
 
   const lastScanTime = useRef<number>(0);
   const SCAN_COOLDOWN = 2000;
@@ -48,10 +52,12 @@ export default function Scanner({ navigation, route }: Props) {
 
     if (routeCourseInfo) {
       setCourseInfo({
+        matiere_id: matiereId,
         libelle: courseLibelle || 'Cours',
         start: routeCourseInfo.start,
         end: routeCourseInfo.end,
-        enseignant: routeCourseInfo.enseignant,
+        enseignant: routeCourseInfo.enseignant,     
+        salle: routeCourseInfo.salle   
       });
     }
 
@@ -88,6 +94,52 @@ export default function Scanner({ navigation, route }: Props) {
     );
   }
 
+const saveEmargedCourse = async (
+  matiere_id: string,
+  matiere_libelle: string,
+  start: string,
+  end: string,
+  salle: string
+) => {
+  try {
+    const userLogin = await AsyncStorage.getItem('userLogin');
+    if (!userLogin) throw new Error('No user matricule found');
+
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('login', '==', userLogin));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      throw new Error('User not found in Firestore');
+    }
+
+    // If login is unique, there should be exactly one document
+    const userDoc = querySnapshot.docs[0];
+    const userData = userDoc.data();
+
+    const enseignant = courseInfo?.enseignant
+    // Now you can use `userDoc.ref` to update emargements
+    const emargement = {
+      matiere_id,
+      matiere_libelle ,
+      enseignant,
+      start,
+      end,
+      date: new Date().toDateString(),
+      type: 'presence',
+      timestamp: new Date(),
+      salle
+    };
+
+    await setDoc(userDoc.ref, {
+      emargements: arrayUnion(emargement)
+    }, { merge: true });
+
+  } catch (error) {
+    console.error('Error saving emargement:', error);
+  }
+};
+
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
     const currentTime = Date.now();
     
@@ -106,18 +158,18 @@ export default function Scanner({ navigation, route }: Props) {
     try {
       if (data.startsWith('EMARGER:')) {
         const finalCourseInfo = courseInfo || {
+          matiere_id: matiereId,
           libelle: courseLibelle || 'Cours',
           start: routeCourseInfo?.start || '08:00',
           end: routeCourseInfo?.end || '10:00',
           enseignant: routeCourseInfo?.enseignant || 'Enseignant',
+          type: 'presence',
+          salle: routeCourseInfo?.salle as string
         };
         
         setCourseInfo(finalCourseInfo);
 
-        // FIXED: Call the success callback first to update Home state
-        if (onEmargementSuccess) {
-          await onEmargementSuccess();
-        }
+        saveEmargedCourse(finalCourseInfo.matiere_id, finalCourseInfo.libelle, finalCourseInfo.start, finalCourseInfo.end, finalCourseInfo.salle)
 
         // FIXED: Show modal but don't navigate yet
         setShowSuccessModal(true);

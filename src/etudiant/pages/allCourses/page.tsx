@@ -1,5 +1,5 @@
  import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Modal, FlatList, ActivityIndicator, Image } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Modal, FlatList, ActivityIndicator, Image } from 'react-native';
 import TopNavBar from '../../components/layout/topBar';
 import BottomNavBar from '../../components/layout/bottomBar';
 import CustomCalendar from '../../components/hooks/calendar'; 
@@ -10,6 +10,8 @@ import { RootStackParamList } from '../../../navigation/index';
 import { Cstyles, styles } from './styles';
 import { getCoursStatus } from '../home/page';
 import { HomeStyles } from '../home/styles';
+import { MatieresStyles } from '../matieres/styles';
+
 
 interface DropdownItem {
   label: string;
@@ -104,6 +106,7 @@ export default function AllCourses({ navigation }: Props) {
     const [ nextCourse, setNextCourse ] = useState<Slot | null>(null);
     const [todayCourses, setTodayCourses] = useState<Slot[]>([]);
     const { coursesByDay, loading, error } = useUserCourses();
+
 
   useEffect(() => {
   if (coursesByDay && coursesByDay.length > 0) {
@@ -238,12 +241,45 @@ export default function AllCourses({ navigation }: Props) {
   const totalCourses = filteredCoursesByDay.reduce((total, day) => total + (day?.data?.length || 0), 0);
 
   const renderCourseCard = (item: Slot) => (
-    <View key={item.matiere_id} style={[Cstyles.squareCard, styles.modernSquareCard]}>
-      <Text style={[Cstyles.courseTitle, styles.modernCourseTitle]}>📚{item.matiere_libelle}</Text>
-      <Text style={[Cstyles.courseText, styles.modernCourseText]}>👨‍💻{item.enseignant}</Text>
-      <Text style={[Cstyles.courseSubtitle, styles.modernCourseSubtitle]}>{item.start} - {item.end}</Text>
-      <Text style={[Cstyles.courseSubtitle, styles.modernCourseSubtitle]}>{item.salle}</Text>
+    <View 
+      key={item.matiere_id} 
+      style={[MatieresStyles.matiereCard]}  // instead of Cstyles.squareCard
+    >
+      {/* Card Header */}
+      <View style={MatieresStyles.cardHeader}>
+        <View style={MatieresStyles.matiereIconContainer}>
+          <Text style={MatieresStyles.matiereIcon}>📚</Text>
+        </View>
+      </View>
+
+      {/* Card Content */}
+      <View style={MatieresStyles.cardContent}>
+        <Text style={MatieresStyles.matiereTitle} numberOfLines={2}>
+          {item.matiere_libelle}
+        </Text>
+
+        <View style={MatieresStyles.professorInfo}>
+          <Text style={MatieresStyles.professorIcon}>👨‍💻</Text>
+          <Text style={MatieresStyles.professorName} numberOfLines={1}>
+            {item.enseignant}
+          </Text>
+        </View>
+
+        <View style={MatieresStyles.matiereStats}>
+          <View style={MatieresStyles.statChip}>
+            <Text style={MatieresStyles.statChipText}>
+              {item.start} - {item.end}
+            </Text>
+          </View>
+          <View style={[MatieresStyles.statChip, MatieresStyles.todayChip]}>
+            <Text style={[MatieresStyles.statChipText, MatieresStyles.todayChipText]}>
+              📍 {item.salle}
+            </Text>
+          </View>
+        </View>
+      </View>
     </View>
+
   );
 
   const renderCoursesInRows = (courses: Slot[]) => {
@@ -298,7 +334,15 @@ export default function AllCourses({ navigation }: Props) {
 
         {nextCourse && (
           <View style={styles.nextCourseContainer}>
-            <Text style={styles.sectionTitle}>Prochain cours</Text>
+              <View style={MatieresStyles.badgeContainer}>
+                <View style={MatieresStyles.badgeIcon}>
+                  <Text style={MatieresStyles.badgeIconText}>📖</Text>
+                </View>
+                <Text style={MatieresStyles.badgeText}>Prochain cours</Text>
+                <View style={MatieresStyles.badgeCount}>
+                  <Text style={MatieresStyles.badgeCountText}>💻</Text>
+                </View>
+              </View>
             <View style={styles.nextCourseCard}>
               <Image 
                 source={require('../../../assets/classroom.jpg')} 
@@ -319,7 +363,19 @@ export default function AllCourses({ navigation }: Props) {
         {/* Today's Courses Section */}
         {todayCourses.length > 0 && (
           <View style={styles.todayCoursesContainer}>
-            <Text style={styles.sectionTitle}>Cours du jour</Text>
+              <View style={MatieresStyles.sectionHeader}>
+                <View style={MatieresStyles.badgeContainer}>
+                  <View style={MatieresStyles.badgeIcon}>
+                    <Text style={MatieresStyles.badgeIconText}>📖</Text>
+                  </View>
+                  <Text style={MatieresStyles.badgeText}>Cours du Jour</Text>
+                  <View style={MatieresStyles.badgeCount}>
+                    <Text style={MatieresStyles.badgeCountText}>🔬</Text>
+                  </View>
+                </View>
+              </View>
+
+            
             {todayCourses.map((course, index) => (
               <View key={index} style={styles.todayCourseCard} >
                 <Text style={styles.todayCourseTitle}>{course.matiere_libelle}</Text>
@@ -403,7 +459,7 @@ export default function AllCourses({ navigation }: Props) {
           </View>
         )}
 
-                {/* Calendar Section */}
+        {/* Calendar Section */}
         {filterMode == 'calendar' && (
           <CustomCalendar 
             onDateSelect={handleDateSelect}
@@ -428,8 +484,8 @@ export default function AllCourses({ navigation }: Props) {
         ) : (
           <>
             {/* Schedule Badge */}
-            <View style={[Cstyles.badgeContainer, styles.modernBadge]}>
-              <Text style={[Cstyles.badgeText, styles.badgeTextModern]}>
+            <View style={[MatieresStyles.badgeContainer]}>
+              <Text style={[MatieresStyles.badgeText]}>
                 {selectedDay ? 
                   (selectedDate ? 
                     `Planning ${selectedDay} ${selectedDate.getDate()}/${selectedDate.getMonth() + 1}` : 
@@ -438,8 +494,8 @@ export default function AllCourses({ navigation }: Props) {
                   'Planning hebdomadaire'
                 }
               </Text>
-              <View style={styles.badgeCount}>
-                <Text style={styles.badgeCountText}>{totalCourses}</Text>
+              <View style={MatieresStyles.badgeCount}>
+                <Text style={MatieresStyles.badgeCountText}>{totalCourses}</Text>
               </View>
             </View>
 
@@ -447,13 +503,13 @@ export default function AllCourses({ navigation }: Props) {
             {filteredCoursesByDay.length > 0 ? (
               filteredCoursesByDay.map((section, index) => (
                 <View key={index}>
-                  <View style={[Cstyles.dayHeader, styles.modernDayHeader]}>
-                    <Text style={[styles.dayTitle]}>
+                  <View style={[MatieresStyles.badgeContainerDays]}>
+                    <Text style={[MatieresStyles.badgeText]}>
                       {section.title} 📚
                       {selectedDate && ` - ${selectedDate.getDate()}/${selectedDate.getMonth() + 1}`}
                     </Text>
-                    <View style={styles.dayCount}>
-                      <Text style={styles.dayCountText}>{section.data.length}</Text>
+                    <View style={MatieresStyles.badgeCount}>
+                      <Text style={MatieresStyles.badgeCountText}>{section.data.length}</Text>
                     </View>
                   </View>
                   {renderCoursesInRows(section.data)}

@@ -25,7 +25,7 @@ import { localStyles } from './styles';
 type RootStackParamList = {
   Login: undefined;
   ChangePassword: { userLogin: string; userRole: string; firstLogin: number };
-  Home: { 
+  HomeStudent: { 
     userLogin: string; 
     userRole: string; 
     firstLogin: number;
@@ -71,7 +71,7 @@ export default function Login({ navigation }: Props) {
         const email = await AsyncStorage.getItem("userEmail") || '';
         const classeId = await AsyncStorage.getItem("classe_id") || '';
 
-        navigation.replace('Home', {
+        navigation.replace('HomeStudent', {
           userLogin: loggedIn,
           userRole: roleName,
           firstLogin: 0,
@@ -223,7 +223,7 @@ export default function Login({ navigation }: Props) {
         firstLogin,
       });
     } else {
-      navigation.navigate('Home', {
+      navigation.navigate('HomeStudent', {
         userLogin: username,
         userRole: roleName,
         firstLogin,

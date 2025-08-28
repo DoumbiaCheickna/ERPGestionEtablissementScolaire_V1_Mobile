@@ -146,10 +146,8 @@ export default function ChangePassword() {
 
         setTimeout(() => {
           if (roleName.toLowerCase() === 'etudiant') {
-            navigation.navigate('Home' as never);
-          } else {
-            navigation.navigate('NotReady' as never);
-          }
+            navigation.navigate('HomeStudent' as never);
+          } 
         }, 1500);
 
       } else {

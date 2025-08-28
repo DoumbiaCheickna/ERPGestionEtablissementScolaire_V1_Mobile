@@ -13,8 +13,8 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db, findClasseName } from '../../firebaseConfig';
-import * as Notifications from 'expo-notifications';
-import { sendPushNotification } from '../services/NotificationInitService';
+import { sendPushNotification } from '../services/NotificationInitService'; // Fixed import path
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // In-memory tracking to prevent duplicate notifications within the same session
 const sentNotifications = new Set<string>();
@@ -57,6 +57,7 @@ interface StudentData {
   classe_id: string;
   role_libelle: string;
   expoPushToken?: string;
+  pushToken?: string; // Added fallback token field
 }
 
 interface SessionData {
@@ -108,10 +109,8 @@ const clearOldNotificationTracking = (): void => {
     if (keyDate < yesterdayStr) {
       sentNotifications.delete(key);
     }
-
   });
 };
-
 
 // Generate deterministic session ID
 const generateSessionId = (
@@ -133,8 +132,6 @@ const normalizeDate = (date: Date): Date => {
   return normalized;
 };
 
-
-
 // Check if course time is expired
 const isCourseTimeExpired = (endTime: string): boolean => {
   const now = new Date();
@@ -149,7 +146,9 @@ const isTodayTheCourseDay = (courseDay?: number): boolean => {
   if (courseDay == undefined) return true;
   const today = new Date();
   return today.getDay() == courseDay;
+
 };
+
 
 // Generate unique ID
 const generateUniqueId = (type: string): string => {
@@ -179,23 +178,6 @@ const createOrGetSession = async (
   }
 };
 
-// Check if student already has a record for this session
-const checkExistingStudentRecord = async (
-  sessionId: string, 
-  matricule: string
-): Promise<boolean> => {
-  try {
-    const sessionRef = doc(db, 'emargements', sessionId);
-    const sessionSnap = await getDoc(sessionRef);
-    
-    if (!sessionSnap.exists()) return false;
-    
-    const sessionData = sessionSnap.data();
-    return sessionData[matricule] !== undefined;
-  } catch (error) {
-    return false;
-  }
-};
 
 // Add student record to session
 const addStudentToSession = async (
@@ -216,6 +198,7 @@ const addStudentToSession = async (
       [matricule]: updatedMatriculeData 
     }, { merge: true });
     
+    
   } catch (error) {
     console.error('Error adding student to session:', error);
     throw error;
@@ -231,6 +214,12 @@ const updateUserStats = async (
   try {
     const userRef = doc(db, 'users', userDocId);
     const userSnap = await getDoc(userRef);
+    
+    if (!userSnap.exists()) {
+      console.warn(`User document not found: ${userDocId}`);
+      return;
+    }
+    
     const existingNotifs = userSnap.data()?.notifications || [];
 
     const alreadyNotified = existingNotifs.some((n: any) => {
@@ -245,20 +234,20 @@ const updateUserStats = async (
         notifications: arrayUnion(notificationData)
       };
 
-      if (type === 'absence') {
+      if (type == 'absence') {
         updateData.absences = increment(1);
       } else {
         updateData.presences = increment(1);
       }
 
       await updateDoc(userRef, updateData);
-    }
+    } 
   } catch (error) {
     console.error('Error updating user stats:', error);
   }
 };
 
-// Get all students
+// Get all students with both token fields
 const getAllStudents = async (): Promise<StudentData[]> => {
   try {
     const studentsQuery = query(
@@ -277,12 +266,14 @@ const getAllStudents = async (): Promise<StudentData[]> => {
         prenom: data.prenom,
         classe_id: data.classe_id,
         role_libelle: data.role_libelle,
-        expoPushToken: data.expoPushToken
+        expoPushToken: data.expoPushToken,
+        pushToken: data.pushToken // Include both token fields
       });
     });
 
     return students;
   } catch (error) {
+    console.error('Error getting students:', error);
     return [];
   }
 };
@@ -349,28 +340,37 @@ const processClassSlotAbsences = async (
 
     await createOrGetSession(sessionId, sessionData);
 
+    let processedCount = 0;
+
     for (const student of classStudents) {
       try {
-        // Check if already processed in Firestore
-        const alreadyProcessed = await checkExistingStudentRecord(sessionId, student.matricule);
-        if (alreadyProcessed) {
+        // Check if student already has emargement for this course today
+        const hasExistingEmargement = await checkExistingEmargement(
+          student.matricule,
+          slot.matiere_id,
+          slot.matiere_libelle,
+          new Date().toDateString(),
+        );
+
+
+        if (hasExistingEmargement) {
           continue;
         }
-
-        // Check if notification was already sent today (prevents duplicates)
-        const notificationAlreadySent = wasNotificationSentToday(student.matricule, slot.matiere_id);
         
+
+        // Build absence data
         const userName = `${student.prenom} ${student.nom}`;
         const uniqueId = generateUniqueId('absence');
 
         const absenceData = {
           matiere_libelle: slot.matiere_libelle,
-          matiereId: slot.matiere_id,
+          matiere_id: slot.matiere_id,
           nom_complet: userName,
           matricule: student.matricule,
           timestamp: new Date(),
           type: 'absence',
           start: slot.start,
+          date: new Date().toDateString(),
           end: slot.end,
           enseignant: slot.enseignant,
           salle: slot.salle,
@@ -389,53 +389,66 @@ const processClassSlotAbsences = async (
           read: false,
         };
 
-        // Add student to session
+        // Save absence and add student to session
+        await saveAbsenceForStudent(student.matricule, absenceData as any);
         await addStudentToSession(sessionId, student.matricule, absenceData);
-        
-        // Update user statistics
         await updateUserStats(student.id, 'absence', absenceNotificationData);
 
-        if (!notificationAlreadySent && student.expoPushToken) {
-          try {
-            // Use token to send remote push notification (works even if app killed)
-            await sendPushNotification(
-              "Absence Détectée",
-              `Vous avez raté le cours de ${slot.matiere_libelle} (${slot.start}-${slot.end})`,
-              {
-                type: 'absence_detected',
-                studentId: student.id,
-                matricule: student.matricule,
-                courseName: slot.matiere_libelle,
-                courseTime: `${slot.start}-${slot.end}`,
-                salle: slot.salle || 'Non spécifiée',
-                timestamp: new Date().toISOString(),
-                screen: 'Notifications',
-              },
-              student.expoPushToken 
-            );
-
-            // Mark as sent in memory to prevent duplicates
-            markNotificationAsSent(student.matricule, slot.matiere_id);
-          } catch (error) {
-            console.error(`Push notification failed for ${student.matricule}:`, error);
-          }
-        }
-
-
-        await new Promise(resolve => setTimeout(resolve, 50));
+        processedCount++;
         
+        // Small delay to prevent overwhelming the database
+        await new Promise(resolve => setTimeout(resolve, 50));
+
       } catch (error) {
         console.error(`Error processing absence for ${student.matricule}:`, error);
       }
     }
-    
+
+        
   } catch (error) {
     console.error('Error processing class slot absences:', error);
   }
 };
 
+// Helper function to check if student already has emargement for specific course and date
+const checkExistingEmargement = async (
+  matricule: string,
+  matiereId: string,
+  matiereLibelle: string,
+  date: string,
+): Promise<boolean> => {
+  try {
+    const studentsRef = collection(db, 'users');
+    const q = query(studentsRef, where('matricule', '==', matricule));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      console.warn(`User document not found for matricule: ${matricule}`);
+      return false;
+    }
+
+    const studentDoc = querySnapshot.docs[0];
+    const userData = studentDoc.data();
+    const existingEmargements: any[] = userData.emargements || [];
+
+    // Check if there's already an emargement for this course today
+    const alreadyEmarged = existingEmargements.some(e =>
+      e.matiere_id == matiereId &&
+      e.matiere_libelle == matiereLibelle &&
+      e.date == date && e.type == 'presence'
+    );
+
+    return alreadyEmarged;
+
+  } catch (error) {
+    console.error(`Error checking existing emargement for ${matricule}:`, error);
+    return false; // If there's an error, assume no existing emargement to be safe
+  }
+};
 // Main function to process all automatic absences
 export const processAllAutomaticAbsences = async (): Promise<void> => {
+  console.log('Starting automatic absence processing...');
+  
   try {
     // Clear old tracking data
     clearOldNotificationTracking();
@@ -453,8 +466,10 @@ export const processAllAutomaticAbsences = async (): Promise<void> => {
       return acc;
     }, {} as Record<string, StudentData[]>);
 
+
     for (const [classId, classStudents] of Object.entries(studentsByClass)) {
       try {
+        
         const classEDTs = await getClassEDT(classId);
         if (classEDTs.length === 0) {
           continue;
@@ -483,13 +498,45 @@ export const processAllAutomaticAbsences = async (): Promise<void> => {
       }
     }
     
+    
   } catch (error) {
     console.error('Error in automatic absence processing:', error);
   }
 };
 
+
+const saveAbsenceForStudent = async (
+  matricule: string,
+  absenceData: any
+): Promise<void> => {
+  try {
+    const studentsRef = collection(db, 'users');
+    const q = query(studentsRef, where('matricule', '==', matricule));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      return;
+    }
+
+    // Assuming matricule is unique, take the first match
+    const studentDoc = querySnapshot.docs[0];
+    const studentRef = studentDoc.ref;
+
+    // Add absence to emargements array
+    await updateDoc(studentRef, {
+      emargements: arrayUnion(absenceData)
+    });
+
+  } catch (error) {
+    console.error(`Error saving absence for ${matricule}:`, error);
+    throw error;
+  }
+};
+
+
 // Function to run service at regular intervals
-export const startAutomaticAbsenceService = (intervalInMinutes: number = 30): NodeJS.Timeout => {
+export const startAutomaticAbsenceService = (intervalInMinutes: number = 5): NodeJS.Timeout => {
+
   processAllAutomaticAbsences();
   
   return setInterval(() => {
@@ -504,6 +551,5 @@ export const stopAutomaticAbsenceService = (intervalId: NodeJS.Timeout): void =>
 
 // Function to run service once (for testing)
 export const runOnceAutomaticAbsences = async (): Promise<void> => {
-  console.log('Running automatic absences once for testing');
   await processAllAutomaticAbsences();
 };

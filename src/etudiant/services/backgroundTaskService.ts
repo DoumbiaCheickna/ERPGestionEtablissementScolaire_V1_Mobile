@@ -1,4 +1,4 @@
-import * as Notifications from 'expo-notifications';
+{/* import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db, getUserSnapchot } from '../../firebaseConfig';
@@ -64,7 +64,7 @@ export const scheduleWeeklyCourseNotifications = async (): Promise<void> => {
                 courseName: course.matiere_libelle,
                 salle: course.salle,
                 enseignant: course.enseignant,
-                screen: 'Home',
+                screen: 'HomeStudent',
               },
               sound: 'default',
             },
@@ -139,3 +139,4 @@ export const setupScheduledCourseNotifications = async (): Promise<void> => {
     console.error('❌ Error setting up notifications:', error);
   }
 };
+*/}
