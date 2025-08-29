@@ -86,7 +86,6 @@ export const useUserCourses = () => {
         const dateFin = anneeData.date_fin.toDate();  
         const now = new Date();
 
-        console.log("📅 Debut:", dateDebut, "Fin:", dateFin, "Now:", now);
 
         if (now < dateDebut || now > dateFin) {
           setCoursesByDay([]);
