@@ -1,12 +1,11 @@
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StatusBar, StyleSheet } from 'react-native';
 import { theme } from '../../../styles/globalStyles';
 
-export 
-// Basic styles - you should adapt these to match your design system
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: 'white',
+        paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     },
     header: {
         flexDirection: 'row',
