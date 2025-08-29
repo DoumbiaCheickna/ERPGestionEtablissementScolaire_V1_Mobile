@@ -85,6 +85,7 @@ export const useUserCourses = () => {
         const dateFin = (anneeData.date_fin as Timestamp).toDate();
         const now = new Date();
 
+        console.log(dateFin)
         // If today is outside academic year -> no timetable
         if (now < dateDebut || now > dateFin) {
           setCoursesByDay([]);
