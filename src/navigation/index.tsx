@@ -22,6 +22,8 @@ export type RootStackParamList = {
     userRole: string; 
     firstLogin: number;
     email: string;
+    fiiereId?: string;
+    niveauId?: string;
     classeId?: string;
     matieres?: any[];
   };
@@ -56,7 +58,7 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Login" component={Login as any} />
+        <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Scanner" component={Scanner} />
         <Stack.Screen name="QRCodeScreen" component={QRCodeScreen} />
         <Stack.Screen name="NotificationsInfos" component={NotificationsInfos} />

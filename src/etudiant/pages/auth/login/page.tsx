@@ -21,22 +21,8 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "fire
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { localStyles } from './styles';
+import { RootStackParamList } from '../../../../navigation';
 
-type RootStackParamList = {
-  Login: undefined;
-  ChangePassword: { userLogin: string; userRole: string; firstLogin: number };
-  HomeStudent: { 
-    userLogin: string; 
-    userRole: string; 
-    firstLogin: number;
-    email: string;
-    fiiereId?: string;
-    niveauId?: string;
-    classeId?: string;
-    matieres?: any[];
-  };
-  NotReady: undefined;
-};
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 

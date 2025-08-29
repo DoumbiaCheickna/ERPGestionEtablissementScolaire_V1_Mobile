@@ -16,9 +16,6 @@ import { db, getUserSnapchot } from '../../../firebaseConfig';
 import { MatieresStyles } from '../matieres/styles';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'HomeStudent'>;
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 
 
@@ -47,7 +44,12 @@ export const getCoursStatus = (startTime: string, endTime: string) => {
   }
 };
 
+type Props = NativeStackScreenProps<RootStackParamList, 'HomeStudent'>;
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
 export default function HomeStudent({ navigation }: Props) {
+
   const { matieres, loading: matieresLoading } = useMatieres();
   const { coursesByDay, loading: coursesLoading } = useUserCourses(); 
   const [emargedCourses, setEmargedCourses] = useState<CourseRecord[]>([]);
