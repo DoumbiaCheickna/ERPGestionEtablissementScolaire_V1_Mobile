@@ -8,7 +8,6 @@ export default function App() {
   const absenceServiceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-  
 
     // Start automatic absence tracking service
     absenceServiceRef.current = startAutomaticAbsenceService(5);
