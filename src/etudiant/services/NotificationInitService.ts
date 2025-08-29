@@ -1,4 +1,4 @@
-// src/services/notificationInitService.ts
+{/*// src/services/notificationInitService.ts
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform, Alert } from 'react-native';
@@ -411,4 +411,4 @@ export const refreshPushTokenIfNeeded = async (): Promise<void> => {
   } catch (error) {
     console.error('Error refreshing push token:', error);
   }
-};
+};*/}

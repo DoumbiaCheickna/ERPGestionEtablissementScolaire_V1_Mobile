@@ -13,7 +13,6 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db, findClasseName } from '../../firebaseConfig';
-import { sendPushNotification } from '../services/NotificationInitService'; // Fixed import path
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // In-memory tracking to prevent duplicate notifications within the same session
