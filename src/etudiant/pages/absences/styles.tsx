@@ -15,18 +15,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#eee',
+        borderBottomColor: '#e0e0e0',
+        backgroundColor: 'white',
         ...Platform.select({
-                ios: {
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 1,
-                },
-                android: {
-                    elevation: 2,
-                },
-            }),
+            ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 1,
+            },
+            android: {
+                elevation: 2,
+            },
+        }),
     },
     backButton: {
         padding: 8,
