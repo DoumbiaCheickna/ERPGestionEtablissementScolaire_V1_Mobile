@@ -81,19 +81,19 @@ export const useUserCourses = () => {
         }
 
         const anneeData = anneeDoc.data();
-        const dateDebut = (anneeData.date_debut as Timestamp).toDate();
-        const dateFin = (anneeData.date_fin as Timestamp).toDate();
+
+        const dateDebut = anneeData.date_debut.toDate();  
+        const dateFin = anneeData.date_fin.toDate();  
         const now = new Date();
 
-        console.log(dateFin)
-        // If today is outside academic year -> no timetable
+        console.log("📅 Debut:", dateDebut, "Fin:", dateFin, "Now:", now);
+
         if (now < dateDebut || now > dateFin) {
           setCoursesByDay([]);
           setLoading(false);
           return;
         }
 
-        // --- Process timetable if within date range ---
         const slotsByDay: DayCourses[] = dayNames.map(day => ({
           title: day,
           data: []
