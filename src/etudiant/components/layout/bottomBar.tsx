@@ -18,6 +18,7 @@ const navItems: { name: string; icon: IoniconName; screen: string; libelle: stri
   { name: 'Profile', icon: 'person-outline', screen: 'Profile', libelle: 'Profil' }, 
 ];
 
+
 export default function BottomNavBar({ activeScreen }: Props) {
   const navigation = useNavigation();
 
@@ -25,7 +26,7 @@ export default function BottomNavBar({ activeScreen }: Props) {
     <SafeAreaView style={styles.wrapper} edges={['bottom']}>
       <View style={styles.container}>
         {navItems.map((item) => {
-          const isActive = activeScreen === item.screen;
+          const isActive = activeScreen == item.screen;
 
           return (
             <TouchableOpacity

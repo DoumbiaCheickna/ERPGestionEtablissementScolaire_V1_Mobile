@@ -524,7 +524,7 @@ export const styles = StyleSheet.create({
   },
   nextCourseCard: {
     marginTop: 30,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#ffffffff',
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',

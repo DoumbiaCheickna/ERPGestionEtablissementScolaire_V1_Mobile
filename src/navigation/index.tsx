@@ -68,7 +68,7 @@ export default function AppNavigator() {
 
         <Stack.Screen name="HomeStudent" component={HomeStudent} />
         <Stack.Screen name="AllCoursesStudent" component={AllCoursesStudent} />
-        <Stack.Screen name="MatieresStudent" component={MatieresStudent as any} />
+        <Stack.Screen name="MatieresStudent" component={MatieresStudent} />
         <Stack.Screen name="NotificationsStudent" component={NotificationsStudent} />
 
       </Stack.Navigator>

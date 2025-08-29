@@ -534,7 +534,7 @@ export default function AllCoursesStudent({ navigation }: Props) {
         )}
       </ScrollView>
 
-      <BottomNavBar activeScreen={'AllCourses'} />
+      <BottomNavBar activeScreen={'AllCoursesStudent'} />
     </View>
   );
 }

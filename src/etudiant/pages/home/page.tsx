@@ -17,6 +17,7 @@ import { MatieresStyles } from '../matieres/styles';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'HomeStudent'>;
+
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 
@@ -850,7 +851,7 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
 
       </ScrollView>
 
-      <BottomNavBar activeScreen="Home"/>
+      <BottomNavBar activeScreen="HomeStudent"/>
     </View>
   );
 }
