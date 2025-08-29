@@ -1,7 +1,11 @@
 import { collection, doc, DocumentData, getDoc, getDocs, getFirestore, query, QuerySnapshot, updateDoc, where } from "firebase/firestore";
 import { initializeApp } from 'firebase/app';
 import { getStorage } from 'firebase/storage';
-import { getAuth, initializeAuth } from 'firebase/auth';
+import { 
+  initializeAuth,
+  //@ts-ignore
+  getReactNativePersistence,
+ } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from "react-native";
 
@@ -18,10 +22,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
+export const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(AsyncStorage)
+});
 export const storage = getStorage(app);
-export const auth = getAuth(app)
-
-
 
 export const getUserSnapchot = async (): Promise<QuerySnapshot<DocumentData> | null> => {
         
