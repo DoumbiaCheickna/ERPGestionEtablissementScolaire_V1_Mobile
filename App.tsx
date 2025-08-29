@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import AppNavigator from './src/navigation';
 {/* import { setupScheduledCourseNotifications } from './src/etudiant/services/backgroundTaskService'; */}
-import { registerForPushNotificationsAsync, setupNotificationListeners } from './src/etudiant/services/NotificationInitService';
+//import { registerForPushNotificationsAsync, setupNotificationListeners } from './src/etudiant/services/NotificationInitService';
 import { startAutomaticAbsenceService, stopAutomaticAbsenceService } from './src/etudiant/utils/emargement';
 
 export default function App() {
