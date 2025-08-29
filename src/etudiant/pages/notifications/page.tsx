@@ -27,9 +27,9 @@ import { styles } from './styles'
 const { width, height } = Dimensions.get('window');
 const SWIPE_THRESHOLD = width * 0.3; 
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Notifications'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'NotificationsStudent'>;
 
-export default function Notifications({navigation}: Props) {
+export default function NotificationsStudent({navigation}: Props) {
     const { userRef, error } = useUserRef();
     const [notifications, setNotifications] = useState<any[]>([]);
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);

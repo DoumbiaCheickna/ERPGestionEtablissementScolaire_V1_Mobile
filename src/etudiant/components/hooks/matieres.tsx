@@ -52,11 +52,10 @@ export const useMatieres = () => {
       return { nom: '', prenom: '' };
     }
   };
-
   const fetchUserMatières = async (filiereId: string, niveauId: string) => {
     try {
       setLoading(true);
-      
+
       // Step 1: Find the classe with matching filiere_id and niveau_id
       const classesRef = collection(db, "classes");
       const classQuery = query(
@@ -64,132 +63,139 @@ export const useMatieres = () => {
         where("filiere_id", "==", filiereId),
         where("niveau_id", "==", niveauId)
       );
-      
       const classSnapshot = await getDocs(classQuery);
-      
+
       if (classSnapshot.empty) {
         setMatieres([]);
         setLoading(false);
         return;
       }
 
-      // Get the classe ID
       const classeDoc = classSnapshot.docs[0];
       const classeId = classeDoc.id;
 
-      // Step 2: Query all EDT documents for this classe
+      // Step 2: Query all EDT docs for this classe
       const edtsRef = collection(db, "edts");
-      const edtQuery = query(
-        edtsRef,
-        where("class_id", "==", classeId)
-      );
-      
+      const edtQuery = query(edtsRef, where("class_id", "==", classeId));
       const edtSnapshot = await getDocs(edtQuery);
-      
+
       if (edtSnapshot.empty) {
         setMatieres([]);
         setLoading(false);
         return;
       }
 
-      // Step 3: Extract all unique matiere IDs from all EDT slots
+      // Step 3: Collect all unique matiere IDs from slots
       const uniqueMatiereIds = new Set<string>();
-      
       edtSnapshot.forEach((edtDoc) => {
         const edtData = edtDoc.data();
         const slots = edtData.slots || [];
-        
         slots.forEach((slot: any) => {
-          if (slot.matiere_id && slot.matiere_id.trim() !== '') {
+          if (slot.matiere_id && slot.matiere_id.trim() !== "") {
             uniqueMatiereIds.add(slot.matiere_id);
           }
         });
       });
 
-      if (uniqueMatiereIds.size == 0) {
+      if (uniqueMatiereIds.size === 0) {
         setMatieres([]);
         setLoading(false);
         return;
       }
 
-      // Step 4: Query affectations_professeurs collection
+      // Step 4: Query affectations_professeurs ONCE
       const affectationsRef = collection(db, "affectations_professeurs");
       const affectationsSnapshot = await getDocs(affectationsRef);
-      
-      if (affectationsSnapshot.empty) {
-        setMatieres([]);
-        setLoading(false);
-        return;
-      }
 
-      // Step 5: Find matching matières and professors
       const matièresData: Matiere[] = [];
-      
-      for (const affectationDoc of affectationsSnapshot.docs) {
+
+      for (const matiereId of uniqueMatiereIds) {
         try {
-          const affectationData = affectationDoc.data();
-          const classes = affectationData.classes || [];
-          const profDocId = affectationData.prof_doc_id;
-          
-          // Find the classe that matches our classeId in the classes array
-          const matchingClasse = classes.find((classe: any) => classe.classe_id == classeId);
+          // Fetch matière info
+          const matiereDocRef = doc(db, "matieres", matiereId);
+          const matiereDoc = await getDoc(matiereDocRef);
 
-          
-          if (matchingClasse) {
-            const matieresIds = matchingClasse.matieres_ids || [];            
-            // Check each matiere_id in uniqueMatiereIds against this affectation
-            for (const uniqueMatiereId of uniqueMatiereIds) {
-              if (matieresIds.includes(uniqueMatiereId)) {
-                try {
-                  // Fetch matière libellé from matieres collection
-                  const matiereDocRef = doc(db, "matieres", uniqueMatiereId);
-                  const matiereDoc = await getDoc(matiereDocRef);
-                  
-                  let matiereTitle = 'Matière sans nom';
-                  if (matiereDoc.exists()) {
-                    const matiereData = matiereDoc.data();
-                    matiereTitle = matiereData.libelle || 'Matière sans nom';
-                  }
-                  
-                  // Fetch professor information using prof_doc_id
-                  const professeurInfo = profDocId 
-                    ? await fetchProfesseurInfo(profDocId)
-                    : { nom: '', prenom: '' };
+          let matiereTitle = "Matière sans nom";
+          if (matiereDoc.exists()) {
+            const matiereData = matiereDoc.data();
+            matiereTitle = matiereData.libelle || "Matière sans nom";
+          }
 
-                  const fullName = professeurInfo.nom && professeurInfo.prenom 
-                    ? `${professeurInfo.prenom} ${professeurInfo.nom}`
-                    : professeurInfo.nom || professeurInfo.prenom || 'Professeur non assigné';
+          // Find professor via affectations
+          let professeurInfo = { nom: "", prenom: "" };
 
-                  // Check if this matière is already added (avoid duplicates)
-                  const existingMatiere = matièresData.find(m => m.id === uniqueMatiereId);
-                  if (!existingMatiere) {
-                    matièresData.push({
-                      id: uniqueMatiereId,
-                      title: matiereTitle,
-                      professeurNom: professeurInfo.nom,
-                      professeurPrenom: professeurInfo.prenom,
-                      professeurFullName: fullName
-                    });
-                  }
-                } catch (error) {
-                  console.error(`Error processing matière ${uniqueMatiereId}:`, error);
-                }
+          affectationsSnapshot.forEach((affectationDoc) => {
+            const affectationData = affectationDoc.data();
+            const classes = affectationData.classes || [];
+            const profDocId = affectationData.prof_doc_id;
+
+            const matchingClasse = classes.find(
+              (classe: any) => classe.classe_id === classeId
+            );
+
+            if (matchingClasse) {
+              const matieresIds = matchingClasse.matieres_ids || [];
+              if (matieresIds.includes(matiereId) && profDocId) {
+                professeurInfo = {
+                  ...(professeurInfo.nom ? professeurInfo : {}),
+                } as any;
+                professeurInfo = {
+                  nom: "",
+                  prenom: "",
+                };
+              }
+            }
+          });
+
+          // If professor found, fetch user info
+          let fullName = "Professeur non assigné";
+          if (professeurInfo && !professeurInfo.nom) {
+            // fetch from users collection
+            for (const affectationDoc of affectationsSnapshot.docs) {
+              const affectationData = affectationDoc.data();
+              const classes = affectationData.classes || [];
+              const profDocId = affectationData.prof_doc_id;
+
+              const matchingClasse = classes.find(
+                (classe: any) => classe.classe_id === classeId
+              );
+
+              if (
+                matchingClasse &&
+                matchingClasse.matieres_ids.includes(matiereId) &&
+                profDocId
+              ) {
+                const prof = await fetchProfesseurInfo(profDocId);
+                professeurInfo = prof;
+                fullName = prof.nom && prof.prenom
+                  ? `${prof.prenom} ${prof.nom}`
+                  : prof.nom || prof.prenom || "Professeur non assigné";
+                break;
               }
             }
           }
-        } catch (error) {
-          console.error(`Error processing affectation ${affectationDoc.id}:`, error);
+
+          matièresData.push({
+            id: matiereId,
+            title: matiereTitle,
+            professeurNom: professeurInfo.nom,
+            professeurPrenom: professeurInfo.prenom,
+            professeurFullName: fullName,
+          });
+        } catch (err) {
+          console.error("Error fetching matiere", matiereId, err);
         }
       }
 
       setMatieres(matièresData);
-      
     } catch (error) {
+      console.error(error);
       setMatieres([]);
     } finally {
       setLoading(false);
     }
   };
+
 
   const initializeData = async () => {
     const userData = await getUserData();

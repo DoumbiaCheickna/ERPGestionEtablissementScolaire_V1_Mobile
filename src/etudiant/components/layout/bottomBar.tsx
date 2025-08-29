@@ -14,7 +14,7 @@ type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const navItems: { name: string; icon: IoniconName; screen: string; libelle: string }[] = [
   { name: 'HomeStudent', icon: 'home-outline', screen: 'HomeStudent', libelle: 'Accueil' },
-  { name: 'AllCourses', icon: 'calendar-outline', screen: 'AllCourses', libelle: 'Emploi du temps' },
+  { name: 'AllCoursesStudent', icon: 'calendar-outline', screen: 'AllCoursesStudent', libelle: 'Emploi du temps' },
   { name: 'Profile', icon: 'person-outline', screen: 'Profile', libelle: 'Profil' }, 
 ];
 

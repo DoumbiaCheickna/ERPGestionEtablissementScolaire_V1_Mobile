@@ -82,15 +82,18 @@ export const registerForPushNotificationsAsync = async (): Promise<string | null
 const updateUserPushToken = async (pushToken: string): Promise<void> => {
   try {
     const querySnapshot: any = await getUserSnapchot();
-    if (!querySnapshot.empty) {
+    
+    // Check if querySnapshot exists and is not empty
+    if (querySnapshot && !querySnapshot.empty) {
       const userDoc = querySnapshot.docs[0];
       const userRef = doc(db, 'users', userDoc.id);
-      // Save to both fields for compatibility
       await updateDoc(userRef, { 
         pushToken,
-        expoPushToken: pushToken, // Added for absence service compatibility
+        expoPushToken: pushToken,
         lastTokenUpdate: new Date()
       });
+    } else {
+      console.warn('No user document found to update push token');
     }
   } catch (error) {
     console.error('Erreur lors de la sauvegarde du token push:', error);

@@ -262,7 +262,7 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
                 icon="notifications-outline"
                 title="Notifications"
                 count={getNotificationDisplay()}
-                onPress={() => handleMenuItemPress('Notifications')}
+                onPress={() => handleMenuItemPress('NotificationsStudent')}
               />
               
               <MenuOption

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { collection, query, where, getDocs, doc, DocumentReference } from 'firebase/firestore';
-import { db, getUserSnapchot } from '../../../firebaseConfig';
+import { db } from '../../../firebaseConfig'; // Remove getUserSnapchot import
 
 const useUserRef = () => {
   const [userRef, setUserRef] = useState<DocumentReference | null>(null);
@@ -19,18 +19,21 @@ const useUserRef = () => {
         throw new Error('Utilisateur non trouvé');
       }
 
-     
-      const querySnapshot: any = await getUserSnapchot();
+      // Query Firestore directly instead of using getUserSnapchot
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('login', '==', userLogin));
+      const querySnapshot = await getDocs(q);
       
+
       if (querySnapshot.empty) {
         throw new Error('Utilisateur non trouvé dans la base de données');
       }
 
+      // Get the first matching document
       const userDoc = querySnapshot.docs[0];
-      userDoc.data()
-      const userDocId = userDoc.id;
-      const docRef = doc(db, "users", userDocId);
-      
+
+
+      const docRef = doc(db, "users", userDoc.id);
       setUserRef(docRef);
 
     } catch (err: any) {

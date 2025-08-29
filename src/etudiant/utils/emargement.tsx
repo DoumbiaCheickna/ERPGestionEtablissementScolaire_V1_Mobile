@@ -143,10 +143,13 @@ const isCourseTimeExpired = (endTime: string): boolean => {
 
 // Check if today is the course day
 const isTodayTheCourseDay = (courseDay?: number): boolean => {
-  if (courseDay == undefined) return true;
+  if (courseDay === undefined) return true;
+  
   const today = new Date();
-  return today.getDay() == courseDay;
-
+  const todayDay = today.getDay();
+  
+  const convertedTodayDay = todayDay == 0 ? 7 : todayDay;
+    return convertedTodayDay == courseDay;
 };
 
 
@@ -181,26 +184,44 @@ const createOrGetSession = async (
 
 // Add student record to session
 const addStudentToSession = async (
-  sessionId: string, 
-  matricule: string, 
-  studentData: any
+  sessionId: string,
+  matricule: string,
+  absenceData: any
 ): Promise<void> => {
   try {
-    const sessionRef = doc(db, 'emargements', sessionId);
+    const sessionRef = doc(db, "emargements", sessionId);
     const sessionSnap = await getDoc(sessionRef);
     const existingData = sessionSnap.exists() ? sessionSnap.data() : {};
+
+    const currentMatriculeData: any[] = existingData[matricule] || [];
+
+    const filtered = currentMatriculeData.filter((e) => {
+      return !(
+        e.matiere_id == absenceData.matiere_id &&
+        e.matiere_libelle == absenceData.matiere_libelle &&
+        e.start == absenceData.start &&
+        e.end == absenceData.end &&
+        e.date == absenceData.date &&
+        e.type == absenceData.type &&
+        e.salle == absenceData.salle
+      );
+    });
+
+
+
+    const updatedMatriculeData = [...filtered, absenceData];
+
     
-    const currentMatriculeData = existingData[matricule] || [];
-    const updatedMatriculeData = [...currentMatriculeData, studentData];
-    
-    await setDoc(sessionRef, { 
-      ...existingData, 
-      [matricule]: updatedMatriculeData 
-    }, { merge: true });
-    
-    
+    await setDoc(
+      sessionRef,
+      {
+        ...existingData,
+        [matricule]: updatedMatriculeData,
+      },
+      { merge: true }
+    );
   } catch (error) {
-    console.error('Error adding student to session:', error);
+    console.error("Error adding student to session:", error);
     throw error;
   }
 };
@@ -267,7 +288,7 @@ const getAllStudents = async (): Promise<StudentData[]> => {
         classe_id: data.classe_id,
         role_libelle: data.role_libelle,
         expoPushToken: data.expoPushToken,
-        pushToken: data.pushToken // Include both token fields
+        pushToken: data.pushToken 
       });
     });
 
@@ -471,7 +492,7 @@ export const processAllAutomaticAbsences = async (): Promise<void> => {
       try {
         
         const classEDTs = await getClassEDT(classId);
-        if (classEDTs.length === 0) {
+        if (classEDTs.length == 0) {
           continue;
         }
 
@@ -486,6 +507,7 @@ export const processAllAutomaticAbsences = async (): Promise<void> => {
             if (!isCourseTimeExpired(slot.end)) {
               continue;
             }
+
             
             await processClassSlotAbsences(edt, slot, classStudents, className);
             
@@ -510,23 +532,42 @@ const saveAbsenceForStudent = async (
   absenceData: any
 ): Promise<void> => {
   try {
-    const studentsRef = collection(db, 'users');
-    const q = query(studentsRef, where('matricule', '==', matricule));
+    const studentsRef = collection(db, "users");
+    const q = query(studentsRef, where("matricule", "==", matricule));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
       return;
     }
 
-    // Assuming matricule is unique, take the first match
     const studentDoc = querySnapshot.docs[0];
     const studentRef = studentDoc.ref;
+    const studentData = studentDoc.data();
 
-    // Add absence to emargements array
-    await updateDoc(studentRef, {
-      emargements: arrayUnion(absenceData)
+    const currentEmargements = studentData.emargements || [];
+
+    // Remove any existing absence with same keys
+    const filtered = currentEmargements.filter((e: any) => {
+      return !(
+        e.matiere_id == absenceData.matiere_id &&
+        e.matiere_libelle == absenceData.matiere_libelle &&
+        e.enseignant == absenceData.enseignant &&
+        e.start == absenceData.start &&
+        e.end == absenceData.end &&
+        e.date == absenceData.date &&
+        e.type == absenceData.type &&
+        e.salle == absenceData.salle &&
+        e.matricule == absenceData.matricule
+      );
     });
 
+    const updatedEmargements = [...filtered, absenceData];
+
+    await setDoc(
+      studentRef,
+      { emargements: updatedEmargements },
+      { merge: true }
+    );
   } catch (error) {
     console.error(`Error saving absence for ${matricule}:`, error);
     throw error;

@@ -102,43 +102,63 @@ const saveEmargedCourse = async (
   salle: string
 ) => {
   try {
-    const userLogin = await AsyncStorage.getItem('userLogin');
-    if (!userLogin) throw new Error('No user matricule found');
+      const userLogin = await AsyncStorage.getItem("userLogin");
+      if (!userLogin) throw new Error("No user matricule found");
 
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('login', '==', userLogin));
-    const querySnapshot = await getDocs(q);
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("login", "==", userLogin));
+      const querySnapshot = await getDocs(q);
 
-    if (querySnapshot.empty) {
-      throw new Error('User not found in Firestore');
+      if (querySnapshot.empty) {
+        throw new Error("User not found in Firestore");
+      }
+
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+
+      const enseignant = courseInfo?.enseignant;
+
+      const emargement = {
+        matiere_id,
+        matiere_libelle,
+        enseignant,
+        start,
+        end,
+        date: new Date().toDateString(),
+        type: "presence",
+        timestamp: new Date(),
+        salle,
+      };
+
+
+      const currentEmargements = userData.emargements || [];
+
+      const filtered = currentEmargements.filter((e: any) => {
+        return !(
+          e.matiere_id == emargement.matiere_id &&
+          e.matiere_libelle == emargement.matiere_libelle &&
+          e.enseignant == emargement.enseignant &&
+          e.start == emargement.start &&
+          e.end == emargement.end &&
+          e.date == emargement.date &&
+          e.type == emargement.type &&
+          e.salle == emargement.salle
+        );
+      });
+
+      const updatedEmargements = [...filtered, emargement];
+
+      await setDoc(
+        userDoc.ref,
+        { emargements: updatedEmargements },
+        { merge: true }
+      );
+
+    } catch (error) {
+      console.error("Error saving emargement:", error);
     }
-
-    // If login is unique, there should be exactly one document
-    const userDoc = querySnapshot.docs[0];
-    const userData = userDoc.data();
-
-    const enseignant = courseInfo?.enseignant
-    // Now you can use `userDoc.ref` to update emargements
-    const emargement = {
-      matiere_id,
-      matiere_libelle ,
-      enseignant,
-      start,
-      end,
-      date: new Date().toDateString(),
-      type: 'presence',
-      timestamp: new Date(),
-      salle
-    };
-
-    await setDoc(userDoc.ref, {
-      emargements: arrayUnion(emargement)
-    }, { merge: true });
-
-  } catch (error) {
-    console.error('Error saving emargement:', error);
-  }
 };
+
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
     const currentTime = Date.now();
@@ -171,7 +191,6 @@ const saveEmargedCourse = async (
 
         saveEmargedCourse(finalCourseInfo.matiere_id, finalCourseInfo.libelle, finalCourseInfo.start, finalCourseInfo.end, finalCourseInfo.salle)
 
-        // FIXED: Show modal but don't navigate yet
         setShowSuccessModal(true);
       } else {
         Alert.alert('QR code invalide pour ce cours');

@@ -97,9 +97,9 @@ const CustomDropdown = ({
   );
 };
 
-type Props = NativeStackScreenProps<RootStackParamList, 'AllCourses'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'AllCoursesStudent'>;
 
-export default function AllCourses({ navigation }: Props) {
+export default function AllCoursesStudent({ navigation }: Props) {
     const [selectedDay, setSelectedDay] = useState('');
     const [selectedDate, setSelectedDate] = useState<Date | any>();
     const [filterMode, setFilterMode] = useState<'dropdown' | 'calendar'>('calendar');

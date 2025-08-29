@@ -332,7 +332,6 @@ const isStudentEmargedForCourse = async (matiereId: string): Promise<boolean> =>
   try {
     const userLogin = await AsyncStorage.getItem('userLogin');
     if (!userLogin) {
-      console.warn('No user login found');
       return false;
     }
 
@@ -341,7 +340,6 @@ const isStudentEmargedForCourse = async (matiereId: string): Promise<boolean> =>
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-      console.warn('User not found in Firestore');
       return false;
     }
 
@@ -369,7 +367,6 @@ const isStudentAbsentForCourse = async (matiereId: string): Promise<boolean> => 
   try {
     const userLogin = await AsyncStorage.getItem('userLogin');
     if (!userLogin) {
-      console.warn('No user login found');
       return false;
     }
 
@@ -378,7 +375,6 @@ const isStudentAbsentForCourse = async (matiereId: string): Promise<boolean> => 
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-      console.warn('User not found in Firestore');
       return false;
     }
 
@@ -526,7 +522,6 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
     // Navigate to scanner with success callback and course information
     navigation.navigate('Scanner', { 
       matiereId, 
-      onEmargementSuccess: async () => {}, 
       courseLibelle,
       // Pass additional course information for the modal
       courseInfo: {
