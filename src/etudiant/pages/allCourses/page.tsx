@@ -119,8 +119,11 @@ export default function AllCoursesStudent({ navigation }: Props) {
     const [selectedMatiereCourses, setSelectedMatiereCourses] = useState<Slot[]>([]);
     const [selectedMatiereIndex, setSelectedMatiereIndex] = useState(0);
     
-    const { coursesByDay, loading, error } = useUserCourses();
+    const { coursesByDay, loading: coursesLoading, refreshCourses, error } = useUserCourses(); 
 
+  const  refreshData = () => {
+    refreshCourses();
+  }
   useEffect(() => {
     if (coursesByDay && coursesByDay.length > 0) {
       
@@ -219,7 +222,7 @@ export default function AllCoursesStudent({ navigation }: Props) {
       
       setNextCourse(closestCourse);
     }
-  }, [coursesByDay]);
+  }, [coursesByDay, coursesLoading]);
 
   const handleCourseCardPress = (course: Slot, index: number) => {
     // Create a matiere object from the course data
@@ -432,6 +435,9 @@ export default function AllCoursesStudent({ navigation }: Props) {
     );
   }
 
+  const loading = coursesLoading
+  console.log(loading)
+
   if (loading) return (
     <View style={HomeStyles.loading}>
         <LottieView
@@ -460,7 +466,6 @@ export default function AllCoursesStudent({ navigation }: Props) {
           <Text style={styles.welcomeText}>📚 Mon emploi du temps</Text>
           <Text style={styles.dateText}>Cours du Lundi au Samedi</Text>
         </View>
-
         {nextCourse && (
           <View style={styles.nextCourseContainer}>
               <View style={MatieresStyles.badgeContainer}>
