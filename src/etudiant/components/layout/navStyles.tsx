@@ -65,76 +65,97 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  modalOverlay: {
+   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-end',
-    paddingTop: 120,
-    paddingRight: 15,
+    justifyContent: 'flex-end',
+  },
+   backgroundOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   menuContainer: {
     backgroundColor: 'white',
-    borderRadius: 15,
-    width: 280,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 5,
-    },
-    shadowOpacity: 0.3,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    maxHeight: '80%',
+    // IMPROVED: Better touch handling
+    elevation: 10, // Android
+    shadowColor: '#000', // iOS
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.25,
     shadowRadius: 10,
-    elevation: 15,
   },
+
   menuHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    marginBottom: 20,
+    paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#E5E5E5',
   },
+
   menuTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: theme.colors.primary,
   },
+
   closeButton: {
-    padding: 4,
+    padding: 5, // Increased touch area
   },
+
   menuOptions: {
-    paddingVertical: 10,
+    gap: 15,
   },
+
   menuOption: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    justifyContent: 'space-between',
     paddingVertical: 15,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    backgroundColor: '#F8F9FA',
+    // IMPROVED: Better touch feedback
+    minHeight: 50, // Ensure minimum touch target size
   },
+
   menuOptionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
+
   menuOptionText: {
     marginLeft: 15,
     fontSize: 16,
-    color: '#333',
+    color: theme.colors.text,
     fontWeight: '500',
   },
+
   menuBadge: {
-    borderRadius: 10,
-    minWidth: 20,
-    height: 20,
+    backgroundColor: '#FF3B30',
+    borderRadius: 12,
+    minWidth: 24,
+    height: 24,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 6,
   },
+
   menuBadgeText: {
     color: 'white',
     fontSize: 12,
     fontWeight: 'bold',
-    textAlign: 'center',
   },
+
 });
 

@@ -171,7 +171,7 @@ const CustomCalendar = ({ onDateSelect, selectedDate }: CalendarProps) => {
 
 const styles = StyleSheet.create({
   calendarContainer: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'white',
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,

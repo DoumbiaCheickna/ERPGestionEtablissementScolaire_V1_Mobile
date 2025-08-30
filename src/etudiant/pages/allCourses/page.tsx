@@ -1,8 +1,9 @@
- import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal, FlatList, ActivityIndicator, Image } from 'react-native';
 import TopNavBar from '../../components/layout/topBar';
 import BottomNavBar from '../../components/layout/bottomBar';
 import CustomCalendar from '../../components/hooks/calendar'; 
+import MatiereDetailsModal from '../../components/modals/MatiereDetailsModal';
 import { theme } from '../../../styles/globalStyles';
 import { useUserCourses, Slot } from '../../components/hooks/cours'; 
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -12,10 +13,15 @@ import { getCoursStatus } from '../home/page';
 import { HomeStyles } from '../home/styles';
 import { MatieresStyles } from '../matieres/styles';
 
-
 interface DropdownItem {
   label: string;
   value: string;
+}
+
+interface Matiere {
+  id: string;
+  title: string;
+  professeurFullName: string;
 }
 
 const CustomDropdown = ({ 
@@ -103,111 +109,145 @@ export default function AllCoursesStudent({ navigation }: Props) {
     const [selectedDay, setSelectedDay] = useState('');
     const [selectedDate, setSelectedDate] = useState<Date | any>();
     const [filterMode, setFilterMode] = useState<'dropdown' | 'calendar'>('calendar');
-    const [ nextCourse, setNextCourse ] = useState<Slot | null>(null);
+    const [nextCourse, setNextCourse] = useState<Slot | null>(null);
     const [todayCourses, setTodayCourses] = useState<Slot[]>([]);
+    
+    // Modal states
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedMatiere, setSelectedMatiere] = useState<Matiere | null>(null);
+    const [selectedMatiereCourses, setSelectedMatiereCourses] = useState<Slot[]>([]);
+    const [selectedMatiereIndex, setSelectedMatiereIndex] = useState(0);
+    
     const { coursesByDay, loading, error } = useUserCourses();
 
-
   useEffect(() => {
-  if (coursesByDay && coursesByDay.length > 0) {
-    
+    if (coursesByDay && coursesByDay.length > 0) {
+      
+      const today = new Date();
+      const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+      const todayDayName = dayNames[today.getDay()];
+      const currentTime = today.getHours() * 60 + today.getMinutes();
+      
+      // Get today's courses
+      const todayCoursesList = coursesByDay
+        .filter((d: any) => d.title == todayDayName)
+        .flatMap((d: any) => d.data) || [];
+      
+      setTodayCourses(todayCoursesList);
+      
+      let closestCourse: any = null;
+      let minTimeDifference = Infinity;
+      
+      // First, try to find upcoming courses for today
+      todayCoursesList.forEach(course => {
+        try {
+          const timeParts = course.start.split(':');
+          const startHours = parseInt(timeParts[0]);
+          const startMinutes = parseInt(timeParts[1]);
+          
+          if (isNaN(startHours)) {
+            return;
+          }
+          
+          const courseStartTime = startHours * 60 + startMinutes;
+          const timeDifference = courseStartTime - currentTime;
+
+          // Only consider future courses (timeDifference > 0)
+          if (timeDifference > 0 && timeDifference < minTimeDifference) {
+            minTimeDifference = timeDifference;
+            closestCourse = course;
+          }
+        } catch (error) {
+          console.error("Error parsing course time:", course.start, error);
+        }
+      });
+      
+      // If no upcoming courses found for today, look for next day's courses
+      if (!closestCourse) {
+        const dayOrder = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+        const currentDayIndex = dayOrder.indexOf(todayDayName);
+        
+        // Search through the next 7 days
+        for (let dayOffset = 1; dayOffset <= 7; dayOffset++) {
+          const nextDayIndex = (currentDayIndex + dayOffset) % 7;
+          const nextDayName = dayOrder[nextDayIndex];
+          
+          const nextDayCourses = coursesByDay
+            .filter((d: any) => d.title === nextDayName)
+            .flatMap((d: any) => d.data) || [];
+          
+          if (nextDayCourses.length > 0) {
+            // Find the earliest course of the next day
+            let earliestCourse: any = null;
+            let earliestTime = Infinity;
+            
+            nextDayCourses.forEach(course => {
+              try {
+                const timeParts = course.start.split(':');
+                const startHours = parseInt(timeParts[0]);
+                const startMinutes = parseInt(timeParts[1]);
+                
+                if (isNaN(startHours)) {
+                  return;
+                }
+                
+                const courseStartTime = startHours * 60 + startMinutes;
+                
+                if (courseStartTime < earliestTime) {
+                  earliestTime = courseStartTime;
+                  earliestCourse = { ...course, day: nextDayName };
+                }
+              } catch (error) {
+                console.error("Error parsing course time:", course.start, error);
+              }
+            });
+            
+            if (earliestCourse) {
+              closestCourse = earliestCourse;
+              break; 
+            }
+          }
+        }
+      } else {
+        closestCourse = { ...closestCourse, day: todayDayName };
+      }
+      
+      if (!closestCourse && todayCoursesList.length > 0) {
+        closestCourse = { ...todayCoursesList[0], day: todayDayName };
+      }
+      
+      setNextCourse(closestCourse);
+    }
+  }, [coursesByDay]);
+
+  const handleCourseCardPress = (course: Slot, index: number) => {
+    // Create a matiere object from the course data
+    const matiere: Matiere = {
+      id: course.matiere_id,
+      title: course.matiere_libelle,
+      professeurFullName: course.enseignant
+    };
+
+    // Get all courses for this matiere
+    const allMatieresCourses = coursesByDay
+      ?.flatMap((day: any) => day.data || [])
+      .filter((c: Slot) => c.matiere_id === course.matiere_id) || [];
+
+    // Get today's courses for this matiere
     const today = new Date();
     const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
     const todayDayName = dayNames[today.getDay()];
-    const currentTime = today.getHours() * 60 + today.getMinutes();
     
-    // Get today's courses
-    const todayCoursesList = coursesByDay
-      .filter((d: any) => d.title == todayDayName)
-      .flatMap((d: any) => d.data) || [];
-    
-    setTodayCourses(todayCoursesList);
-    
-    let closestCourse: any = null;
-    let minTimeDifference = Infinity;
-    
-    // First, try to find upcoming courses for today
-    todayCoursesList.forEach(course => {
-      try {
-        const timeParts = course.start.split(':');
-        const startHours = parseInt(timeParts[0]);
-        const startMinutes = parseInt(timeParts[1]);
-        
-        if (isNaN(startHours)) {
-          return;
-        }
-        
-        const courseStartTime = startHours * 60 + startMinutes;
-        const timeDifference = courseStartTime - currentTime;
+    const todayMatiereCourses = coursesByDay
+      ?.filter((d: any) => d.title === todayDayName)
+      .flatMap((d: any) => d.data || [])
+      .filter((c: Slot) => c.matiere_id === course.matiere_id) || [];
 
-        // Only consider future courses (timeDifference > 0)
-        if (timeDifference > 0 && timeDifference < minTimeDifference) {
-          minTimeDifference = timeDifference;
-          closestCourse = course;
-        }
-      } catch (error) {
-        console.error("Error parsing course time:", course.start, error);
-      }
-    });
-    
-    // If no upcoming courses found for today, look for next day's courses
-    if (!closestCourse) {
-      const dayOrder = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-      const currentDayIndex = dayOrder.indexOf(todayDayName);
-      
-      // Search through the next 7 days
-      for (let dayOffset = 1; dayOffset <= 7; dayOffset++) {
-        const nextDayIndex = (currentDayIndex + dayOffset) % 7;
-        const nextDayName = dayOrder[nextDayIndex];
-        
-        const nextDayCourses = coursesByDay
-          .filter((d: any) => d.title === nextDayName)
-          .flatMap((d: any) => d.data) || [];
-        
-        if (nextDayCourses.length > 0) {
-          // Find the earliest course of the next day
-          let earliestCourse: any = null;
-          let earliestTime = Infinity;
-          
-          nextDayCourses.forEach(course => {
-            try {
-              const timeParts = course.start.split(':');
-              const startHours = parseInt(timeParts[0]);
-              const startMinutes = parseInt(timeParts[1]);
-              
-              if (isNaN(startHours)) {
-                return;
-              }
-              
-              const courseStartTime = startHours * 60 + startMinutes;
-              
-              if (courseStartTime < earliestTime) {
-                earliestTime = courseStartTime;
-                earliestCourse = { ...course, day: nextDayName };
-              }
-            } catch (error) {
-              console.error("Error parsing course time:", course.start, error);
-            }
-          });
-          
-          if (earliestCourse) {
-            closestCourse = earliestCourse;
-            break; 
-          }
-        }
-      }
-    } else {
-      closestCourse = { ...closestCourse, day: todayDayName };
-    }
-    
-    if (!closestCourse && todayCoursesList.length > 0) {
-      closestCourse = { ...todayCoursesList[0], day: todayDayName };
-    }
-    
-    setNextCourse(closestCourse);
-  }
-}, [coursesByDay]);
-
+    setSelectedMatiere(matiere);
+    setSelectedMatiereCourses(allMatieresCourses);
+    setSelectedMatiereIndex(index);
+    setModalVisible(true);
+  };
 
   const handleDateSelect = (date: Date, dayName: string) => {
     setSelectedDate(date);
@@ -240,10 +280,85 @@ export default function AllCoursesStudent({ navigation }: Props) {
   const filteredCoursesByDay = getFilteredCoursesByDay();
   const totalCourses = filteredCoursesByDay.reduce((total, day) => total + (day?.data?.length || 0), 0);
 
-  const renderCourseCard = (item: Slot) => (
-    <View 
+  // Get next course for selected matiere
+  const getNextCourseForMatiere = (matiereId: string) => {
+    const today = new Date();
+    const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    const todayDayName = dayNames[today.getDay()];
+    const currentTime = today.getHours() * 60 + today.getMinutes();
+
+    // Get all courses for this matiere
+    const matiereCourses = coursesByDay
+      ?.flatMap((day: any) => day.data?.map((course: Slot) => ({ ...course, day: day.title })) || [])
+      .filter((course: any) => course.matiere_id === matiereId) || [];
+
+    // Find next upcoming course
+    let nextCourse = null;
+    let minTimeDifference = Infinity;
+
+    // First check today's courses
+    const todayMatiereCourses = matiereCourses.filter((course: any) => course.day === todayDayName);
+    
+    todayMatiereCourses.forEach((course: any) => {
+      try {
+        const timeParts = course.start.split(':');
+        const startHours = parseInt(timeParts[0]);
+        const startMinutes = parseInt(timeParts[1]);
+        
+        if (!isNaN(startHours)) {
+          const courseStartTime = startHours * 60 + startMinutes;
+          const timeDifference = courseStartTime - currentTime;
+
+          if (timeDifference > 0 && timeDifference < minTimeDifference) {
+            minTimeDifference = timeDifference;
+            nextCourse = course;
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing course time:", error);
+      }
+    });
+
+    // If no upcoming course today, find next day's first course
+    if (!nextCourse && matiereCourses.length > 0) {
+      const dayOrder = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+      const currentDayIndex = dayOrder.indexOf(todayDayName);
+      
+      for (let dayOffset = 1; dayOffset <= 7; dayOffset++) {
+        const nextDayIndex = (currentDayIndex + dayOffset) % 7;
+        const nextDayName = dayOrder[nextDayIndex];
+        
+        const nextDayMatiereCourses = matiereCourses.filter((course: any) => course.day === nextDayName);
+        
+        if (nextDayMatiereCourses.length > 0) {
+          // Get the earliest course of that day
+          nextCourse = nextDayMatiereCourses.reduce((earliest: any, current: any) => {
+            try {
+              const currentTimeParts = current.start.split(':');
+              const currentStartTime = parseInt(currentTimeParts[0]) * 60 + parseInt(currentTimeParts[1]);
+              
+              const earliestTimeParts = earliest.start.split(':');
+              const earliestStartTime = parseInt(earliestTimeParts[0]) * 60 + parseInt(earliestTimeParts[1]);
+              
+              return currentStartTime < earliestStartTime ? current : earliest;
+            } catch (error) {
+              return earliest;
+            }
+          });
+          break;
+        }
+      }
+    }
+
+    return nextCourse;
+  };
+
+  const renderCourseCard = (item: Slot, index: number) => (
+    <TouchableOpacity 
       key={item.matiere_id} 
-      style={[MatieresStyles.matiereCard]}  // instead of Cstyles.squareCard
+      style={[MatieresStyles.matiereCard]}
+      onPress={() => handleCourseCardPress(item, index)}
+      activeOpacity={0.7}
     >
       {/* Card Header */}
       <View style={MatieresStyles.cardHeader}>
@@ -278,8 +393,7 @@ export default function AllCoursesStudent({ navigation }: Props) {
           </View>
         </View>
       </View>
-    </View>
-
+    </TouchableOpacity>
   );
 
   const renderCoursesInRows = (courses: Slot[]) => {
@@ -290,7 +404,7 @@ export default function AllCoursesStudent({ navigation }: Props) {
       const rowCourses = courses.slice(i, i + 2);
       rows.push(
         <View key={i} style={Cstyles.columnWrapper}>
-          {rowCourses.map(course => course && renderCourseCard(course))}
+          {rowCourses.map((course, index) => course && renderCourseCard(course, i + index))}
         </View>
       );
     }
@@ -377,7 +491,12 @@ export default function AllCoursesStudent({ navigation }: Props) {
 
             
             {todayCourses.map((course, index) => (
-              <View key={index} style={styles.todayCourseCard} >
+              <TouchableOpacity 
+                key={index} 
+                style={styles.todayCourseCard}
+                onPress={() => handleCourseCardPress(course, index)}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.todayCourseTitle}>{course.matiere_libelle}</Text>
                 <Text style={styles.todayCourseText}>Prof: {course.enseignant}</Text>
                 <Text style={styles.todayCourseTime}>{course.start} - {course.end}</Text>
@@ -398,11 +517,10 @@ export default function AllCoursesStudent({ navigation }: Props) {
                       </Text>
                     );
                   })()}
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
-
 
         {/* Filter Toggle Buttons */}
         <View style={styles.filterToggleContainer}>
@@ -442,8 +560,6 @@ export default function AllCoursesStudent({ navigation }: Props) {
 
         </View>
 
-
-
         {/* Dropdown Filter Section */}
         {filterMode == 'dropdown' && (
           <View style={styles.filtersContainer}>
@@ -466,7 +582,6 @@ export default function AllCoursesStudent({ navigation }: Props) {
             selectedDate={selectedDate}
           />
         )}
-
 
         {/* Clear Filter Button */}
         {(selectedDay || selectedDate) && (
@@ -534,8 +649,29 @@ export default function AllCoursesStudent({ navigation }: Props) {
         )}
       </ScrollView>
 
+      {/* Matiere Details Modal */}
+      <MatiereDetailsModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        matiere={selectedMatiere}
+        courses={selectedMatiereCourses as any}
+        nextCourse={selectedMatiere ? getNextCourseForMatiere(selectedMatiere.id) : null}
+        totalCourses={selectedMatiereCourses.length}
+        todayCourses={selectedMatiere ? 
+          coursesByDay
+            ?.filter((d: any) => {
+              const today = new Date();
+              const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+              return d.title === dayNames[today.getDay()];
+            })
+            .flatMap((d: any) => d.data || [])
+            .filter((c: Slot) => c.matiere_id === selectedMatiere.id).length || 0
+          : 0
+        }
+        matiereIndex={selectedMatiereIndex}
+      />
+
       <BottomNavBar activeScreen={'AllCoursesStudent'} />
     </View>
   );
 }
-

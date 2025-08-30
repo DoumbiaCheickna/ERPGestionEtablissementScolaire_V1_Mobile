@@ -284,6 +284,12 @@ export const MatieresStyles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 5,
   },
+  nextCourseDay: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: theme.colors.primary,
+    marginTop: 8,
+  },
   nextCourseLabel: {
     fontSize: 12,
     color: '#64748b',

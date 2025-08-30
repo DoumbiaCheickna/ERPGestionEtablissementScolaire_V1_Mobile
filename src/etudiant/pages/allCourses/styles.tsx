@@ -119,7 +119,7 @@ export const styles = StyleSheet.create({
   filterToggleContainer: {
     flexDirection: 'row',
     marginBottom: 16,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'white',
     borderRadius: 12,
     padding: 4,
     shadowColor: '#000',
@@ -157,7 +157,7 @@ export const styles = StyleSheet.create({
   // Filter Section
   filtersContainer: {
     marginBottom: 24,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'white',
     borderRadius: 16,
     padding: 16,
     shadowColor: '#000',
@@ -557,7 +557,8 @@ export const styles = StyleSheet.create({
     marginTop: 8,
   },
   todayCourseCard: {
-    backgroundColor: theme.colors.surface,
+    marginTop: 20,
+    backgroundColor: '#ffffffff',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,

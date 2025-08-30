@@ -8,6 +8,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db, getUserData, getUserSnapchot } from '../../../firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { styles } from './navStyles'
+
 export interface TopNavBarRef {
   refreshData: () => Promise<void>;
 }
@@ -108,7 +109,6 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
       const absences = existingEmargements.filter(ex => ex.type == 'absence');
       setAbsentCount(absences.length);
 
-
     } catch (error) {
       console.error('Error loading absent courses count:', error);
       setAbsentCount(0);
@@ -165,11 +165,18 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
     return absentCount.toString();
   };
 
+  // IMPROVED: Better menu item press handler with immediate feedback
   const handleMenuItemPress = (screen: string) => {
+    // Close menu immediately for better UX
     setMenuVisible(false);
-    navigation.navigate(screen as never);
+    
+    // Add slight delay to ensure modal is closed before navigation
+    setTimeout(() => {
+      navigation.navigate(screen as never);
+    }, 100);
   };
 
+  // IMPROVED: Menu option component with better touch handling
   const MenuOption = ({ icon, title, count, onPress, countColor = '#FF3B30' }: {
     icon: string;
     title: string;
@@ -177,7 +184,15 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
     onPress: () => void;
     countColor?: string;
   }) => (
-    <TouchableOpacity style={styles.menuOption} onPress={onPress}>
+    <TouchableOpacity 
+      style={styles.menuOption} 
+      onPress={onPress}
+      activeOpacity={0.7}
+      delayPressIn={0}
+      delayPressOut={0}
+      // ADDED: Ensure the touch area is properly defined
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+    >
       <View style={styles.menuOptionLeft}>
         <Ionicons name={icon as any} size={24} color={theme.colors.primary} />
         <Text style={styles.menuOptionText}>{title}</Text>
@@ -234,24 +249,30 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
         </TouchableOpacity>
       </View>
 
-      {/* Menu Modal */}
       <Modal
         visible={menuVisible}
         transparent={true}
         animationType="fade"
         onRequestClose={() => setMenuVisible(false)}
       >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setMenuVisible(false)}
-        >
-          <View style={styles.menuContainer}>
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity 
+            style={styles.backgroundOverlay}
+            activeOpacity={1}
+            onPress={() => setMenuVisible(false)}
+          />
+          
+          <TouchableOpacity 
+            style={styles.menuContainer}
+            activeOpacity={1}
+            onPress={() => {}}
+          >
             <View style={styles.menuHeader}>
               <Text style={styles.menuTitle}>Menu</Text>
               <TouchableOpacity 
                 onPress={() => setMenuVisible(false)}
                 style={styles.closeButton}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Ionicons name="close" size={24} color={theme.colors.primary} />
               </TouchableOpacity>
@@ -279,8 +300,8 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
                 onPress={() => handleMenuItemPress('MatieresStudent')}
               />
             </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
       </Modal>
     </>
   );
