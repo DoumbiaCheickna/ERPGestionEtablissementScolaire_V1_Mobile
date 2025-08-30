@@ -255,7 +255,7 @@ const pickImage = async () => {
           <LottieView
             source={require('../../../assets/loading.json')}
             autoPlay
-            loop={true}
+            loop={false}
             style={{ width: 170, height: 170 }}
           />
           <Image 

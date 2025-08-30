@@ -436,7 +436,6 @@ export default function AllCoursesStudent({ navigation }: Props) {
   }
 
   const loading = coursesLoading
-  console.log(loading)
 
   if (loading) return (
     <View style={HomeStyles.loading}>
