@@ -14,6 +14,7 @@ import * as Location from "expo-location";
 import { styles as eStyles } from '../allCourses/styles'
 import { getUserSnapchot } from '../../../firebaseConfig';
 import { MatieresStyles } from './styles';
+import LottieView from 'lottie-react-native';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MatieresStudent'>;
 
@@ -197,7 +198,12 @@ export default function MatieresStudent({ navigation }: Props) {
   if (loading) {
     return (
       <View style={MatieresStyles.loading}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <LottieView
+          source={require('../../../assets/Book loading.json')}
+          autoPlay
+          loop={true}
+          style={{ width: 170, height: 170 }}
+        />
         <Image source={require('../../../assets/iibs-logo.png')} style={{ width: 100, height: 100, marginTop: 20 }}/>
         <Text style={MatieresStyles.loadingText}>Chargement des matières...</Text>
       </View>

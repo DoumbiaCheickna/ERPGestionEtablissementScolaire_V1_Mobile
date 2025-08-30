@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
 
   todayDate: {
-    backgroundColor: 'rgb(1, 1, 34)',
+    backgroundColor: '#2196F3',
   },
 
   todayDateText: {

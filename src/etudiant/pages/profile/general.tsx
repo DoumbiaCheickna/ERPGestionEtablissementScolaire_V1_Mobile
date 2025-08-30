@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Image, TouchableOpacity, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db, getUserSnapchot } from '../../../firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,12 +9,60 @@ import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../../styles/globalStyles';
 import { RootStackParamList } from '../../../navigation/index';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { generalStyles } from './styles'; // Import the new styles
+import LottieView from 'lottie-react-native';
 
 const profileActions = [
-  { id: '1', icon: 'person-outline', title: 'Profil', subtitle: 'Modifier votre profil' },
-  { id: '2', icon: 'notifications-outline', title: 'Notifications', subtitle: 'Gérer vos notifications' },
-  { id: '3', icon: 'help-circle-outline', title: 'Aide et support', subtitle: 'Accéder à l aide et au support' },
-  { id: '4', icon: 'log-out-outline', title: 'Déconnexion', subtitle: '' },
+  { 
+    id: '1', 
+    icon: 'person-outline', 
+    title: 'Mon Profil', 
+    subtitle: 'Modifier vos informations personnelles',
+    color: '#3b82f6'
+  },
+  { 
+    id: '2', 
+    icon: 'notifications-outline', 
+    title: 'Notifications', 
+    subtitle: 'Gérer vos préférences de notification',
+    color: '#8b5cf6',
+  },
+  { 
+    id: '3', 
+    icon: 'settings-outline', 
+    title: 'Paramètres', 
+    subtitle: 'Configurer l\'application',
+    color: '#6b7280'
+  },
+  { 
+    id: '4', 
+    icon: 'help-circle-outline', 
+    title: 'Aide & Support', 
+    subtitle: 'Obtenir de l\'aide et contacter le support',
+    color: '#10b981'
+  },
+  { 
+    id: '5', 
+    icon: 'information-circle-outline', 
+    title: 'À propos', 
+    subtitle: 'Version de l\'app et informations légales',
+    color: '#f59e0b'
+  },
+  { 
+    id: '6', 
+    icon: 'log-out-outline', 
+    title: 'Déconnexion', 
+    subtitle: 'Se déconnecter de votre compte',
+    color: '#ef4444',
+    isLogout: true
+  },
+];
+
+const quickActions = [
+  { icon: '📚', text: 'Matieres', action: 'Matieres' },
+  { icon: '📊', text: 'Notes', action: 'grades' },
+  { icon: '📅', text: 'Planning', action: 'Planning' },
+  { icon: '💬', text: 'Messages', action: 'messages' },
 ];
 
 interface UserInfo {
@@ -42,25 +90,23 @@ export default function Profile({ navigation }: Props) {
       setLoading(true);
       setError(null);
 
-      
-
       const userSnapshot: any = await getUserSnapchot();
 
       if (!userSnapshot || userSnapshot.empty) {
-          setError('Utilisateur non trouvé');
-          return;
-        }
-        const userDoc = userSnapshot.docs[0].data();
-        
-        setUser({
-          nom: userDoc.nom || '',
-          prenom: userDoc.prenom || '',
-          email: userDoc.email || '',
-          login: userDoc.login || '',
-          classeId: userDoc.classe_id || '',
-          avatar: userDoc.avatar
-        });
-    
+        setError('Utilisateur non trouvé');
+        return;
+      }
+      
+      const userDoc = userSnapshot.docs[0].data();
+      
+      setUser({
+        nom: userDoc.nom || '',
+        prenom: userDoc.prenom || '',
+        email: userDoc.email || '',
+        login: userDoc.login || '',
+        classeId: userDoc.classe_id || '',
+        avatar: userDoc.avatar
+      });
 
     } catch (error) {
       setError('Erreur lors du chargement des informations');
@@ -70,24 +116,34 @@ export default function Profile({ navigation }: Props) {
   };
 
   const handleActionPress = (actionId: string, actionTitle: string) => {
-    // Handle different action presses
     switch (actionId) {
       case '1': // Profil
         navigation.navigate('ShowProfileInfos');
         break;
       case '2': // Notifications
-        navigation.navigate('NotificationsInfos')
+        navigation.navigate('NotificationsInfos');
         break;
-      case '3': // Aide
-        Alert.alert('Info', 'Fonctionnalité d\'aide et support à implémenter');
+      case '3': // Paramètres
+        Alert.alert('Info', 'Paramètres à implémenter');
         break;
-      case '4': // Déconnexion
+      case '4': // Aide
+        Alert.alert('Info', 'Aide et support à implémenter');
+        break;
+      case '5': // À propos
+        Alert.alert('À propos', 'Version 1.0.0\nDéveloppé pour IIBS');
+        break;
+      case '6': // Déconnexion
         handleLogout();
         break;
       default:
         break;
     }
   };
+
+
+  
+
+
 
   const handleLogout = async () => {
     Alert.alert(
@@ -99,7 +155,7 @@ export default function Profile({ navigation }: Props) {
           style: 'cancel',
         },
         {
-          text: 'Déconnexion',
+          text: 'Se déconnecter',
           style: 'destructive',
           onPress: async () => {
             try {
@@ -109,7 +165,6 @@ export default function Profile({ navigation }: Props) {
               await AsyncStorage.removeItem('filiere');
               await AsyncStorage.removeItem('niveau');
               
-              Alert.alert('Succès', 'Vous avez été déconnecté avec succès');
               navigation.navigate('Login' as never);
             } catch (error) {
               Alert.alert('Erreur', 'Erreur lors de la déconnexion');
@@ -120,28 +175,80 @@ export default function Profile({ navigation }: Props) {
     );
   };
 
-  const renderItem = ({ item }: { item: typeof profileActions[0] }) => (
+
+    const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'Matieres':
+        navigation.navigate('MatieresStudent' as never);
+        break;
+      case 'grades':
+        Alert.alert('Info', 'Notes à implémenter');
+        break;
+      case 'Planning':
+        navigation.navigate('AllCoursesStudent' as never);
+        break;
+      case 'messages':
+        Alert.alert('Info', 'Messages à implémenter');
+        break;
+    }
+  };
+  const getInitials = (prenom: string, nom: string) => {
+    return `${prenom.charAt(0)}${nom.charAt(0)}`.toUpperCase();
+  };
+
+  const renderActionItem = ({ item }: { item: typeof profileActions[0] }) => (
     <TouchableOpacity 
-      style={styles.actionItem} 
-      activeOpacity={0.6}
+      style={[
+        generalStyles.actionItemEnhanced,
+        item.isLogout && generalStyles.logoutItem
+      ]} 
+      activeOpacity={0.7}
       onPress={() => handleActionPress(item.id, item.title)}
     >
-      <Ionicons name={item.icon as any} size={24} color={theme.colors.primary} />
-      <View style={styles.actionText}>
-        <Text style={styles.actionTitle}>{item.title}</Text>
-        {item.subtitle ? <Text style={styles.actionSubtitle}>{item.subtitle}</Text> : null}
+      <View style={[
+        generalStyles.actionIconContainer,
+        item.isLogout && generalStyles.logoutIconContainer
+      ]}>
+        <Ionicons 
+          name={item.icon as any} 
+          size={22} 
+          color={item.color}
+        />
       </View>
-      <Ionicons name="chevron-forward-outline" size={20} color="#999" />
+      
+      <View style={generalStyles.actionText}>
+        <Text style={[
+          generalStyles.actionTitle,
+          item.isLogout && generalStyles.logoutTitle
+        ]}>
+          {item.title}
+        </Text>
+        {item.subtitle ? (
+          <Text style={generalStyles.actionSubtitle}>{item.subtitle}</Text>
+        ) : null}
+      </View>
+      
+      <Ionicons 
+        name="chevron-forward-outline" 
+        size={18} 
+        color="#cbd5e1" 
+        style={generalStyles.actionChevron}
+      />
     </TouchableOpacity>
   );
 
   if (loading) {
     return (
-      <View style={styles.container}>
+      <View style={generalStyles.container}>
         <TopNavBar />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Chargement du profil...</Text>
+        <View style={generalStyles.loadingContainer}>
+           <LottieView
+              source={require('../../../assets/loading.json')}
+              autoPlay
+              loop={true}
+              style={{ width: 170, height: 170 }}
+            />
+          <Text style={generalStyles.loadingText}>Chargement de votre profil...</Text>
         </View>
         <BottomNavBar activeScreen="Profile" />
       </View>
@@ -150,13 +257,18 @@ export default function Profile({ navigation }: Props) {
 
   if (error || !user) {
     return (
-      <View style={styles.container}>
+      <View style={generalStyles.container}>
         <TopNavBar />
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={50} color="#ff6b6b" />
-          <Text style={styles.errorText}>{error || 'Erreur de chargement'}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchUserInfo}>
-            <Text style={styles.retryText}>Réessayer</Text>
+        <View style={generalStyles.errorContainer}>
+          <View style={generalStyles.errorIconContainer}>
+            <Ionicons name="alert-circle-outline" size={40} color="#ef4444" />
+          </View>
+          <Text style={generalStyles.errorText}>Oups! Une erreur s'est produite</Text>
+          <Text style={generalStyles.errorSubtext}>
+            {error || 'Impossible de charger vos informations de profil'}
+          </Text>
+          <TouchableOpacity style={generalStyles.retryButton} onPress={fetchUserInfo}>
+            <Text style={generalStyles.retryText}>Réessayer</Text>
           </TouchableOpacity>
         </View>
         <BottomNavBar activeScreen="Profile" />
@@ -165,138 +277,88 @@ export default function Profile({ navigation }: Props) {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={generalStyles.container}>
       <TopNavBar />
 
-      <View style={styles.profileHeader}>
-        <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>
-            {user.prenom} {user.nom}
-          </Text>
-          <Text style={styles.userEmail}>{user.email}</Text>
-          <Text style={styles.userLogin}>@{user.login}</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Enhanced Profile Header */}
+        <View style={generalStyles.profileHeader}>
+          <View style={generalStyles.profileHeaderContent}>
+            <View style={generalStyles.avatarContainer}>
+              {user.avatar ? (
+                <Image source={{ uri: user.avatar }} style={generalStyles.avatarImage} />
+              ) : (
+                <View style={generalStyles.avatarPlaceholder}>
+                  <Text style={generalStyles.avatarPlaceholderText}>
+                    {getInitials(user.prenom, user.nom)}
+                  </Text>
+                </View>
+              )}
+              <View style={generalStyles.onlineIndicator} />
+            </View>
+            
+            <View style={generalStyles.userInfo}>
+              <Text style={generalStyles.userName}>
+                {user.prenom} {user.nom}
+              </Text>
+              <Text style={generalStyles.userEmail}>{user.email}</Text>
+              <Text style={generalStyles.userLogin}>@{user.login}</Text>
+            </View>
+          </View>
         </View>
-      </View>
 
-      <FlatList
-        data={profileActions}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-      />
+        {/* Quick Actions */}
+        <View style={generalStyles.quickActionsContainer}>
+          <View style={generalStyles.quickActionsRow}>
+            {quickActions.map((action, index) => (
+              <TouchableOpacity
+                key={index}
+                style={generalStyles.quickActionItem}
+                onPress={() => handleQuickAction(action.action)}
+                activeOpacity={0.7}
+              >
+                <Text style={generalStyles.quickActionIcon}>{action.icon}</Text>
+                <Text style={generalStyles.quickActionText}>{action.text}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Profile Stats */}
+        <View style={generalStyles.statsContainer}>
+          <View style={generalStyles.statItem}>
+            <Text style={generalStyles.statNumber}>12</Text>
+            <Text style={generalStyles.statLabel}>Matières</Text>
+          </View>
+          <View style={generalStyles.statDivider} />
+          <View style={generalStyles.statItem}>
+            <Text style={generalStyles.statNumber}>85%</Text>
+            <Text style={generalStyles.statLabel}>Assiduité</Text>
+          </View>
+          <View style={generalStyles.statDivider} />
+          <View style={generalStyles.statItem}>
+            <Text style={generalStyles.statNumber}>4.2</Text>
+            <Text style={generalStyles.statLabel}>Moyenne</Text>
+          </View>
+        </View>
+
+        {/* Section Header */}
+        <View style={generalStyles.sectionHeader}>
+          <Text style={generalStyles.sectionTitle}>Paramètres du compte</Text>
+          <Text style={generalStyles.sectionSubtitle}>Gérer votre compte et vos préférences</Text>
+        </View>
+
+        {/* Action Items */}
+        <View style={generalStyles.listContainer}>
+          {profileActions.map((item) => (
+            <View key={item.id}>
+              {renderActionItem({ item })}
+            </View>
+          ))}
+        </View>
+      </ScrollView>
 
       <BottomNavBar activeScreen="Profile" />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: '#f6f6f6' 
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingVertical: 25,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    marginBottom: 25,
-  },
-  avatar: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    marginRight: 15,
-  },
-  userInfo: {
-    marginLeft: 15,
-    flexDirection: 'column',
-    flex: 1,
-  },
-  userName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#333',
-  },
-  userEmail: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  userLogin: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 2,
-  },
-  listContainer: {
-    paddingHorizontal: 20,
-  },
-  actionItem: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-    elevation: 2,
-  },
-  actionText: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  actionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#222',
-  },
-  avatarImage: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        marginBottom: 10,
-    },
-  actionSubtitle: {
-    fontSize: 12,
-    color: '#777',
-    marginTop: 3,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#666',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  errorText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#ff6b6b',
-    textAlign: 'center',
-  },
-  retryButton: {
-    marginTop: 20,
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  retryText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

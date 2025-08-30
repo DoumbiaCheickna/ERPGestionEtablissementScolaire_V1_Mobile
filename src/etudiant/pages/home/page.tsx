@@ -15,6 +15,7 @@ import { styles as eStyles } from '../allCourses/styles'
 import { db, getUserSnapchot } from '../../../firebaseConfig';
 import { MatieresStyles } from '../matieres/styles';
 import { collection, getDocs, query, where } from 'firebase/firestore';
+import LottieView from 'lottie-react-native';
 
 
 
@@ -548,7 +549,12 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
 
   if (loading) return (
     <View style={HomeStyles.loading}>
-      <ActivityIndicator size="large" color={theme.colors.primary} />
+       <LottieView
+          source={require('../../../assets/Book loading.json')}
+          autoPlay
+          loop={true}
+          style={{ width: 170, height: 170 }}
+        />
       <Image source={require('../../../assets/iibs-logo.png')} style={{ width: 100, height: 100, marginTop: 20 }}/>
       <Text style={HomeStyles.loadingText}>Chargement des données...</Text>
     </View>

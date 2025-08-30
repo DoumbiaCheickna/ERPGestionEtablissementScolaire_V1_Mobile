@@ -141,7 +141,7 @@ export const styles = StyleSheet.create({
   },
 
   activeToggleButton: {
-    backgroundColor: 'rgb(1, 1, 34)',
+    backgroundColor: '#2196F3',
   },
 
   toggleButtonText: {

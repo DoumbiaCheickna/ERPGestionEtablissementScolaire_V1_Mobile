@@ -12,6 +12,7 @@ import { Cstyles, styles } from './styles';
 import { getCoursStatus } from '../home/page';
 import { HomeStyles } from '../home/styles';
 import { MatieresStyles } from '../matieres/styles';
+import LottieView from 'lottie-react-native';
 
 interface DropdownItem {
   label: string;
@@ -430,6 +431,20 @@ export default function AllCoursesStudent({ navigation }: Props) {
       </View>
     );
   }
+
+  if (loading) return (
+    <View style={HomeStyles.loading}>
+        <LottieView
+          source={require('../../../assets/Book loading.json')}
+          autoPlay
+          loop={true}
+          style={{ width: 170, height: 170 }}
+        />
+      <Image source={require('../../../assets/iibs-logo.png')} style={{ width: 100, height: 100, marginTop: 20 }}/>
+      <Text style={HomeStyles.loadingText}>Chargement des données...</Text>
+    </View>
+  );
+  
 
   return (
     <View style={Cstyles.container}>

@@ -26,6 +26,7 @@ import Toast from '../../components/layout/toast';
 import { styles } from './styles'
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
+import LottieView from 'lottie-react-native';
 
 
 interface UserProfileInfo {
@@ -251,7 +252,12 @@ const pickImage = async () => {
           <View style={styles.placeholder} />
         </View>
            <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <LottieView
+            source={require('../../../assets/loading.json')}
+            autoPlay
+            loop={true}
+            style={{ width: 170, height: 170 }}
+          />
           <Image 
             source={require('../../../assets/iibs-logo.png')}
             style={{ width: 100, height: 100, marginTop: 20 }}
@@ -303,7 +309,10 @@ const pickImage = async () => {
             <Image source={{ uri: userInfo.avatar }} style={styles.avatarImage} />
 
           <TouchableOpacity onPress={pickImage} style={styles.changeAvatarButton}>
-            <Text style={styles.changeAvatarText}>Changer la photo</Text>
+            <Text style={styles.changeAvatarText}>
+              <Ionicons name='image' style={{color:  '#ffff'}}>
+              </Ionicons>
+              Changer la photo</Text>
           </TouchableOpacity>
 
           <Text style={styles.fullName}>{userInfo.prenom} {userInfo.nom}</Text>
@@ -317,7 +326,7 @@ const pickImage = async () => {
           {/* Edit Password */}
           <TouchableOpacity style={styles.settingItem} onPress={openPasswordModal}>
             <View style={styles.settingItemLeft}>
-              <Ionicons name="lock-closed-outline" size={20} color={theme.colors.primary} />
+              <Ionicons name="lock-closed-outline" size={20} color={'#3b82f6'} />
               <Text style={styles.settingItemText}>Changer le mot de passe</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#ccc" />
@@ -326,7 +335,7 @@ const pickImage = async () => {
           {/* Edit Login */}
           <TouchableOpacity style={styles.settingItem} onPress={openLoginModal}>
             <View style={styles.settingItemLeft}>
-              <Ionicons name="person-outline" size={20} color={theme.colors.primary} />
+              <Ionicons name="person-outline" size={20} color={'#8b5cf6'} />
               <Text style={styles.settingItemText}>Changer le nom d'utilisateur</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#ccc" />
@@ -338,28 +347,42 @@ const pickImage = async () => {
           <Text style={styles.sectionTitle}>Informations du compte</Text>
           
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Nom d'utilisateur actuel</Text>
+            <Text style={styles.infoLabel}>
+               <Ionicons name='person-outline' style={{color:  '#3b82f6'}}>
+              </Ionicons>Nom d'utilisateur actuel
+            </Text>
             <View style={styles.infoValueContainer}>
               <Text style={styles.infoValue}>{userInfo.login}</Text>
             </View>
           </View>
 
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Email</Text>
+            <Text style={styles.infoLabel}>
+               <Ionicons name='send-outline' style={{color:  '#3b82f6'}}>
+              </Ionicons>
+              Email
+            </Text>
             <View style={styles.infoValueContainer}>
               <Text style={styles.infoValue}>{userInfo.email}</Text>
             </View>
           </View>
 
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Téléphone</Text>
+              
+            <Text style={styles.infoLabel}>
+              <Ionicons name='phone-portrait-outline' style={{color:  '#f59e63ff'}}>
+              </Ionicons>
+              Téléphone
+            </Text>
             <View style={styles.infoValueContainer}>
               <Text style={styles.infoValue}>{userInfo.telephone}</Text>
             </View>
           </View>
 
           <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Classe</Text>
+            <Text style={styles.infoLabel}>
+               <Ionicons name='home-outline' style={{color:  '#54c985ff'}}>
+              </Ionicons>Classe</Text>
             <View style={styles.infoValueContainer}>
               <Text style={styles.infoValue}>{userInfo.className}</Text>
             </View>

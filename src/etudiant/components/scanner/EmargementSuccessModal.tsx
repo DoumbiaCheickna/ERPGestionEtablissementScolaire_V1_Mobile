@@ -65,7 +65,7 @@ export const EmargementSuccessModal: React.FC<EmargementSuccessModalProps> = ({
           <LottieView
             source={require('../../../assets/Success.json')}
             autoPlay
-            loop={false}
+            loop={true}
             style={{ width: 170, height: 170 }}
           />
 
