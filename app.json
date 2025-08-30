@@ -20,7 +20,9 @@
       "bundleIdentifier": "com.iibs.schoolmanagement",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": ["fetch"]
+        "UIBackgroundModes": [
+          "fetch"
+        ]
       }
     },
     "android": {
@@ -55,7 +57,7 @@
           "sounds": []
         }
       ],
-      "expo-background-task"
+      "expo-font"
     ],
     "extra": {
       "eas": {

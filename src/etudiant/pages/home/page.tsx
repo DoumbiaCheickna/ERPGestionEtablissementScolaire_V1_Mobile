@@ -50,8 +50,8 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function HomeStudent({ navigation }: Props) {
 
-  const { matieres, loading: matieresLoading } = useMatieres();
-  const { coursesByDay, loading: coursesLoading } = useUserCourses(); 
+  const { matieres, loading: matieresLoading, refreshMatieres } = useMatieres();
+  const { coursesByDay, loading: coursesLoading, refreshCourses } = useUserCourses(); 
   const [emargedCourses, setEmargedCourses] = useState<CourseRecord[]>([]);
   const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
   const [isNearSchool, setIsNearSchool] = useState(false);
@@ -60,8 +60,11 @@ export default function HomeStudent({ navigation }: Props) {
   const [courseAbsenceStatus, setCourseAbsenceStatus] = useState<Record<string, boolean>>({});
   const [courseEmargedStatus, setCourseEmargedStatus] = useState<Record<string, boolean>>({});
 
-
-
+  const  refreshData = () => {
+    refreshCourses();
+    refreshMatieres()
+  }
+  
 
   const SCHOOL_COORDINATES = {
     latitude: 14.717022,
@@ -682,6 +685,14 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
             </View>
           </View>
         </View>
+
+         <TouchableOpacity 
+            style={MatieresStyles.refreshButton}
+            onPress={refreshData}
+            activeOpacity={0.7}
+          >
+            <Text style={MatieresStyles.refreshButtonText}>🔄 Actualiser Les données</Text>
+          </TouchableOpacity>
 
         {nextCourse && (
           <View style={eStyles.nextCourseContainer}>

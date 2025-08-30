@@ -509,7 +509,6 @@ export const styles = StyleSheet.create({
   },
 
   nextCourseContainer: {
-    marginTop: 30,
     marginBottom: 30,
   },
   todayCoursesContainer: {

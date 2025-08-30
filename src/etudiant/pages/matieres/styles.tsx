@@ -115,7 +115,6 @@ export const MatieresStyles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   sectionHeader: {
-    marginBottom: 30,
   },
   badgeContainer: {
     flexDirection: 'row',
@@ -350,10 +349,13 @@ export const MatieresStyles = StyleSheet.create({
     marginBottom: 30,
   },
   refreshButton: {
+    textAlign: 'center',
+    alignItems: 'center',
     backgroundColor: '#2196F3',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 20,
+    marginVertical: 20
   },
   refreshButtonText: {
     color: '#ffffff',

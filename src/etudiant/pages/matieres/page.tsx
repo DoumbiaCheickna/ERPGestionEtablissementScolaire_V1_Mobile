@@ -18,10 +18,15 @@ type Props = NativeStackScreenProps<RootStackParamList, 'MatieresStudent'>;
 
 
 export default function MatieresStudent({ navigation }: Props) {
-  const { matieres, loading: matieresLoading } = useMatieres();
-  const { coursesByDay, loading: coursesLoading } = useUserCourses();
+  const { matieres, loading: matieresLoading, refreshMatieres } = useMatieres();
+  const { coursesByDay, loading: coursesLoading, refreshCourses } = useUserCourses();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+
+  const refreshData = () => {
+    refreshCourses();
+    refreshMatieres()
+  }
 
   // Get today's date info
   const today = new Date();
@@ -54,9 +59,9 @@ export default function MatieresStudent({ navigation }: Props) {
 
     // Check today's courses first
     const todayCourses = coursesByDay
-      .filter((d: any) => d.title === todayDayName)
+      .filter((d: any) => d.title == todayDayName)
       .flatMap((d: any) => d.data)
-      .filter((course: any) => course.matiere_id === matiereId);
+      .filter((course: any) => course.matiere_id == matiereId);
 
     todayCourses.forEach((course: any) => {
       try {
@@ -73,6 +78,7 @@ export default function MatieresStudent({ navigation }: Props) {
             nextCourse = { ...course, day: todayDayName };
           }
         }
+
       } catch (error) {
         console.error("Error parsing course time:", course.start, error);
       }
@@ -96,6 +102,7 @@ export default function MatieresStudent({ navigation }: Props) {
   return (
     <View style={MatieresStyles.container}>
       <TopNavBar />
+
       
       <ScrollView 
         style={MatieresStyles.scrollView}
@@ -151,6 +158,7 @@ export default function MatieresStudent({ navigation }: Props) {
           </View>
         </View>
 
+     
         {/* Matières Grid Section */}
         <View style={MatieresStyles.matieresSection}>
           <View style={MatieresStyles.sectionHeader}>
@@ -164,6 +172,14 @@ export default function MatieresStudent({ navigation }: Props) {
               </View>
             </View>
           </View>
+
+            <TouchableOpacity 
+              style={MatieresStyles.refreshButton}
+              onPress={refreshData}
+              activeOpacity={0.7}
+            >
+              <Text style={MatieresStyles.refreshButtonText}>🔄 Actualiser Les données</Text>
+            </TouchableOpacity>
 
           {matieres.length > 0 ? (
             <View style={MatieresStyles.matieresGrid}>

@@ -1,3 +1,4 @@
+// Updated useMatieres hook with caching
 import { useState, useEffect } from 'react';
 import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { db } from '../../../firebaseConfig';
@@ -11,9 +12,13 @@ export type Matiere = {
   professeurFullName: string;
 };
 
+// Global cache for matieres
+let matieresCache: Matiere[] = [];
+let matieresLoaded = false;
+
 export const useMatieres = () => { 
-  const [matieres, setMatieres] = useState<Matiere[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [matieres, setMatieres] = useState<Matiere[]>(matieresCache);
+  const [loading, setLoading] = useState(!matieresLoaded);
   const [userFiliereId, setUserFiliereId] = useState<string>('');
   const [userNiveauId, setUserNiveauId] = useState<string>('');
 
@@ -52,8 +57,16 @@ export const useMatieres = () => {
       return { nom: '', prenom: '' };
     }
   };
+
   const fetchUserMatières = async (filiereId: string, niveauId: string) => {
     try {
+      // If already loaded, use cache
+      if (matieresLoaded) {
+        setMatieres(matieresCache);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
 
       // Step 1: Find the classe with matching filiere_id and niveau_id
@@ -66,7 +79,10 @@ export const useMatieres = () => {
       const classSnapshot = await getDocs(classQuery);
 
       if (classSnapshot.empty) {
-        setMatieres([]);
+        const emptyResult: Matiere[] = [];
+        setMatieres(emptyResult);
+        matieresCache = emptyResult;
+        matieresLoaded = true;
         setLoading(false);
         return;
       }
@@ -80,7 +96,10 @@ export const useMatieres = () => {
       const edtSnapshot = await getDocs(edtQuery);
 
       if (edtSnapshot.empty) {
-        setMatieres([]);
+        const emptyResult: Matiere[] = [];
+        setMatieres(emptyResult);
+        matieresCache = emptyResult;
+        matieresLoaded = true;
         setLoading(false);
         return;
       }
@@ -98,7 +117,10 @@ export const useMatieres = () => {
       });
 
       if (uniqueMatiereIds.size === 0) {
-        setMatieres([]);
+        const emptyResult: Matiere[] = [];
+        setMatieres(emptyResult);
+        matieresCache = emptyResult;
+        matieresLoaded = true;
         setLoading(false);
         return;
       }
@@ -124,7 +146,9 @@ export const useMatieres = () => {
           // Find professor via affectations
           let professeurInfo = { nom: "", prenom: "" };
 
-          affectationsSnapshot.forEach((affectationDoc) => {
+          // If professor found, fetch user info
+          let fullName = "Professeur non assigné";
+          for (const affectationDoc of affectationsSnapshot.docs) {
             const affectationData = affectationDoc.data();
             const classes = affectationData.classes || [];
             const profDocId = affectationData.prof_doc_id;
@@ -133,45 +157,17 @@ export const useMatieres = () => {
               (classe: any) => classe.classe_id === classeId
             );
 
-            if (matchingClasse) {
-              const matieresIds = matchingClasse.matieres_ids || [];
-              if (matieresIds.includes(matiereId) && profDocId) {
-                professeurInfo = {
-                  ...(professeurInfo.nom ? professeurInfo : {}),
-                } as any;
-                professeurInfo = {
-                  nom: "",
-                  prenom: "",
-                };
-              }
-            }
-          });
-
-          // If professor found, fetch user info
-          let fullName = "Professeur non assigné";
-          if (professeurInfo && !professeurInfo.nom) {
-            // fetch from users collection
-            for (const affectationDoc of affectationsSnapshot.docs) {
-              const affectationData = affectationDoc.data();
-              const classes = affectationData.classes || [];
-              const profDocId = affectationData.prof_doc_id;
-
-              const matchingClasse = classes.find(
-                (classe: any) => classe.classe_id === classeId
-              );
-
-              if (
-                matchingClasse &&
-                matchingClasse.matieres_ids.includes(matiereId) &&
-                profDocId
-              ) {
-                const prof = await fetchProfesseurInfo(profDocId);
-                professeurInfo = prof;
-                fullName = prof.nom && prof.prenom
-                  ? `${prof.prenom} ${prof.nom}`
-                  : prof.nom || prof.prenom || "Professeur non assigné";
-                break;
-              }
+            if (
+              matchingClasse &&
+              matchingClasse.matieres_ids.includes(matiereId) &&
+              profDocId
+            ) {
+              const prof = await fetchProfesseurInfo(profDocId);
+              professeurInfo = prof;
+              fullName = prof.nom && prof.prenom
+                ? `${prof.prenom} ${prof.nom}`
+                : prof.nom || prof.prenom || "Professeur non assigné";
+              break;
             }
           }
 
@@ -187,6 +183,9 @@ export const useMatieres = () => {
         }
       }
 
+      // Cache the results
+      matieresCache = matièresData;
+      matieresLoaded = true;
       setMatieres(matièresData);
     } catch (error) {
       console.error(error);
@@ -195,7 +194,6 @@ export const useMatieres = () => {
       setLoading(false);
     }
   };
-
 
   const initializeData = async () => {
     const userData = await getUserData();
@@ -208,6 +206,9 @@ export const useMatieres = () => {
   };
 
   const refreshMatieres = () => {
+    // Clear cache and force reload
+    matieresLoaded = false;
+    matieresCache = [];
     initializeData();
   };
 

@@ -194,7 +194,8 @@ container: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 100
+    marginBottom: 100,
+    marginTop: 30
   },
 
   courseCard: {
