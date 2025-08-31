@@ -218,8 +218,9 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
         {/* IIBS Logo - Navigates to Home or Refreshes if on Home */}
         <TouchableOpacity onPress={handleLogoPress}>
           <Image
-            source={require('../../../assets/iibs-logo.png')}
+            source={require('../../../assets/logo9.png')}
             style={styles.profilePic}
+            resizeMode="contain"
           />
         </TouchableOpacity>
 

@@ -11,6 +11,8 @@ import { RootStackParamList } from '../../../navigation/index';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { generalStyles } from './styles'; // Import the new styles
 import LottieView from 'lottie-react-native';
+import { useMatieres } from '../../components/hooks/matieres';
+import { useUserCourses } from '../../components/hooks/cours';
 
 const profileActions = [
   { 
@@ -74,12 +76,22 @@ interface UserInfo {
   avatar?: string;
 }
 
+
+interface Matiere {
+  id: string;
+  title: string;
+  professeurFullName: string;
+  description?: string;
+}
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
 export default function Profile({ navigation }: Props) {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { matieres } = useMatieres()
+  const { coursesByDay } = useUserCourses()
+
 
   useEffect(() => {
     fetchUserInfo();
@@ -124,10 +136,10 @@ export default function Profile({ navigation }: Props) {
         navigation.navigate('NotificationsInfos');
         break;
       case '3': // Paramètres
-        Alert.alert('Info', 'Paramètres à implémenter');
+        Alert.alert('Info', 'Paramètres en cours de développement');
         break;
       case '4': // Aide
-        Alert.alert('Info', 'Aide et support à implémenter');
+        Alert.alert('Info', 'Aide et support en cours de développement');
         break;
       case '5': // À propos
         Alert.alert('À propos', 'Version 1.0.0\nDéveloppé pour IIBS');
@@ -327,17 +339,17 @@ export default function Profile({ navigation }: Props) {
         {/* Profile Stats */}
         <View style={generalStyles.statsContainer}>
           <View style={generalStyles.statItem}>
-            <Text style={generalStyles.statNumber}>12</Text>
+            <Text style={generalStyles.statNumber}>{matieres.length}</Text>
             <Text style={generalStyles.statLabel}>Matières</Text>
           </View>
           <View style={generalStyles.statDivider} />
           <View style={generalStyles.statItem}>
-            <Text style={generalStyles.statNumber}>85%</Text>
-            <Text style={generalStyles.statLabel}>Assiduité</Text>
+            <Text style={generalStyles.statNumber}>{coursesByDay.length}</Text>
+            <Text style={generalStyles.statLabel}>Cours</Text>
           </View>
           <View style={generalStyles.statDivider} />
           <View style={generalStyles.statItem}>
-            <Text style={generalStyles.statNumber}>4.2</Text>
+            <Text style={generalStyles.statNumber}>17</Text>
             <Text style={generalStyles.statLabel}>Moyenne</Text>
           </View>
         </View>

@@ -204,7 +204,12 @@ export default function MatieresStudent({ navigation }: Props) {
           loop={true}
           style={{ width: 170, height: 170 }}
         />
-        <Image source={require('../../../assets/iibs-logo.png')} style={{ width: 100, height: 100, marginTop: 20 }}/>
+        <Image 
+          source={require('../../../assets/logo8.png')} 
+          style={{ width: 250, height: 250, marginTop: -50 }}
+          resizeMode='contain'
+        
+        />
         <Text style={MatieresStyles.loadingText}>Chargement des matières...</Text>
       </View>
     );

@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { PanGestureHandler, State, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore';
 import useUserRef from '../../components/hooks/getConnectedUser';
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ActivityIndicator } from "react-native";
@@ -24,6 +24,8 @@ import { RootStackParamList } from '../../../navigation';
 import Toast from '../../components/layout/toast';
 import { db, getUserSnapchot } from '../../../firebaseConfig';
 import { styles } from './styles';
+import AbsenceJustificationModal from './AbsenceJustificationModal';
+
 
 const { width, height } = Dimensions.get('window');
 const SWIPE_THRESHOLD = width * 0.3; 
@@ -44,6 +46,12 @@ interface AbsenceData {
   salle?: string;
   annee?: string;
   semestre?: string;
+  justification: {
+    contenu: string;
+    documents: string;
+    dateJustification: string;
+    statut: string;
+  }
 }
 
 export default function Absences({navigation}: Props) {
@@ -53,37 +61,62 @@ export default function Absences({navigation}: Props) {
     const [longPressedAbsence, setLongPressedAbsence] = useState<string | null>(null);
     const [optionsPosition, setOptionsPosition] = useState({ x: 0, y: 0 });
     const [showOptions, setShowOptions] = useState(false);
+    const [selectedAbsence, setSelectedAbsence] = useState<AbsenceData | null>(null);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [userMatricule, setUserMatricule] = useState('');
+
     
-    // Animation values
-    const scaleAnim = useMemo(() => new Animated.Value(1), []);
 
     const getAbsences = useCallback(async () => {
         try {
+            // First get the user's matricule
             const userSnap = await getUserSnapchot();
-            const userDoc = userSnap?.docs[0]
-            const userData = userDoc?.data()
+            const userDoc = userSnap?.docs[0];
+            const userData = userDoc?.data();
 
-            if (!userData) {
+            if (!userData?.matricule) {
+                setAbsences([]);
+                setUserMatricule('');
+                return;
+            }
+
+            const matricule = userData.matricule;
+            setUserMatricule(matricule);
+
+            // Get all documents from emargements collection
+            const emargementsRef = collection(db, 'emargements');
+            const querySnapshot = await getDocs(emargementsRef);
+
+            if (querySnapshot.empty) {
                 setAbsences([]);
                 return;
             }
 
-            const userEmargements = userData.emargements || [];
-            
-            if (Array.isArray(userEmargements)) {
-                // Filter only absences and sort by timestamp (newest first)
-                const absencesList = userEmargements
-                    .filter(emargement => emargement.type === 'absence')
-                    .sort((a, b) => {
-                        const dateA = new Date(a.timestamp || a.date);
-                        const dateB = new Date(b.timestamp || b.date);
-                        return dateB.getTime() - dateA.getTime();
-                    });
-                
-                setAbsences(absencesList);
-            } else {
+            let userEmargements: AbsenceData[] = [];
+
+            // Loop through each document to find the one containing our matricule
+            querySnapshot.forEach((docSnapshot) => {
+                const data = docSnapshot.data();
+                if (data[matricule] && Array.isArray(data[matricule])) {
+                    userEmargements = [...userEmargements, ...data[matricule]];                   
+                }
+            });
+
+            if (userEmargements.length === 0) {
                 setAbsences([]);
+                return;
             }
+
+            // Filter only absences and sort by timestamp (newest first)
+            const absencesList = userEmargements
+                .filter(emargement => emargement.type == 'absence')
+                .sort((a, b) => {
+                    const dateA = new Date(a.timestamp || a.date);
+                    const dateB = new Date(b.timestamp || b.date);
+                    return dateB.getTime() - dateA.getTime();
+                });
+            
+            setAbsences(absencesList);
 
         } catch (err) {
             console.error('Error fetching absences:', err);
@@ -92,6 +125,42 @@ export default function Absences({navigation}: Props) {
             setLoading(false);
         }
     }, []);
+
+    const getUserMatricule = useCallback(async () => {
+        try {
+            const userSnap = await getUserSnapchot();
+            const userDoc = userSnap?.docs[0];
+            const userData = userDoc?.data();
+            
+            if (userData?.matricule) {
+                setUserMatricule(userData.matricule);
+            }
+        } catch (error) {
+            console.error('Error getting user matricule:', error);
+        }
+    }, []);
+
+    // Call getUserMatricule in useEffect
+    useEffect(() => {
+        getAbsences();
+        getUserMatricule();
+    }, [getAbsences, getUserMatricule]);
+
+    // Add this function to handle absence tap
+    const handleAbsenceTap = useCallback((absence: AbsenceData) => {
+        setSelectedAbsence(absence);
+        setModalVisible(true);
+    }, []);
+
+    // Add this function to close modal
+    const handleCloseModal = useCallback(() => {
+        setModalVisible(false);
+        setSelectedAbsence(null);
+    }, []);
+    // Animation values
+    const scaleAnim = useMemo(() => new Animated.Value(1), []);
+
+    
 
     useEffect(() => {
         getAbsences();
@@ -138,96 +207,109 @@ export default function Absences({navigation}: Props) {
     }, []);
 
     // Delete absence via swipe
+// Replace your existing getAbsences function with this one:
+
+
+    // Also update your deleteAbsence function to use the same pattern:
     const deleteAbsence = useCallback(async (absenceToDelete: AbsenceData) => {
-        // Store original state for rollback
         const originalAbsences = [...absences];
         try {
             // Optimistic update
             const optimisticAbsences = absences.filter(absence => 
                 !(absence.matiere_id == absenceToDelete.matiere_id &&
-                  absence.date == absenceToDelete.date &&
-                  absence.start == absenceToDelete.start &&
-                  absence.end == absenceToDelete.end &&
-                  absence.type == absenceToDelete.type)
+                absence.date == absenceToDelete.date &&
+                absence.start == absenceToDelete.start &&
+                absence.end == absenceToDelete.end &&
+                absence.type == absenceToDelete.type)
             );
             setAbsences(optimisticAbsences);
 
+            // Get all documents from emargements collection
+            const emargementsRef = collection(db, 'emargements');
+            const querySnapshot = await getDocs(emargementsRef);
 
-            const userSnap = await getUserSnapchot();
-            const userDoc = userSnap?.docs[0]
-            const ui: any = userDoc?.id
-            const userData = userDoc?.data()
+            let targetDoc = null;
+            let targetDocRef = null;
 
-            if (!userData) {
+            // Loop through each document to find the one containing our matricule
+            querySnapshot.forEach((docSnapshot) => {
+                const data = docSnapshot.data();
+                if (data[userMatricule] && Array.isArray(data[userMatricule])) {
+                    targetDoc = data;
+                    targetDocRef = docSnapshot.ref;
+                }
+            });
+
+            if (!targetDoc || !targetDocRef) {
                 setAbsences(originalAbsences);
+                Alert.alert('Erreur', 'Document utilisateur introuvable');
                 return;
             }
 
-            const userEmargements = userData.emargements || [];
-
-
-
-            if (!Array.isArray(userEmargements)) {
-                setAbsences(originalAbsences);
-                return;
-            }
+            const userEmargements: AbsenceData[] = targetDoc[userMatricule];
 
             // Remove the specific absence from emargements
             const updatedEmargements = userEmargements.filter(emargement =>
                 !(emargement.matiere_id === absenceToDelete.matiere_id &&
-                  emargement.date === absenceToDelete.date &&
-                  emargement.start === absenceToDelete.start &&
-                  emargement.end === absenceToDelete.end &&
-                  emargement.type === absenceToDelete.type)
+                emargement.date === absenceToDelete.date &&
+                emargement.start === absenceToDelete.start &&
+                emargement.end === absenceToDelete.end &&
+                emargement.type === absenceToDelete.type)
             );
 
-            // Update the user document with new emargements
-            const userRef = doc(db, 'users', ui);
-            await updateDoc(userRef, {
-                emargements: updatedEmargements,
+            // Update the document with new emargements for this matricule
+            await updateDoc(targetDocRef, {
+                [userMatricule]: updatedEmargements,
             });
 
             Alert.alert('Absence supprimée');
 
         } catch (err) {
             console.error('Error deleting absence:', err);
-            setAbsences(originalAbsences); // Rollback
+            setAbsences(originalAbsences);
             Alert.alert('Erreur lors de la suppression');
         }
-    }, [absences]);
+    }, [absences, userMatricule]);
 
+    // Also update your deleteAllAbsences function:
     const deleteAllAbsences = useCallback(async () => {
         const originalAbsences = [...absences];
 
         try {
             setAbsences([]);
 
-            const userSnap = await getUserSnapchot();
-            const userDoc = userSnap?.docs[0]
-            const ui: any = userDoc?.id
-            const userData = userDoc?.data()
+            // Get all documents from emargements collection
+            const emargementsRef = collection(db, 'emargements');
+            const querySnapshot = await getDocs(emargementsRef);
 
-            if (!userData) {
+            let targetDoc = null;
+            let targetDocRef = null;
+
+            // Loop through each document to find the one containing our matricule
+            querySnapshot.forEach((docSnapshot) => {
+                const data = docSnapshot.data();
+                if (data[userMatricule] && Array.isArray(data[userMatricule])) {
+                    targetDoc = data;
+                    targetDocRef = docSnapshot.ref;
+                }
+            });
+
+            if (!targetDoc || !targetDocRef) {
                 setAbsences(originalAbsences);
+                Alert.alert('Erreur', 'Document utilisateur introuvable');
                 return;
             }
 
-            const userEmargements = userData.emargements || [];
-
-            if (!Array.isArray(userEmargements)) {
-                setAbsences(originalAbsences);
-                return;
-            }
+            const userEmargements: AbsenceData[] = targetDoc[userMatricule];
 
             // Remove all absences, keep only presences
             const updatedEmargements = userEmargements.filter(emargement => 
                 emargement.type !== 'absence'
             );
 
-            // Update the user document with new emargements
-            const userRef = doc(db, 'users', ui);
-            await updateDoc(userRef, {
-                emargements: updatedEmargements,
+            // Update the document with new emargements for this matricule
+            await updateDoc(targetDocRef, {
+                [userMatricule]: updatedEmargements,
             });
 
             Alert.alert("Toutes les absences ont été supprimées");
@@ -237,7 +319,7 @@ export default function Absences({navigation}: Props) {
             setAbsences(originalAbsences);
             Alert.alert("Erreur lors de la suppression de toutes les absences");
         }
-    }, [absences]);
+    }, [absences, userMatricule]);
 
     const confirmDeleteAllAbsences = useCallback(() => {
         if(absences.length === 0){
@@ -411,7 +493,13 @@ export default function Absences({navigation}: Props) {
                     activeOffsetX={[-10, 10]}
                 >
                     <Animated.View style={{ transform: [{ translateX }] }}>
+
                         <Pressable
+                            onPress={() => {
+                                if (absence.justification?.statut != "Approuvée") {
+                                    handleAbsenceTap(absence);
+                                }
+                            }}
                             onLongPress={(event) => handleLongPress(absence, event)}
                             delayLongPress={500}
                             style={({ pressed }) => [
@@ -420,6 +508,7 @@ export default function Absences({navigation}: Props) {
                                 isLongPressed && styles.longPressedAbsence
                             ]}
                         >
+                        
                             <Animated.View 
                                 style={[
                                     styles.absenceContent,
@@ -430,9 +519,12 @@ export default function Absences({navigation}: Props) {
                                     <Text style={styles.absenceTitle}>
                                         {absence.matiere_libelle}
                                     </Text>
-                                    <View style={styles.absenceBadge}>
-                                        <Text style={styles.absenceBadgeText}>ABSENCE</Text>
-                                    </View>
+                                    {absence.justification?.statut !== "Approuvée" && (
+                                        <View style={styles.absenceBadge}>
+                                            <Text style={styles.absenceBadgeText}>ABSENCE</Text>
+                                        </View>
+                                    )}
+                                   
                                 </View>
                                 
                                 <Text style={styles.absenceTime}>
@@ -458,11 +550,29 @@ export default function Absences({navigation}: Props) {
                                 <Text style={styles.absenceTimestamp}>
                                     {formatTime(absence.timestamp)}
                                 </Text>
+                                {absence.justification?.statut == 'Approuvée' ? (
+                                     <View style={styles.absenceBadgeJustified}>
+                                        <Text style={styles.absenceBadgeTextJustified}>Absence Jusitifiée</Text>
+                                    </View>
+                                ) : absence.justification?.statut == 'En cours' ? (
+                                    <View style={styles.absenceBadgeWaiting}>
+                                        <Text style={styles.absenceBadgeTextWaiting}>En cours</Text>
+                                    </View>
+                                ) : absence.justification?.statut == 'Rejetée' ? (
+                                    <View style={styles.absenceBadgeRejected}>
+                                        <Text style={styles.absenceBadgeTextRejected}>Rejetée</Text>
+                                    </View>
+                                ): (
+                                    <View>
+                                        <Text style={{color: 'red', fontSize: 10}}>Veillez justifier l'absence</Text>
+                                    </View>
+                                )}
                             </Animated.View>
                         </Pressable>
                     </Animated.View>
                 </PanGestureHandler>
             </View>
+            
         );
     });
 
@@ -529,7 +639,15 @@ export default function Absences({navigation}: Props) {
                 </ScrollView>
                 
                 {toast && <Toast message={toast.message} type={toast.type} />}
+                <AbsenceJustificationModal
+                    visible={modalVisible}
+                    absence={selectedAbsence}
+                    onClose={handleCloseModal}
+                    userMatricule={userMatricule}
+                />
             </SafeAreaView>
         </GestureHandlerRootView>
+
+        
     );
 }

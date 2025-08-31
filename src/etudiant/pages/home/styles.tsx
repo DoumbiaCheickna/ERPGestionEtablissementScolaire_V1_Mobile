@@ -314,20 +314,20 @@ container: {
   },
 
   loadingText: {
-    marginTop: 16,
+    marginTop: -50,
     fontSize: 16,
     color: theme.colors.textSecondary,
   },
 
   // Empty State
   emptyState: {
+    marginTop: 20,
     padding: 32,
     alignItems: 'center',
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'white',
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: theme.colors.background,
-    borderStyle: 'dashed',
+    borderColor: '#e7e7e7ff',
   },
 
   emptyIcon: {

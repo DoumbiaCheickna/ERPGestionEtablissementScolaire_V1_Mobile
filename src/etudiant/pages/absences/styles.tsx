@@ -124,7 +124,49 @@ export const styles = StyleSheet.create({
         paddingVertical: 2,
         borderRadius: 4,
     },
+
     absenceBadgeText: {
+        color: 'white',
+        fontSize: 10,
+        fontWeight: '600',
+    },
+    absenceBadgeJustified: {
+        alignItems: 'center',
+        backgroundColor: '#006d09ff',
+        paddingHorizontal: 2,
+        paddingVertical: 2,
+        borderRadius: 4,
+        width: 120
+    },
+    absenceBadgeTextJustified: {
+        color: 'white',
+        fontSize: 10,
+        fontWeight: '600',
+    },
+    absenceBadgeWaiting: {
+        alignItems: 'center',
+        backgroundColor: 'dodgerblue',
+        paddingHorizontal: 2,
+        paddingVertical: 2,
+        borderRadius: 4,
+        width: 120
+    },
+    absenceBadgeTextWaiting: {
+        color: 'white',
+        fontSize: 10,
+        fontWeight: '600',
+    },
+
+     absenceBadgeRejected: {
+        alignItems: 'center',
+        backgroundColor: '#ff4444',
+        paddingHorizontal: 2,
+        paddingVertical: 2,
+        borderRadius: 4,
+        width: 120
+    },
+
+    absenceBadgeTextRejected: {
         color: 'white',
         fontSize: 10,
         fontWeight: '600',

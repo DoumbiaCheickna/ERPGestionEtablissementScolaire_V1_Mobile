@@ -395,7 +395,13 @@ const processClassSlotAbsences = async (
           enseignant: slot.enseignant,
           salle: slot.salle,
           annee: edt.annee,
-          semestre: edt.semestre
+          semestre: edt.semestre,
+          justification: {
+            contenu: "",
+            documents: "",
+            dateJustification: "",
+            statut: "En attente"
+          }
         };
 
         const absenceNotificationData: NotificationDataAbsence = {

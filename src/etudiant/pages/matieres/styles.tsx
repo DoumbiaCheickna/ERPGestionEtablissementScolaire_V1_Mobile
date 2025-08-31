@@ -16,7 +16,7 @@ export const MatieresStyles = StyleSheet.create({
     backgroundColor: '#f8fafc',
   },
   loadingText: {
-    marginTop: 15,
+    marginTop: -50,
     fontSize: 16,
     color: '#64748b',
     fontWeight: '500',

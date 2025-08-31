@@ -555,7 +555,11 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
           loop={true}
           style={{ width: 170, height: 170 }}
         />
-      <Image source={require('../../../assets/iibs-logo.png')} style={{ width: 100, height: 100, marginTop: 20 }}/>
+      <Image 
+        source={require('../../../assets/logo8.png')} 
+        style={{ width: 250, height: 250, marginTop: -50 }}
+        resizeMode="contain"
+      />
       <Text style={HomeStyles.loadingText}>Chargement des données...</Text>
     </View>
   );
@@ -849,15 +853,6 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
         {/* Show message if no courses today */}
         {todayCourses.length === 0 && (
           <View style={HomeStyles.sectionContainer}>
-            <View style={[Cstyles.badgeContainer, HomeStyles.modernBadge]}>
-              <View style={HomeStyles.badgeIcon}>
-                <Text style={HomeStyles.badgeIconText}>🕐</Text>
-              </View>
-              <Text style={[Cstyles.badgeText, HomeStyles.badgeTextModern]}>Cours du jour</Text>
-              <View style={HomeStyles.badgeCount}>
-                <Text style={HomeStyles.badgeCountText}>0</Text>
-              </View>
-            </View>
 
             <View style={HomeStyles.emptyState}>
               <Text style={HomeStyles.emptyIcon}>📅</Text>
