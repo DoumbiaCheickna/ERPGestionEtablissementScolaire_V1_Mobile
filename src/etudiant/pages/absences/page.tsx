@@ -21,7 +21,6 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ActivityIndicator } from "react-native";
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../navigation';
-import Toast from '../../components/layout/toast';
 import { db, getUserSnapchot } from '../../../firebaseConfig';
 import { styles } from './styles';
 import AbsenceJustificationModal from './AbsenceJustificationModal';
@@ -638,7 +637,6 @@ export default function Absences({navigation}: Props) {
                     )}
                 </ScrollView>
                 
-                {toast && <Toast message={toast.message} type={toast.type} />}
                 <AbsenceJustificationModal
                     visible={modalVisible}
                     absence={selectedAbsence}
