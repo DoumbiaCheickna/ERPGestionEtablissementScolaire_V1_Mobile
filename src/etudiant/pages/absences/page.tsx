@@ -402,7 +402,7 @@ export default function Absences({navigation}: Props) {
     const SwipeableAbsenceItem = React.memo(({ absence, index }: { absence: AbsenceData, index: number }) => {
         const absenceKey = `${absence.matiere_id}_${absence.date}_${absence.start}`;
         const isLongPressed = longPressedAbsence === absenceKey;
-        const isSwipeable = absence.justification?.statut == "Approuvée"; // Only swipeable if not approved
+        const isSwipeable = absence.justification?.statut == "Approuvée"; // Only swipeable if approved
         
         const animationValues = useMemo(() => ({
             translateX: new Animated.Value(0),
@@ -491,7 +491,7 @@ export default function Absences({navigation}: Props) {
 
         return (
             <View style={styles.swipeContainer}>
-                {/* Delete background - only show if swipeable */}
+                {/* Delete le  background - seulement si swipeable */}
                 {isSwipeable && (
                     <Animated.View 
                         style={[
@@ -504,12 +504,12 @@ export default function Absences({navigation}: Props) {
                     </Animated.View>
                 )}
 
-                {/* Swipeable absence - only enable gesture if swipeable */}
+                {/* Swipeable absence - seulement si c'est Approuvée */}
                 <PanGestureHandler
                     onGestureEvent={isSwipeable ? onGestureEvent : undefined}
                     onHandlerStateChange={isSwipeable ? onHandlerStateChange : undefined}
                     activeOffsetX={isSwipeable ? [-10, 10] : undefined}
-                    enabled={isSwipeable} // Disable gesture handler if not swipeable
+                    enabled={isSwipeable} // désactive gesture handler si not swipeable
                 >
                     <Animated.View style={{ transform: [{ translateX: isSwipeable ? translateX : new Animated.Value(0) }] }}>
                         <Pressable

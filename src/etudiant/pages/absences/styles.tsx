@@ -8,14 +8,13 @@ export const styles = StyleSheet.create({
         paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     },
     nonSwipeableAbsence: {
-        opacity: 0.8,
-        backgroundColor: '#f8f8f8',     
-        borderLeftWidth: 3,
-        borderLeftColor: '#28a745', 
+        opacity: 1,
+        backgroundColor: '#ffffffff',     
      },
     swipeContainer: {
         position: 'relative',
         marginBottom: 12,
+        margin: 20
     },
     header: {
         flexDirection: 'row',
