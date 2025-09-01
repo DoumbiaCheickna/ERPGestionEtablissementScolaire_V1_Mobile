@@ -402,7 +402,7 @@ export default function Absences({navigation}: Props) {
     const SwipeableAbsenceItem = React.memo(({ absence, index }: { absence: AbsenceData, index: number }) => {
         const absenceKey = `${absence.matiere_id}_${absence.date}_${absence.start}`;
         const isLongPressed = longPressedAbsence === absenceKey;
-        const isSwipeable = absence.justification?.statut !== "Approuvée"; // Only swipeable if not approved
+        const isSwipeable = absence.justification?.statut == "Approuvée"; // Only swipeable if not approved
         
         const animationValues = useMemo(() => ({
             translateX: new Animated.Value(0),
