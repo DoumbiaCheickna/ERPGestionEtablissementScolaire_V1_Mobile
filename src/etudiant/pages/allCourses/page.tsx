@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal, FlatList, ActivityIndicator, Image } from 'react-native';
-import TopNavBar from '../../components/layout/topBar';
-import BottomNavBar from '../../components/layout/bottomBar';
+import TopNavBar from '../../../layout/topBar';
+import BottomNavBar from '../../../layout/bottomBar';
 import CustomCalendar from '../../components/hooks/calendar'; 
 import MatiereDetailsModal from '../../components/modals/MatiereDetailsModal';
 import { theme } from '../../../styles/globalStyles';

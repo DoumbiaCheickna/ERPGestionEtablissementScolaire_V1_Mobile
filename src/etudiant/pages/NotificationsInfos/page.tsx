@@ -16,7 +16,7 @@ import { getDoc, updateDoc } from 'firebase/firestore';
 import useUserRef from '../../components/hooks/getConnectedUser';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../navigation';
-import Toast from '../../components/layout/toast';
+import Toast from '../../../layout/toast';
 
 const { width } = Dimensions.get('window');
 

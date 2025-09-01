@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ActivityIndicator, TouchableOpacity, Alert, ScrollView, Linking, Platform, Dimensions, Button } from 'react-native';
-import TopNavBar from '../../components/layout/topBar';
-import BottomNavBar from '../../components/layout/bottomBar';
+import TopNavBar from '../../../layout/topBar';
+import BottomNavBar from '../../../layout/bottomBar';
 import { theme } from '../../../styles/globalStyles';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../navigation/index';
@@ -295,6 +295,7 @@ export default function HomeStudent({ navigation }: Props) {
     } catch (error) {
       setIsNearSchool(false);
       Alert.alert('Erreur', 'Impossible d\'obtenir votre localisation. Veuillez réessayer.');
+      refreshData();
     }
   };
 

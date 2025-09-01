@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { theme } from '../../../styles/globalStyles';
+import { theme } from '../styles/globalStyles';
 
 export const styles = StyleSheet.create({
   topNav: {
@@ -18,7 +18,7 @@ export const styles = StyleSheet.create({
     marginTop: 25,
     maxHeight: 50,
     maxWidth: 50,
-    borderRadius: 18,
+    borderRadius: 50,
     backgroundColor: '#f1f1f1ff',
     zIndex: 100,
   },

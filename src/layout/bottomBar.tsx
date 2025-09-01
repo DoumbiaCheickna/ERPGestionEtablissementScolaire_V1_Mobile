@@ -3,8 +3,8 @@ import { View, TouchableOpacity, StyleSheet, Platform, Text } from 'react-native
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context'; // ✅ important
-import { theme } from '../../../styles/globalStyles';
-import { Cstyles } from '../../pages/allCourses/styles'
+import { theme } from '../styles/globalStyles';
+import { Cstyles } from '../etudiant/pages/allCourses/styles'
 
 interface Props {
   activeScreen: string;

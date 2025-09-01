@@ -3,8 +3,8 @@ import { View, Text, FlatList, Image, TouchableOpacity, Alert, ActivityIndicator
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db, getUserSnapchot } from '../../../firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import TopNavBar from '../../components/layout/topBar';
-import BottomNavBar from '../../components/layout/bottomBar';
+import TopNavBar from '../../../layout/topBar';
+import BottomNavBar from '../../../layout/bottomBar';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../../styles/globalStyles';
 import { RootStackParamList } from '../../../navigation/index';

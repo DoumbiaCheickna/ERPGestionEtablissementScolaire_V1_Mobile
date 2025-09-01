@@ -350,7 +350,7 @@ export default function AbsenceJustificationModal({
                             alignItems: "center", 
                             textAlign: "center", 
                             color: "black", 
-                            fontSize: 18, 
+                            fontSize: 15, 
                             marginTop: 20, 
                             marginBottom: -50,
                             fontFamily: 'Times New Roman'   ,
@@ -358,7 +358,7 @@ export default function AbsenceJustificationModal({
                             width: 300                 
                         }}
                     >
-                        Votre justification est en cours de traitement
+                        Votre justification est en cours de traitement...
                     </Text>
                     <LottieView 
                         source={require('../../../assets/Waiting.json')}

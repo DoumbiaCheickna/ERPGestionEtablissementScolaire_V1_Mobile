@@ -21,7 +21,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { ActivityIndicator } from "react-native";
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../navigation';
-import Toast from '../../components/layout/toast';
+import Toast from '../../../layout/toast';
 import { styles } from './styles'
 
 const { width, height } = Dimensions.get('window');

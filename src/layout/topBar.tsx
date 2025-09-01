@@ -2,10 +2,10 @@
 import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, Alert, StatusBar, Platform, Modal, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { theme } from '../../../styles/globalStyles';
+import { theme } from '../styles/globalStyles';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { collection, getDocs, query, where } from "firebase/firestore";
-import { db, getUserData, getUserSnapchot } from '../../../firebaseConfig';
+import { db, getUserData, getUserSnapchot } from '../firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { styles } from './navStyles'
 
@@ -218,7 +218,7 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
         {/* IIBS Logo - Navigates to Home or Refreshes if on Home */}
         <TouchableOpacity onPress={handleLogoPress}>
           <Image
-            source={require('../../../assets/logo9.png')}
+            source={require('../assets/logo2.jpg')}
             style={styles.profilePic}
             resizeMode="contain"
           />

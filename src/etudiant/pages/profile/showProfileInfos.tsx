@@ -22,7 +22,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../navigation/index';
 import { updatePassword } from "firebase/auth";
 import { getUserSnapchot, FindUserClassName } from '../../../firebaseConfig';
-import Toast from '../../components/layout/toast';
+import Toast from '../../../layout/toast';
 import { styles } from './styles'
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
