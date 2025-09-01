@@ -209,119 +209,132 @@ export default function Absences({navigation}: Props) {
 
 
 
-    const deleteAbsence = useCallback(async (absenceToHide: AbsenceData) => {
-    const originalAbsences = [...absences];
-    try {
-    // Optimistic update - remove from view immediately
-    const optimisticAbsences = absences.filter(absence => 
-        !(absence.matiere_id == absenceToHide.matiere_id &&
-        absence.date == absenceToHide.date &&
-        absence.start == absenceToHide.start &&
-        absence.end == absenceToHide.end &&
-        absence.type == absenceToHide.type)
-    );
-    setAbsences(optimisticAbsences);
-
-    // Get all documents from emargements collection
-    const emargementsRef = collection(db, 'emargements');
-    const querySnapshot = await getDocs(emargementsRef);
-
-    let targetDoc = null;
-    let targetDocRef = null;
-
-    // Loop through each document to find the one containing our matricule
-    querySnapshot.forEach((docSnapshot) => {
-        const data = docSnapshot.data();
-        if (data[userMatricule] && Array.isArray(data[userMatricule])) {
-            targetDoc = data;
-            targetDocRef = docSnapshot.ref;
-        }
-    });
-
-    if (!targetDoc || !targetDocRef) {
-        setAbsences(originalAbsences);
-        Alert.alert('Erreur', 'Document utilisateur introuvable');
-        return;
-    }
-
-    const userEmargements: AbsenceData[] = targetDoc[userMatricule];
-
-    // Mark the specific absence as hidden instead of deleting
-    const updatedEmargements = userEmargements.map(emargement => {
-        if (emargement.matiere_id === absenceToHide.matiere_id &&
-            emargement.date === absenceToHide.date &&
-            emargement.start === absenceToHide.start &&
-            emargement.end === absenceToHide.end &&
-            emargement.type === absenceToHide.type) {
-            return { ...emargement, isHidden: true }; // Mark as hidden
-        }
-        return emargement;
-    });
-
-    // Update the document with the modified emargements
-    await updateDoc(targetDocRef, {
-        [userMatricule]: updatedEmargements,
-    });
-
-    // Silent success - no alert
-
-    } catch (err) {
-    console.error('Error hiding absence:', err);
-    setAbsences(originalAbsences);
-    Alert.alert('Erreur lors de la suppression');
-    }
-    }, [absences, userMatricule]);
-
     const deleteAllAbsences = useCallback(async () => {
         const originalAbsences = [...absences];
 
         try {
-            // Clear the view immediately
             setAbsences([]);
 
-            // Get all documents from emargements collection
             const emargementsRef = collection(db, 'emargements');
             const querySnapshot = await getDocs(emargementsRef);
 
-            let targetDoc = null;
-            let targetDocRef = null;
-
-            // Loop through each document to find the one containing our matricule
+            // Collect ALL documents that contain the user's matricule
+            const documentsToUpdate: any[] = [];
+            
             querySnapshot.forEach((docSnapshot) => {
                 const data = docSnapshot.data();
                 if (data[userMatricule] && Array.isArray(data[userMatricule])) {
-                    targetDoc = data;
-                    targetDocRef = docSnapshot.ref;
+                    documentsToUpdate.push({
+                        docRef: docSnapshot.ref,
+                        docData: data
+                    });
                 }
             });
 
-            if (!targetDoc || !targetDocRef) {
+            if (documentsToUpdate.length === 0) {
                 setAbsences(originalAbsences);
-                Alert.alert('Erreur', 'Document utilisateur introuvable');
+                Alert.alert('Erreur', 'Aucun document utilisateur trouvé');
                 return;
             }
 
-            const userEmargements: AbsenceData[] = targetDoc[userMatricule];
+            // Update ALL documents that contain user's absences
+            const updatePromises = documentsToUpdate.map(async ({ docRef, docData }) => {
+                const userEmargements: AbsenceData[] = docData[userMatricule];
 
-            // Mark all absences as hidden instead of deleting them
-            const updatedEmargements = userEmargements.map(emargement => {
-                if (emargement.type === 'absence') {
-                    return { ...emargement, isHidden: true };
-                }
-                return emargement;
+                // Mark all absences as hidden in this document
+                const updatedEmargements = userEmargements.map(emargement => {
+                    if (emargement.type === 'absence') {
+                        return { ...emargement, isHidden: true };
+                    }
+                    return emargement;
+                });
+
+                // Update this specific document
+                return updateDoc(docRef, {
+                    [userMatricule]: updatedEmargements,
+                });
             });
 
-            // Update the document with hidden absences
-            await updateDoc(targetDocRef, {
-                [userMatricule]: updatedEmargements,
-            });
+            // Wait for ALL documents to be updated
+            await Promise.all(updatePromises);
 
-            // Silent success
 
         } catch (err) {
             console.error('Error hiding all absences:', err);
             setAbsences(originalAbsences);
             Alert.alert("Erreur lors de la suppression de toutes les absences");
+        }
+    }, [absences, userMatricule]);
+
+    const deleteAbsence = useCallback(async (absenceToHide: AbsenceData) => {
+        const originalAbsences = [...absences];
+        try {
+            // Optimistic update
+            const optimisticAbsences = absences.filter(absence => 
+                !(absence.matiere_id == absenceToHide.matiere_id &&
+                absence.date == absenceToHide.date &&
+                absence.start == absenceToHide.start &&
+                absence.end == absenceToHide.end &&
+                absence.type == absenceToHide.type)
+            );
+            setAbsences(optimisticAbsences);
+
+            const emargementsRef = collection(db, 'emargements');
+            const querySnapshot = await getDocs(emargementsRef);
+
+            let targetDoc = null;
+            let targetDocRef = null;
+            let found = false;
+
+            querySnapshot.forEach((docSnapshot) => {
+                if (found) return; 
+                
+                const data = docSnapshot.data();
+                if (data[userMatricule] && Array.isArray(data[userMatricule])) {
+                    const hasThisAbsence = data[userMatricule].some(emargement =>
+                        emargement.matiere_id === absenceToHide.matiere_id &&
+                        emargement.date === absenceToHide.date &&
+                        emargement.start === absenceToHide.start &&
+                        emargement.end === absenceToHide.end &&
+                        emargement.type === absenceToHide.type
+                    );
+
+                    if (hasThisAbsence) {
+                        targetDoc = data;
+                        targetDocRef = docSnapshot.ref;
+                        found = true;
+                    }
+                }
+            });
+
+            if (!targetDoc || !targetDocRef) {
+                setAbsences(originalAbsences);
+                Alert.alert('Erreur', 'Document contenant cette absence introuvable');
+                return;
+            }
+
+            const userEmargements: AbsenceData[] = targetDoc[userMatricule];
+
+            // Mark the specific absence as hidden
+            const updatedEmargements = userEmargements.map(emargement => {
+                if (emargement.matiere_id === absenceToHide.matiere_id &&
+                    emargement.date === absenceToHide.date &&
+                    emargement.start === absenceToHide.start &&
+                    emargement.end === absenceToHide.end &&
+                    emargement.type === absenceToHide.type) {
+                    return { ...emargement, isHidden: true };
+                }
+                return emargement;
+            });
+
+            await updateDoc(targetDocRef, {
+                [userMatricule]: updatedEmargements,
+            });
+
+        } catch (err) {
+            console.error('Error hiding absence:', err);
+            setAbsences(originalAbsences);
+            Alert.alert('Erreur lors de la suppression');
         }
     }, [absences, userMatricule]);
 
