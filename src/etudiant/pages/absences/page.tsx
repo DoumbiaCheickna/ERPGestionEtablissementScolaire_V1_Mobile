@@ -326,6 +326,19 @@ export default function Absences({navigation}: Props) {
             return;
         }
 
+        // Check if there are any non-approved absences
+        const nonApprovedAbsences = absences.filter(absence => 
+            absence.justification?.statut !== "Approuvée"
+        );
+
+        if (nonApprovedAbsences.length > 0) {
+            Alert.alert(
+                "Suppression impossible",
+                "Toutes les absences ne sont pas encore justifiées pour être supprimées"
+            );
+            return;
+        }
+
         Alert.alert(
             "Confirmation",
             "Voulez-vous vraiment supprimer toutes les absences ?",
@@ -341,7 +354,7 @@ export default function Absences({navigation}: Props) {
                 }
             ]
         );
-    }, [deleteAllAbsences, absences.length]);
+    }, [deleteAllAbsences, absences]);
 
     // Handle long press for options
     const handleLongPress = useCallback((absence: AbsenceData, event: any) => {
@@ -389,6 +402,7 @@ export default function Absences({navigation}: Props) {
     const SwipeableAbsenceItem = React.memo(({ absence, index }: { absence: AbsenceData, index: number }) => {
         const absenceKey = `${absence.matiere_id}_${absence.date}_${absence.start}`;
         const isLongPressed = longPressedAbsence === absenceKey;
+        const isSwipeable = absence.justification?.statut !== "Approuvée"; // Only swipeable if not approved
         
         const animationValues = useMemo(() => ({
             translateX: new Animated.Value(0),
@@ -404,6 +418,9 @@ export default function Absences({navigation}: Props) {
         );
 
         const onHandlerStateChange = ({ nativeEvent }: any) => {
+            // Only handle swipe if absence is swipeable
+            if (!isSwipeable) return;
+
             if (nativeEvent.state === State.END) {
                 if (Math.abs(nativeEvent.translationX) > SWIPE_THRESHOLD) {
                     if (alertShowing.current) {
@@ -466,7 +483,7 @@ export default function Absences({navigation}: Props) {
                     useNativeDriver: true,
                 }).start();
 
-            } else if (nativeEvent.state === State.ACTIVE) {
+            } else if (nativeEvent.state === State.ACTIVE && isSwipeable) {
                 const opacity = Math.min(Math.abs(nativeEvent.translationX) / SWIPE_THRESHOLD, 1);
                 deleteOpacity.setValue(opacity);
             }
@@ -474,40 +491,42 @@ export default function Absences({navigation}: Props) {
 
         return (
             <View style={styles.swipeContainer}>
-                {/* Delete background */}
-                <Animated.View 
-                    style={[
-                        styles.deleteBackground,
-                        { opacity: deleteOpacity }
-                    ]}
-                >
-                    <Ionicons name="trash-outline" size={24} color="white" />
-                    <Text style={styles.deleteText}>Supprimer</Text>
-                </Animated.View>
+                {/* Delete background - only show if swipeable */}
+                {isSwipeable && (
+                    <Animated.View 
+                        style={[
+                            styles.deleteBackground,
+                            { opacity: deleteOpacity }
+                        ]}
+                    >
+                        <Ionicons name="trash-outline" size={24} color="white" />
+                        <Text style={styles.deleteText}>Supprimer</Text>
+                    </Animated.View>
+                )}
 
-                {/* Swipeable absence */}
+                {/* Swipeable absence - only enable gesture if swipeable */}
                 <PanGestureHandler
-                    onGestureEvent={onGestureEvent}
-                    onHandlerStateChange={onHandlerStateChange}
-                    activeOffsetX={[-10, 10]}
+                    onGestureEvent={isSwipeable ? onGestureEvent : undefined}
+                    onHandlerStateChange={isSwipeable ? onHandlerStateChange : undefined}
+                    activeOffsetX={isSwipeable ? [-10, 10] : undefined}
+                    enabled={isSwipeable} // Disable gesture handler if not swipeable
                 >
-                    <Animated.View style={{ transform: [{ translateX }] }}>
-
+                    <Animated.View style={{ transform: [{ translateX: isSwipeable ? translateX : new Animated.Value(0) }] }}>
                         <Pressable
                             onPress={() => {
                                 if (absence.justification?.statut != "Approuvée") {
                                     handleAbsenceTap(absence);
                                 }
                             }}
-                            onLongPress={(event) => handleLongPress(absence, event)}
+                            onLongPress={isSwipeable ? (event) => handleLongPress(absence, event) : undefined}
                             delayLongPress={500}
                             style={({ pressed }) => [
                                 styles.absenceItem,
                                 pressed && styles.pressedAbsence,
-                                isLongPressed && styles.longPressedAbsence
+                                isLongPressed && styles.longPressedAbsence,
+                                !isSwipeable && styles.nonSwipeableAbsence 
                             ]}
                         >
-                        
                             <Animated.View 
                                 style={[
                                     styles.absenceContent,
@@ -523,7 +542,6 @@ export default function Absences({navigation}: Props) {
                                             <Text style={styles.absenceBadgeText}>ABSENCE</Text>
                                         </View>
                                     )}
-                                   
                                 </View>
                                 
                                 <Text style={styles.absenceTime}>
@@ -550,7 +568,7 @@ export default function Absences({navigation}: Props) {
                                     {formatTime(absence.timestamp)}
                                 </Text>
                                 {absence.justification?.statut == 'Approuvée' ? (
-                                     <View style={styles.absenceBadgeJustified}>
+                                    <View style={styles.absenceBadgeJustified}>
                                         <Text style={styles.absenceBadgeTextJustified}>Absence Jusitifiée</Text>
                                     </View>
                                 ) : absence.justification?.statut == 'En cours' ? (
@@ -571,7 +589,6 @@ export default function Absences({navigation}: Props) {
                     </Animated.View>
                 </PanGestureHandler>
             </View>
-            
         );
     });
 

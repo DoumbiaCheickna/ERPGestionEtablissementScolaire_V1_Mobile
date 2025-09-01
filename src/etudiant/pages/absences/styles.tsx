@@ -7,6 +7,16 @@ export const styles = StyleSheet.create({
         backgroundColor: 'white',
         paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     },
+    nonSwipeableAbsence: {
+        opacity: 0.8,
+        backgroundColor: '#f8f8f8',     
+        borderLeftWidth: 3,
+        borderLeftColor: '#28a745', 
+     },
+    swipeContainer: {
+        position: 'relative',
+        marginBottom: 12,
+    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -64,25 +74,23 @@ export const styles = StyleSheet.create({
         fontSize: 16,
         color: '#666',
     },
-    swipeContainer: {
-        marginHorizontal: 16,
-        marginVertical: 4,
-        position: 'relative',
-    },
     deleteBackground: {
         position: 'absolute',
         right: 0,
         top: 0,
         bottom: 0,
-        backgroundColor: '#ff4444',
+        backgroundColor: '#ff4757',
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 20,
         borderRadius: 8,
+        marginHorizontal: 16,
     },
+    
     deleteText: {
         color: 'white',
-        fontSize: 12,
+        fontSize: 14,
+        fontWeight: '600',
         marginTop: 4,
     },
     absenceItem: {
