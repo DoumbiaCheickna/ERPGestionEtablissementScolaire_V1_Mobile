@@ -5,7 +5,6 @@ import { Overlay } from './overlay';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../navigation';
 import { Ionicons } from '@expo/vector-icons';
-import Toast from '../../components/layout/toast';
 import { EmargementSuccessModal } from './EmargementSuccessModal';
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebaseConfig'; // adjust path
@@ -251,15 +250,6 @@ const saveEmargedCourse = async (
         <View style={styles.processingOverlay}>
           <Text style={styles.processingText}>Traitement en cours...</Text>
         </View>
-      )}
-
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          duration={3000}
-          key={Date.now()}
-        />
       )}
 
       <EmargementSuccessModal
