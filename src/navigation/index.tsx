@@ -1,18 +1,24 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Login from '../etudiant/pages/auth/login/page';
-import ChangePassword from '../etudiant/pages/auth/change-password/page';
-import Profile from '../etudiant/pages/profile/general';
+import Login from '../auth/login/page';
+import ChangePassword from '../auth/change-password/page';
+import Profile from '../professeur/pages/profile/general';
 import AllCoursesStudent from '../etudiant/pages/allCourses/page';
-import ShowProfileInfos from '../etudiant/pages/profile/showProfileInfos';
-import NotificationsStudent  from '../etudiant/pages/notifications/page';
-import Scanner from '../etudiant/components/scanner';
+import ShowProfileInfosStudent from '../etudiant/pages/profile/showProfileInfos';
+import ShowProfileInfosProfesseur from '../professeur/pages/profile/showProfileInfos';
+import Scanner from '../components/scanner';
 import QRCodeScreen from '../etudiant/pages/qrcode/page';
-import NotificationsInfos from '../etudiant/pages/NotificationsInfos/page';
+import NotificationsInfos from '../NotificationsInfos/page';
 import HomeStudent from '../etudiant/pages/home/page';
 import MatieresStudent from '../etudiant/pages/matieres/page';
 import Absences from '../etudiant/pages/absences/page';
+import HomeProfesseur from '../professeur/pages/home/page';
+import AllCoursesProfesseur from '../professeur/pages/allCourses/page';
+import MatieresClassesProfesseur from '../professeur/pages/enseignments/page';
+import Notifications from '../notifications/page';
+import ProfileStudent from '../etudiant/pages/profile/general';
+import ProfileProfesseur from '../professeur/pages/profile/general';
 
 export type RootStackParamList = {
   Login: { userLogin: string; userRole: string; firstLogin: number };
@@ -27,11 +33,16 @@ export type RootStackParamList = {
     classeId?: string;
     matieres?: any[];
   };
+  MatieresClassesProfesseur: undefined;
+  HomeProfesseur: any;
   NotReady: undefined;
-  Profile: undefined;
+  ProfileProfesseur: undefined;
+  ProfileStudent: undefined;
   AllCoursesStudent: { userLogin: string };
-  ShowProfileInfos: undefined;
-  NotificationsStudent: undefined;
+  AllCoursesProfesseur: undefined;
+  ShowProfileInfosStudent: undefined;
+  ShowProfileInfosProfesseur: undefined;
+  Notifications: undefined;
   NotificationsInfos: undefined;
   Scanner: {
     matiereId: string;
@@ -62,16 +73,26 @@ export default function AppNavigator() {
         <Stack.Screen name="Scanner" component={Scanner} />
         <Stack.Screen name="QRCodeScreen" component={QRCodeScreen} />
         <Stack.Screen name="NotificationsInfos" component={NotificationsInfos} />
-        <Stack.Screen name="Profile" component={Profile} />
         <Stack.Screen name="ChangePassword" component={ChangePassword} />
-        <Stack.Screen name="ShowProfileInfos" component={ShowProfileInfos}/>
         <Stack.Screen name="Absences" component={Absences} />
+        <Stack.Screen name="Notifications" component={Notifications} />
 
 
         <Stack.Screen name="HomeStudent" component={HomeStudent} />
         <Stack.Screen name="AllCoursesStudent" component={AllCoursesStudent} />
+        <Stack.Screen name="ProfileStudent" component={ProfileStudent} />
         <Stack.Screen name="MatieresStudent" component={MatieresStudent} />
-        <Stack.Screen name="NotificationsStudent" component={NotificationsStudent} />
+        <Stack.Screen name="ShowProfileInfosStudent" component={ShowProfileInfosStudent}/>
+
+
+
+
+         <Stack.Screen name="HomeProfesseur" component={HomeProfesseur} />
+        <Stack.Screen name="AllCoursesProfesseur" component={AllCoursesProfesseur} />
+        <Stack.Screen name="MatieresClassesProfesseur" component={MatieresClassesProfesseur} />
+        <Stack.Screen name="ProfileProfesseur" component={ProfileProfesseur} />
+        <Stack.Screen name="ShowProfileInfosProfesseur" component={ShowProfileInfosProfesseur}/>
+
 
       </Stack.Navigator>
     </NavigationContainer>

@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../navigation';
-import QRCodeGenerator from '../../../components/QRCodeGenerator';
+import QRCodeGenerator from '../../components/QRCodeGenerator';
 import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'QRCodeScreen'>;

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ActivityIndicator, TouchableOpacity, Alert, ScrollView, Linking, Platform, Dimensions, Button } from 'react-native';
-import TopNavBar from '../../../layout/topBar';
-import BottomNavBar from '../../../layout/bottomBar';
-import MatiereDetailsModal from '../../components/modals/MatiereDetailsModal';
+import TopNavBar from '../../../components/layout/topBar';
+import BottomNavBar from '../../../components/layout/bottomBar';
+import MatiereDetailsModal from '../../../components/modals/MatiereDetailsModal';
 import { theme } from '../../../styles/globalStyles';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../navigation/index';
-import { useMatieres } from '../../components/hooks/matieres';
-import { Slot, useUserCourses } from '../../components/hooks/cours'; 
+import { useStudentMatieres } from '../../../components/hooks/matieresStudent';
+import { Slot, useStudentCourses } from '../../../components/hooks/coursStudent'; 
 import { Cstyles } from '../allCourses/styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from "expo-location";
@@ -36,8 +36,8 @@ interface Matiere {
 }
 
 export default function MatieresStudent({ navigation }: Props) {
-  const { matieres, loading: matieresLoading, refreshMatieres } = useMatieres();
-  const { coursesByDay, loading: coursesLoading, refreshCourses } = useUserCourses();
+  const { matieres, loading: matieresLoading, refreshMatieres } = useStudentMatieres();
+  const { coursesByDay, loading: coursesLoading, refreshCourses } = useStudentCourses();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   

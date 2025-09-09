@@ -13,6 +13,8 @@ import { generalStyles } from './styles';
 import LottieView from 'lottie-react-native';
 import { useStudentMatieres } from '../../../components/hooks/matieresStudent';
 import { useStudentCourses } from '../../../components/hooks/coursStudent';
+import { useProfesseurMatieres } from '../../../components/hooks/matieresProfesseur';
+import { useProfesseurCourses } from '../../../components/hooks/coursProfesseur';
 
 const profileActions = [
   { 
@@ -72,7 +74,6 @@ interface UserInfo {
   prenom: string;
   email: string;
   login: string;
-  classeId: string;
   role: string;
   avatar?: string;
 }
@@ -84,14 +85,14 @@ interface Matiere {
   professeurFullName: string;
   description?: string;
 }
-type Props = NativeStackScreenProps<RootStackParamList, 'ProfileStudent'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'ProfileProfesseur'>;
 
-export default function ProfileStudent({ navigation }: Props) {
+export default function ProfileProfesseur({ navigation }: Props) {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const { matieres } = useStudentMatieres()
-  const { coursesByDay } = useStudentCourses()
+  const { matieres } = useProfesseurMatieres()
+  const { coursesByDay } = useProfesseurCourses()
 
 
   useEffect(() => {
@@ -117,7 +118,6 @@ export default function ProfileStudent({ navigation }: Props) {
         prenom: userDoc.prenom || '',
         email: userDoc.email || '',
         login: userDoc.login || '',
-        classeId: userDoc.classe_id || '',
         role: userDoc.role || '',
         avatar: userDoc.avatar
       });
@@ -197,13 +197,13 @@ export default function ProfileStudent({ navigation }: Props) {
     const handleQuickAction = (action: string) => {
     switch (action) {
       case 'Matieres':
-        navigation.navigate('MatieresStudent' as never);
+        navigation.navigate('MatieresProfesseur' as never);
         break;
       case 'grades':
         Alert.alert('Info', 'Notes à implémenter');
         break;
       case 'Planning':
-        navigation.navigate('AllCoursesStudent' as never);
+        navigation.navigate('AllCoursesProfesseur' as never);
         break;
       case 'messages':
         Alert.alert('Info', 'Messages à implémenter');
@@ -355,8 +355,8 @@ export default function ProfileStudent({ navigation }: Props) {
           </View>
           <View style={generalStyles.statDivider} />
           <View style={generalStyles.statItem}>
-            <Text style={generalStyles.statNumber}>17</Text>
-            <Text style={generalStyles.statLabel}>Moyenne</Text>
+            <Text style={generalStyles.statNumber}>-</Text>
+            <Text style={generalStyles.statLabel}>Classes</Text>
           </View>
         </View>
 

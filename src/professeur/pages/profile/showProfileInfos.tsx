@@ -29,23 +29,21 @@ import * as FileSystem from "expo-file-system";
 import LottieView from 'lottie-react-native';
 
 
-interface StudentProfileInfo {
+interface UserProfileInfo {
   id: string;
   nom: string;
   prenom: string;
   email: string;
   login: string;
-  filiereId: string;
   telephone: string;
-  niveauId: string;
-  className: string;
+  specialite?: string;
   avatar?: string;
 }
 
-type Props = NativeStackScreenProps<RootStackParamList, 'ShowProfileInfosStudent'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'ShowProfileInfosProfesseur'>;
 
 export default function ProfileSettings({ navigation }: Props) {
-  const [userInfo, setUserInfo] = useState<StudentProfileInfo | null>(null);
+  const [userInfo, setUserInfo] = useState<UserProfileInfo | null>(null);
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -92,10 +90,8 @@ export default function ProfileSettings({ navigation }: Props) {
           prenom: userData.prenom || '',
           email: userData.email || '',
           login: userData.login || '',
-          filiereId: userData.filiere_id || '',
           telephone: userData.telephone || '',
-          niveauId: userData.niveau_id || '',
-          className: className,
+          specialite: userData.specialite || '',
           avatar: userData.avatar
         });
 
@@ -381,10 +377,10 @@ const pickImage = async () => {
 
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>
-               <Ionicons name='home-outline' style={{color:  '#54c985ff'}}>
-              </Ionicons>Classe</Text>
+               <Ionicons name="at-sharp" style={{color:  '#54c985ff'}}>
+              </Ionicons>Spécialité</Text>
             <View style={styles.infoValueContainer}>
-              <Text style={styles.infoValue}>{userInfo.className}</Text>
+              <Text style={styles.infoValue}>{userInfo.specialite}</Text>
             </View>
           </View>
         </View>

@@ -5,26 +5,17 @@ import BottomNavBar from '../../../components/layout/bottomBar';
 import { theme } from '../../../styles/globalStyles';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../navigation/index';
-import { useStudentMatieres } from '../../../components/hooks/matieresStudent';
-import { Slot, useStudentCourses } from '../../../components/hooks/coursStudent'; 
+import { useProfesseurMatieres } from '../../../components/hooks/matieresProfesseur';
+import { Slot, useProfesseurCourses } from '../../../components/hooks/coursProfesseur'; 
 import { Cstyles } from '../allCourses/styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from "expo-location";
 import { HomeStyles } from "./styles";
 import { styles as eStyles } from '../allCourses/styles'
-import { db, getUserSnapchot } from '../../../firebaseConfig';
-import { MatieresStyles } from '../matieres/styles';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../../firebaseConfig';
+import { MatieresStyles } from '../enseignments/styles';
+import { collection, getDocs, query, where, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import LottieView from 'lottie-react-native';
-
-
-
-
-// Interface for course records with matricule
-interface CourseRecord {
-  matiere_id: string;
-  matricule: string;
-}
 
 export const getCoursStatus = (startTime: string, endTime: string) => {
   const now = new Date();
@@ -45,27 +36,24 @@ export const getCoursStatus = (startTime: string, endTime: string) => {
   }
 };
 
-type Props = NativeStackScreenProps<RootStackParamList, 'HomeStudent'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'HomeProfesseur'>;
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-export default function HomeStudent({ navigation }: Props) {
+export default function HomeProfesseur({ navigation }: Props) {
 
-  const { matieres, loading: matieresLoading, refreshMatieres } = useStudentMatieres();
-  const { coursesByDay, loading: coursesLoading, refreshCourses } = useStudentCourses(); 
-  const [emargedCourses, setEmargedCourses] = useState<CourseRecord[]>([]);
+  const { matieres, loading: matieresLoading, refreshMatieres, userDocId } = useProfesseurMatieres();
+  const { coursesByDay, loading: coursesLoading, refreshCourses } = useProfesseurCourses(); 
   const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
   const [isNearSchool, setIsNearSchool] = useState(false);
-  const [userMatricule, setUserMatricule] = useState('');
   const [nextCourse, setNextCourse] = useState<Slot | null>(null);
-  const [courseAbsenceStatus, setCourseAbsenceStatus] = useState<Record<string, boolean>>({});
-  const [courseEmargedStatus, setCourseEmargedStatus] = useState<Record<string, boolean>>({});
+  const [unavailableCourses, setUnavailableCourses] = useState<Set<string>>(new Set());
+  const [professorName, setProfessorName] = useState('');
 
-  const  refreshData = () => {
+  const refreshData = () => {
     refreshCourses();
-    refreshMatieres()
+    refreshMatieres();
   }
-  
 
   const SCHOOL_COORDINATES = {
     latitude: 14.717022,
@@ -75,8 +63,7 @@ export default function HomeStudent({ navigation }: Props) {
 
   useEffect(() => {
     const initApp = async () => {
-      await getMatricule();
-
+      await getProfessorInfo();
       await requestLocationPermission();
     };
     
@@ -90,11 +77,8 @@ export default function HomeStudent({ navigation }: Props) {
   const todayStr = `${today.getDate().toString().padStart(2,'0')}/${(today.getMonth()+1).toString().padStart(2,'0')}/${today.getFullYear()}`;
   const todayCourses = coursesByDay.filter((d:any)=>d.title==todayDayName).flatMap((d:any)=>d.data) || [];
 
-  // Check for expired courses and mark as absent
+  // Find next course
   useEffect(() => {
-
-
-
     let closestCourse: any = null;
     let minTimeDifference = Infinity;
 
@@ -176,9 +160,7 @@ export default function HomeStudent({ navigation }: Props) {
     }
     
     setNextCourse(closestCourse);
-
-
-  }, [coursesByDay, emargedCourses, coursesLoading, userMatricule]);
+  }, [coursesByDay, coursesLoading]);
 
   useEffect(() => {
     if (!locationPermissionGranted) return;
@@ -186,13 +168,11 @@ export default function HomeStudent({ navigation }: Props) {
     let locationInterval: ReturnType<typeof setInterval>;
 
     const updateLocationInterval = () => {
-      const currentCourse = getCurrentCourse();
-
       if (locationInterval) clearInterval(locationInterval);
 
       locationInterval = setInterval(() => {
         getCurrentLocation();
-      }, currentCourse ? 5 * 60 * 1000 : 15 * 60 * 1000); 
+      }, 10 * 60 * 1000); // Check every 10 minutes for professors
 
       // run immediately
       getCurrentLocation();
@@ -204,49 +184,6 @@ export default function HomeStudent({ navigation }: Props) {
       if (locationInterval) clearInterval(locationInterval);
     };
   }, [locationPermissionGranted, todayCourses, nextCourse]);
-
-  useEffect(() => {
-  const loadAbsenceStatus = async () => {
-    if (!userMatricule || todayCourses.length === 0) return;
-
-    const statusMap: Record<string, boolean> = {};
-    
-    for (const course of todayCourses) {
-      try {
-        const isAbsent = await isStudentAbsentForCourse(course.matiere_id);
-        statusMap[course.matiere_id] = isAbsent;
-      } catch (error) {
-        console.error(`Error checking absence for course ${course.matiere_id}:`, error);
-        statusMap[course.matiere_id] = false;
-      }
-    }
-    
-    setCourseAbsenceStatus(statusMap);
-  };
-
-  const loadPresenceStatus = async () => {
-    if (!userMatricule || todayCourses.length === 0) return;
-
-    const statusMap: Record<string, boolean> = {};
-    
-    for (const course of todayCourses) {
-      try {
-        const isPresent = await isStudentEmargedForCourse(course.matiere_id);
-        statusMap[course.matiere_id] = isPresent;
-      } catch (error) {
-        console.error(`Error checking presence for course ${course.matiere_id}:`, error);
-        statusMap[course.matiere_id] = false;
-      }
-    }
-    setCourseEmargedStatus(statusMap);
-  };
-
-  loadPresenceStatus();
-  loadAbsenceStatus();
-}, [userMatricule, todayCourses]);
-
-
-
 
   const requestLocationPermission = async () => {
     try {
@@ -265,7 +202,7 @@ export default function HomeStudent({ navigation }: Props) {
   const handleLocationPermissionDenied = () => {
     Alert.alert(
       'Permission requise',
-      'La permission de localisation est obligatoire pour vérifier que vous êtes sur le campus IIBS.',
+      'La permission de localisation est recommandée pour vérifier que vous êtes sur le campus IIBS.',
       [
         {
           text: 'Réessayer',
@@ -276,42 +213,21 @@ export default function HomeStudent({ navigation }: Props) {
           onPress: () => Linking.openSettings()
         },
         {
-          text: 'Quitter',
-          onPress: () => {
-            Alert.alert('Information', 'L\'application ne peut pas fonctionner sans la permission de localisation.');
-          },
-          style: 'destructive'
+          text: 'Continuer sans',
+          style: 'cancel'
         }
-      ],
-      { cancelable: false }
+      ]
     );
   };
 
   const getCurrentLocation = async () => {
     try {
-      const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
+      const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       const { latitude, longitude } = location.coords;
       checkIfNearSchool(latitude, longitude);
     } catch (error) {
       setIsNearSchool(false);
-      Alert.alert('Erreur', 'Impossible d\'obtenir votre localisation. Veuillez réessayer.');
-      refreshData();
     }
-  };
-
-  const getCurrentCourse = () => {
-    const now = new Date();
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
-    const runningCourse = todayCourses.find(course => {
-      const [startH, startM] = course.start.split(':').map(Number);
-      const [endH, endM] = course.end.split(':').map(Number);
-      const startTime = startH * 60 + startM;
-      const endTime = endH * 60 + endM;
-      return currentMinutes >= startTime && currentMinutes <= endTime;
-    });
-
-    return runningCourse || null;
   };
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
@@ -334,110 +250,27 @@ export default function HomeStudent({ navigation }: Props) {
     setIsNearSchool(nearSchool);
   };
 
-
-
-const isStudentEmargedForCourse = async (matiereId: string): Promise<boolean> => {
-  try {
-    const userLogin = await AsyncStorage.getItem('userLogin');
-    if (!userLogin) {
-      return false;
-    }
-
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('login', '==', userLogin));
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      return false;
-    }
-
-    const userDoc = querySnapshot.docs[0];
-    const userData = userDoc.data();
-    const emargements: any[] = userData.emargements || [];
-
-    const today = new Date().toDateString();
-
-    // Check if there's an absence record for this course today
-    const hasPresence = emargements.some(emargement =>
-      emargement.type == 'presence' &&
-      emargement.matiere_id == matiereId &&
-      emargement.date == today
-    );
-    return hasPresence;
-
-  } catch (error) {
-    console.error('Error checking student absence:', error);
-    return false; 
-  }
-  
-};
-const isStudentAbsentForCourse = async (matiereId: string): Promise<boolean> => {
-  try {
-    const userLogin = await AsyncStorage.getItem('userLogin');
-    if (!userLogin) {
-      return false;
-    }
-
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('login', '==', userLogin));
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      return false;
-    }
-
-    const userDoc = querySnapshot.docs[0];
-    const userData = userDoc.data();
-    const emargements: any[] = userData.emargements || [];
-
-    const today = new Date().toDateString();
-
-
-
-    // Check if there's an absence record for this course today
-    const hasAbsence = emargements.some(emargement =>
-      emargement.type == 'absence' &&
-      emargement.matiere_id == matiereId &&
-      emargement.date == today
-    );
-    return hasAbsence;
-
-  } catch (error) {
-    console.error('Error checking student absence:', error);
-    return false; 
-  }
-  
-};
-
-  const isStudentEmargedForCourseSync = (matiereId: string): boolean => {
-    return courseEmargedStatus[matiereId] || false;
-  };
-  
-  const isStudentAbsentForCourseSync = (matiereId: string): boolean => {
-    return courseAbsenceStatus[matiereId] || false;
-  };
-
-
-
-
-
-  // Save emarged course with matricule
-  const getMatricule = async () => {
+  const getProfessorInfo = async () => {
     try {
-      const userSnapshot: any = await getUserSnapchot();
-      const userDoc = userSnapshot?.docs[0];
-      const userData = userDoc?.data();
-      const matricule = userData.matricule;
-      setUserMatricule(matricule);
-      return matricule;
+      const userLogin = await AsyncStorage.getItem('userLogin');
+      if (!userLogin) return;
+
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('login', '==', userLogin));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        const userData = userDoc.data();
+        const fullName = userData.nom && userData.prenom 
+          ? `${userData.prenom} ${userData.nom}` 
+          : userData.nom || userData.prenom || 'Professeur';
+        setProfessorName(fullName);
+      }
     } catch (error) {
-      console.error('Error getting matricule:', error);
-      return '';
+      console.error('Error getting professor info:', error);
     }
   };
-
-  // Record absence using your handleAbsence function
-
 
   const isCourseTimeExpired = (endTime: string) => {
     const now = new Date();
@@ -455,97 +288,109 @@ const isStudentAbsentForCourse = async (matiereId: string): Promise<boolean> => 
     return currentTime < courseStartTime;
   };
 
-  const canEmarger = (matiereId: string, endTime: string) => {
-    const isAlreadyEmarged = isStudentEmargedForCourseSync(matiereId);
-    const isTimeExpired = isCourseTimeExpired(endTime);
-    return !isAlreadyEmarged && !isTimeExpired;
+  const getCourseKey = (course: Slot) => {
+    return `${course.matiere_id}-${course.class_id}-${course.start}-${course.end}`;
   };
 
-const getEmargerButtonStatus = (matiereId: string, endTime: string, startTime: string) => {
-  if (!userMatricule) {
-    return { 
-      text: 'Chargement...', 
+  const handleIndisponiblePress = async (course: Slot) => {
+    const courseKey = getCourseKey(course);
+    
+    if (unavailableCourses.has(courseKey)) {
+      Alert.alert('Information', 'Vous avez déjà marqué ce cours comme indisponible.');
+      return;
+    }
+
+    Alert.alert(
+      'Confirmer indisponibilité',
+      `Voulez-vous vraiment marquer le cours "${course.matiere_libelle}" comme indisponible?`,
+      [
+        {
+          text: 'Annuler',
+          style: 'cancel'
+        },
+        {
+          text: 'Confirmer',
+          onPress: () => markCourseUnavailable(course, courseKey),
+          style: 'destructive'
+        }
+      ]
+    );
+  };
+
+  const markCourseUnavailable = async (course: Slot, courseKey: string) => {
+    try {
+      if (!userDocId) return;
+
+      const userDocRef = doc(db, 'users', userDocId);
+      const today = new Date().toDateString();
+      
+      const indisponibiliteRecord = {
+        type: 'indisponibilite',
+        matiere_id: course.matiere_id,
+        class_id: course.class_id,
+        date: today,
+        start: course.start,
+        end: course.end,
+        salle: course.salle,
+        matiere_libelle: course.matiere_libelle,
+        timestamp: new Date().toISOString()
+      };
+
+      await updateDoc(userDocRef, {
+        indisponibilites: arrayUnion(indisponibiliteRecord)
+      });
+
+      setUnavailableCourses(prev => new Set(prev).add(courseKey));
+      
+      Alert.alert('Succès', 'Cours marqué comme indisponible avec succès.');
+    } catch (error) {
+      console.error('Error marking course unavailable:', error);
+      Alert.alert('Erreur', 'Impossible de marquer le cours comme indisponible.');
+    }
+  };
+
+  const getIndisponibleButtonStatus = (course: Slot, endTime: string, startTime: string) => {
+    const courseKey = getCourseKey(course);
+    const isAlreadyUnavailable = unavailableCourses.has(courseKey);
+    const isTimeExpired = isCourseTimeExpired(endTime);
+    const isNotStarted = isCourseNotStarted(startTime);
+    
+    if (isAlreadyUnavailable) return { 
+      text: '❌ Indisponible', 
+      style: HomeStyles.absentButton, 
+      textStyle: HomeStyles.absentButtonText, 
+      disabled: true 
+    };
+    
+    if (isTimeExpired) return { 
+      text: 'Terminé', 
       style: HomeStyles.expiredButton, 
       textStyle: HomeStyles.expiredButtonText, 
       disabled: true 
     };
-  }
-
-  const isAlreadyEmarged = isStudentEmargedForCourseSync(matiereId);
-  const isAbsent = isStudentAbsentForCourseSync(matiereId); // Use sync version
-  const isTimeExpired = isCourseTimeExpired(endTime);
-  const isNotStarted = isCourseNotStarted(startTime);
-  
-  if (isAlreadyEmarged) return { 
-    text: '✓ Émargé', 
-    style: HomeStyles.emargedButton, 
-    textStyle: HomeStyles.emargedButtonText, 
-    disabled: true 
-  };
-  if (isAbsent && isTimeExpired) return { 
-    text: '❌ Absent', 
-    style: HomeStyles.absentButton, 
-    textStyle: HomeStyles.absentButtonText, 
-    disabled: true 
+    
+    return { 
+      text: '❌ Indisponible', 
+      style: [HomeStyles.modernEmargerButton, { backgroundColor: '#FF5722' }], 
+      textStyle: [Cstyles.emargerButtonText, HomeStyles.emargerButtonTextModern], 
+      disabled: false 
+    };
   };
   
-  if (isNotStarted) return { 
-    text: 'Bientôt', 
-    style: HomeStyles.expiredButton, 
-    textStyle: HomeStyles.expiredButtonText, 
-    disabled: true 
-  };
-  
-  if (isTimeExpired && !isAbsent) return { 
-    text: 'Expiré', 
-    style: HomeStyles.expiredButton, 
-    textStyle: HomeStyles.expiredButtonText, 
-    disabled: true 
-  };
-  
-  return { 
-    text: '✓ Emarger', 
-    style: [HomeStyles.modernEmargerButton], 
-    textStyle: [Cstyles.emargerButtonText, HomeStyles.emargerButtonTextModern], 
-    disabled: false 
-  };
-};
-
-
-const handleEmargerPress = async (matiereId: string, endTime: string, courseLibelle: string, course: any, startTime: string) => {
-  
-    if (!locationPermissionGranted) {
-      Alert.alert('Permission requise', 'Veuillez accorder la permission de localisation pour continuer.', [{ text: 'Accorder permission', onPress: () => requestLocationPermission() }]);
-      return;
-    }
-    if (!isNearSchool) {
-      Alert.alert('Localisation requise', 'Vous devez être sur le campus de l\'école pour émarger ! 📍', [{ text: 'Vérifier à nouveau', onPress: () => getCurrentLocation() }, { text: 'OK', style: 'cancel' }]);
-      return;
-    }
-    if (!canEmarger(matiereId, endTime)) {
-      Alert.alert('Information', isStudentEmargedForCourseSync(matiereId) ? 'Vous avez déjà émargé pour ce cours aujourd\'hui.' : 'Le temps d\'émargement pour ce cours est expiré.');
-      return;
-    }
-
-    // Navigate to scanner with success callback and course information
-    navigation.navigate('Scanner', { 
-      matiereId, 
-      courseLibelle,
-      // Pass additional course information for the modal
-      courseInfo: {
-        start: course.start,
-        end: course.end,
-        enseignant: course.enseignant,
-        salle: course.salle
-      }
-    });
-  };
 
   const goToQRCode = (matiereId: string, courseLibelle: string) => {
     if (!matiereId) return Alert.alert('Erreur', 'ID du cours manquant');
     navigation.navigate('QRCodeScreen', { matiereId, courseLibelle });
   };
 
+  {/* 
+  const goToStudentList = (matiereId: string, courseLibelle: string, classId: string) => {
+    if (!matiereId || !classId) return Alert.alert('Erreur', 'Informations du cours manquantes');
+    // Navigate to student list for this course/class
+    navigation.navigate('StudentList', { matiereId, courseLibelle, classId });
+  };
+
+  */}
   const loading = matieresLoading || coursesLoading;
 
   if (loading) return (
@@ -576,8 +421,9 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
       >
         {/* Header Section */}
         <View style={HomeStyles.headerSection}>
-          <Text style={HomeStyles.welcomeText}>Accueil</Text>
+          <Text style={HomeStyles.welcomeText}>Accueil Professeur</Text>
           <Text style={HomeStyles.dateText}>Aujourd'hui • {todayDayName} {todayStr}</Text>
+          <Text style={HomeStyles.professorName}>Bienvenue, M. {professorName}</Text>
           
           {/* Location Status Indicator */}
           <View style={HomeStyles.locationStatus}>
@@ -647,7 +493,7 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
                 marginBottom: 8,
                 textAlign: 'center',
               }}>
-                IIBS Campus
+                IIBS Campus - Espace Professeur
               </Text>
               <Text style={{
                 fontSize: 16,
@@ -686,10 +532,10 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
                     fontWeight: 'bold', 
                     color: isNearSchool ? '#4CAF50' : '#FF9800' 
                   }}>
-                    {isNearSchool ? '📍' : '🚶'}
+                    {isNearSchool ? '🏫' : '🏠'}
                   </Text>
                   <Text style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
-                    {isNearSchool ? 'Campus' : 'Hors Campus'}
+                    {isNearSchool ? 'Campus' : 'À distance'}
                   </Text>
                 </View>
               </View>
@@ -709,11 +555,11 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
           <View style={eStyles.nextCourseContainer}>
             <View style={MatieresStyles.badgeContainer}>
                 <View style={MatieresStyles.badgeIcon}>
-                  <Text style={MatieresStyles.badgeIconText}>📖</Text>
+                  <Text style={MatieresStyles.badgeIconText}>👨‍🏫</Text>
                 </View>
                 <Text style={MatieresStyles.badgeText}>Prochain Cours</Text>
                 <View style={MatieresStyles.badgeCount}>
-                  <Text style={MatieresStyles.badgeCountText}>{matieres.length}</Text>
+                  <Text style={MatieresStyles.badgeCountText}>1</Text>
                 </View>
             </View>
             <View style={eStyles.nextCourseCard}>
@@ -724,7 +570,7 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
               />
               <View style={eStyles.nextCourseInfo}>
                 <Text style={eStyles.nextCourseTitle}>{nextCourse.matiere_libelle}</Text>
-                <Text style={eStyles.nextCourseText}>{nextCourse.enseignant}</Text>
+                <Text style={eStyles.nextCourseText}>Classe: {nextCourse.classe_libelle}</Text>
                 <Text style={eStyles.nextCourseText}>{nextCourse.start} - {nextCourse.end}</Text>
                 <Text style={eStyles.nextCourseText}>{nextCourse.salle}</Text>
                 <Text style={eStyles.nextCourseDay}>{nextCourse.day}</Text>
@@ -736,11 +582,11 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
         <View style={MatieresStyles.sectionHeader}>
           <View style={MatieresStyles.badgeContainer}>
             <View style={MatieresStyles.badgeIcon}>
-              <Text style={MatieresStyles.badgeIconText}>📖</Text>
+              <Text style={MatieresStyles.badgeIconText}>👨‍🏫</Text>
             </View>
             <Text style={MatieresStyles.badgeText}>Mes Cours du Jour</Text>
             <View style={MatieresStyles.badgeCount}>
-              <Text style={MatieresStyles.badgeCountText}>{matieres.length}</Text>
+              <Text style={MatieresStyles.badgeCountText}>{todayCourses.length}</Text>
             </View>
           </View>
         </View>
@@ -749,13 +595,12 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
         {todayCourses.length > 0 && (
           <View style={HomeStyles.courseGrid}>
             {todayCourses.map((item: any, index: number) => {
-              const buttonStatus = getEmargerButtonStatus(item.matiere_id, item.end, item.start);
+              const buttonStatus = getIndisponibleButtonStatus(item, item.end, item.start);
               const coursStatus = getCoursStatus(item.start, item.end);
 
               return (
-                
                 <View 
-                  key={`${item.matiere_id}-${index}`} 
+                  key={`${item.matiere_id}-${item.class_id}-${index}`} 
                   style={[
                     MatieresStyles.matiereCard,
                     index % 2 === 0 ? MatieresStyles.matiereCardLeft : MatieresStyles.matiereCardRight
@@ -764,7 +609,7 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
                   {/* Card Header */}
                   <View style={MatieresStyles.cardHeader}>
                     <View style={MatieresStyles.matiereIconContainer}>
-                      <Text style={MatieresStyles.matiereIcon}>🎓</Text>
+                      <Text style={MatieresStyles.matiereIcon}>👨‍🏫</Text>
                     </View>
                   </View>
 
@@ -775,9 +620,9 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
                     </Text>
 
                     <View style={MatieresStyles.professorInfo}>
-                      <Text style={MatieresStyles.professorIcon}>👨‍🏫</Text>
+                      <Text style={MatieresStyles.professorIcon}>🎓</Text>
                       <Text style={MatieresStyles.professorName} numberOfLines={1}>
-                        {item.enseignant}
+                        {item.classe_libelle}
                       </Text>
                     </View>
 
@@ -793,32 +638,17 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
                       </View>
                     </View>
 
-                   <TouchableOpacity
-                    style={buttonStatus.style}
-                    onPress={() =>
-                      handleEmargerPress(
-                        item.matiere_id,
-                        item.end,
-                        item.matiere_libelle,
-                        item,
-                        item.start
-                      )
-                    }
-                    disabled={
-                      buttonStatus.disabled ||
-                      !locationPermissionGranted ||
-                      !isNearSchool
-                    }
-                  >
-                    <Text style={buttonStatus.textStyle}>
-                      {!locationPermissionGranted
-                        ? 'Permission requise 📍'
-                        : !isNearSchool
-                          ? "Aller à l'école! 🏫"
-                          : buttonStatus.text}
-                    </Text>
-                  </TouchableOpacity>
+                    
 
+                    <TouchableOpacity
+                      style={buttonStatus.style}
+                      onPress={() => handleIndisponiblePress(item)}
+                      disabled={buttonStatus.disabled}
+                    >
+                      <Text style={buttonStatus.textStyle}>
+                        {buttonStatus.text}
+                      </Text>
+                    </TouchableOpacity>
 
                     {/* Status label */}
                     <Text
@@ -834,27 +664,26 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
                     </Text>
                   </View>
 
-                  {/* Card Footer */}
+                  {/* Card Footer 
                   <View style={MatieresStyles.cardFooter}>
                     <TouchableOpacity 
                       style={MatieresStyles.viewCoursesButton}
-                      onPress={() => goToQRCode(item.matiere_id, item.matiere_libelle)}
+                      onPress={() => goToStudentList(item.matiere_id, item.matiere_libelle, item.class_id)}
                     >
-                      <Text style={MatieresStyles.viewCoursesText}>Afficher QR</Text>
+                      <Text style={MatieresStyles.viewCoursesText}>Voir Étudiants</Text>
                       <Text style={MatieresStyles.arrowIcon}>→</Text>
                     </TouchableOpacity>
                   </View>
+                  */}
                 </View>
               );
             })}
           </View>
-
         )}
 
         {/* Show message if no courses today */}
         {todayCourses.length === 0 && (
           <View style={HomeStyles.sectionContainer}>
-
             <View style={HomeStyles.emptyState}>
               <Text style={HomeStyles.emptyIcon}>📅</Text>
               <Text style={HomeStyles.emptyText}>Aucun cours aujourd'hui</Text>
@@ -862,7 +691,6 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
             </View>
           </View>
         )}
-
 
       </ScrollView>
 

@@ -5,13 +5,13 @@ import BottomNavBar from '../../../components/layout/bottomBar';
 import CustomCalendar from '../../../components/hooks/calendar'; 
 import MatiereDetailsModal from '../../../components/modals/MatiereDetailsModal';
 import { theme } from '../../../styles/globalStyles';
-import { useStudentCourses, Slot } from '../../../components/hooks/coursStudent'; 
+import { useProfesseurCourses, Slot } from '../../../components/hooks/coursProfesseur'; 
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../navigation/index';
 import { Cstyles, styles } from './styles';
 import { getCoursStatus } from '../home/page';
 import { HomeStyles } from '../home/styles';
-import { MatieresStyles } from '../matieres/styles';
+import { MatieresStyles } from '../enseignments/styles';
 import LottieView from 'lottie-react-native';
 
 interface DropdownItem {
@@ -104,9 +104,9 @@ const CustomDropdown = ({
   );
 };
 
-type Props = NativeStackScreenProps<RootStackParamList, 'AllCoursesStudent'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'AllCoursesProfesseur'>;
 
-export default function AllCoursesStudent({ navigation }: Props) {
+export default function AllCoursesProfesseur({ navigation }: Props) {
     const [selectedDay, setSelectedDay] = useState('');
     const [selectedDate, setSelectedDate] = useState<Date | any>();
     const [filterMode, setFilterMode] = useState<'dropdown' | 'calendar'>('calendar');
@@ -119,7 +119,7 @@ export default function AllCoursesStudent({ navigation }: Props) {
     const [selectedMatiereCourses, setSelectedMatiereCourses] = useState<Slot[]>([]);
     const [selectedMatiereIndex, setSelectedMatiereIndex] = useState(0);
     
-    const { coursesByDay, loading: coursesLoading, refreshCourses, error } = useStudentCourses(); 
+    const { coursesByDay, loading: coursesLoading, refreshCourses, error } = useProfesseurCourses(); 
 
   const  refreshData = () => {
     refreshCourses();
@@ -637,15 +637,18 @@ export default function AllCoursesStudent({ navigation }: Props) {
             {filteredCoursesByDay.length > 0 ? (
               filteredCoursesByDay.map((section, index) => (
                 <View key={index}>
-                  <View style={[MatieresStyles.badgeContainerDays]}>
-                    <Text style={[MatieresStyles.badgeText]}>
-                      {section.title} 📚
-                      {selectedDate && ` - ${selectedDate.getDate()}/${selectedDate.getMonth() + 1}`}
-                    </Text>
-                    <View style={MatieresStyles.badgeCount}>
-                      <Text style={MatieresStyles.badgeCountText}>{section.data.length}</Text>
+                  {section.data.length > 0 && (
+                    <View style={[MatieresStyles.badgeContainerDays]}>
+                      <Text style={[MatieresStyles.badgeText]}>
+                        {section.title} 📚
+                        {selectedDate && ` - ${selectedDate.getDate()}/${selectedDate.getMonth() + 1}`}
+                      </Text>
+                      <View style={MatieresStyles.badgeCount}>
+                        <Text style={MatieresStyles.badgeCountText}>{section.data.length}</Text>
+                      </View>
                     </View>
-                  </View>
+                  )}
+               
                   {renderCoursesInRows(section.data)}
                 </View>
               ))
