@@ -132,11 +132,7 @@ export default function ProfileStudent({ navigation }: Props) {
   const handleActionPress = (actionId: string, actionTitle: string) => {
     switch (actionId) {
       case '1': // Profil
-        if(user?.role.toLocaleLowerCase() == 'etudiant'){
-          navigation.navigate('ShowProfileInfosStudent');
-        } else {
-          navigation.navigate('ShowProfileInfosProfesseur');
-        }
+        navigation.navigate('ShowProfileInfosStudent');
         break;
       case '2': // Notifications
         navigation.navigate('NotificationsInfos');

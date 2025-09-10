@@ -266,6 +266,7 @@ container: {
     paddingVertical: 20,
     paddingHorizontal: 16,
     alignItems: 'center',
+    marginTop: 8,
   },
 
   emargerButtonTextModern: {

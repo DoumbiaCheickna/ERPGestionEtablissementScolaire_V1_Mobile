@@ -25,7 +25,6 @@ import { db, getUserSnapchot } from '../../../firebaseConfig';
 import { styles } from './styles';
 import AbsenceJustificationModal from './AbsenceJustificationModal';
 
-
 const { width, height } = Dimensions.get('window');
 const SWIPE_THRESHOLD = width * 0.3; 
 
@@ -65,7 +64,6 @@ export default function Absences({navigation}: Props) {
     const [modalVisible, setModalVisible] = useState(false);
     const [userMatricule, setUserMatricule] = useState('');
 
-    
 
     const getAbsences = useCallback(async () => {
         try {
@@ -671,7 +669,6 @@ export default function Absences({navigation}: Props) {
                         </View>
                     )}
                 </ScrollView>
-                
                 <AbsenceJustificationModal
                     visible={modalVisible}
                     absence={selectedAbsence}

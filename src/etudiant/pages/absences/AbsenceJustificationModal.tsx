@@ -192,7 +192,7 @@ export default function AbsenceJustificationModal({
         }
       }
 
-      // Get all documents from emargements collection
+      // Get ALL documents from emargements collection
       const emargementsRef = collection(db, 'emargements');
       const querySnapshot = await getDocs(emargementsRef);
 
@@ -205,64 +205,73 @@ export default function AbsenceJustificationModal({
 
       let targetDoc = null;
       let targetDocRef = null;
+      let targetAbsenceIndex = -1;
 
-      // Loop through all documents to find the one containing our matricule
+      // Loop through ALL documents to find the one containing the specific absence
       querySnapshot.forEach((docSnapshot) => {
         const data = docSnapshot.data();
-        if (data[userMatricule]) {
-          targetDoc = data;
-          targetDocRef = docSnapshot.ref;
+        
+        // Check if this document has data for our user
+        if (data[userMatricule] && Array.isArray(data[userMatricule])) {
+          const userAbsences = data[userMatricule];
+          
+          // Look for the specific absence in this document
+          const absenceIndex = userAbsences.findIndex((item: any) => {
+            return (
+              item.type === 'absence' &&
+              item.matiere_id === absence.matiere_id &&
+              item.date === absence.date &&
+              item.start === absence.start &&
+              item.end === absence.end &&
+              item.matricule === absence.matricule
+            );
+          });
+
+          // If we found the absence in this document
+          if (absenceIndex !== -1) {
+            targetDoc = data;
+            targetDocRef = docSnapshot.ref;
+            targetAbsenceIndex = absenceIndex;
+            return; 
+          }
         }
       });
 
-      if (!targetDoc || !targetDocRef) {
-        Alert.alert('Erreur', 'Aucune donnée trouvée pour cet utilisateur');
-        setIsSubmitting(false);
-        setUploadProgress(0);
-        return;
-      }
-
-      // Get the user's absences array using their matricule as key
-      const userAbsences: any = targetDoc[userMatricule];
-      
-      if (!Array.isArray(userAbsences)) {
-        Alert.alert('Erreur', 'Aucune donnée trouvée pour cet utilisateur');
-        setIsSubmitting(false);
-        setUploadProgress(0);
-        return;
-      }
-      
-      let absenceFound = false;
-      const updatedAbsences = userAbsences.map((item: any) => {
-        if (
-          item.type === 'absence' &&
-          item.matiere_id == absence.matiere_id &&
-          item.date == absence.date &&
-          item.start == absence.start &&
-          item.end == absence.end
-        ) {
-          absenceFound = true;
-          return {
-            ...item,
-            justification: {
-              contenu: justificationText.trim(),
-              documents: uploadedDocuments,
-              dateJustification: new Date().toISOString(),
-              statut: 'En cours'
-            }
-          };
-        }
-        return item;
-      });
-
-      if (!absenceFound) {
+      // Check if we found the target absence
+      if (!targetDoc || !targetDocRef || targetAbsenceIndex === -1) {
+        console.log('Absence not found in any document');
+        console.log('Search criteria:', {
+          type: 'absence',
+          matiere_id: absence.matiere_id,
+          date: absence.date,
+          start: absence.start,
+          end: absence.end,
+          matricule: absence.matricule
+        });
+        
         Alert.alert('Erreur', 'Absence introuvable dans les données');
         setIsSubmitting(false);
         setUploadProgress(0);
         return;
       }
 
-      // Update the document in Firestore with the modified user absences
+      // Get the user's absences from the found document
+      const userAbsences: any = targetDoc[userMatricule];
+      
+      // Create a copy and update the specific absence
+      const updatedAbsences = [...userAbsences];
+      updatedAbsences[targetAbsenceIndex] = {
+        ...updatedAbsences[targetAbsenceIndex],
+        justification: {
+          contenu: justificationText.trim(),
+          documents: uploadedDocuments,
+          dateJustification: new Date().toISOString(),
+          statut: 'En cours'
+        }
+      };
+
+
+      // Update the specific document in Firestore
       await updateDoc(targetDocRef, {
         [userMatricule]: updatedAbsences
       });
@@ -274,12 +283,13 @@ export default function AbsenceJustificationModal({
       );
 
     } catch (error) {
-      console.error('Error submitting justification:', error);
       Alert.alert('Erreur', 'Impossible d\'envoyer la justification');
     } finally {
       setIsSubmitting(false);
     }
   }, [absence, justificationText, attachedDocuments, userMatricule]);
+
+
 
   const handleClose = useCallback(() => {
     setJustificationText('');

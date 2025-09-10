@@ -810,28 +810,28 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
                       !isNearSchool
                     }
                   >
-                    <Text style={buttonStatus.textStyle}>
-                      {!locationPermissionGranted
-                        ? 'Permission requise 📍'
-                        : !isNearSchool
-                          ? "Aller à l'école! 🏫"
-                          : buttonStatus.text}
-                    </Text>
+                      <Text style={buttonStatus.textStyle}>
+                        {!locationPermissionGranted
+                          ? 'Permission requise 📍'
+                          : !isNearSchool
+                            ? "Aller à l'école! 🏫"
+                            : buttonStatus.text}
+                      </Text>
                   </TouchableOpacity>
 
 
-                    {/* Status label */}
-                    <Text
-                      style={
-                        coursStatus.type == 'warning'
-                          ? HomeStyles.statusWarning
-                          : coursStatus.type == 'primary'
-                          ? HomeStyles.statusPrimary
-                          : HomeStyles.statusSuccess
-                      }
-                    >
-                      {coursStatus.label}
-                    </Text>
+                      {/* Status label */}
+                      <Text
+                        style={
+                          coursStatus.type == 'warning'
+                            ? HomeStyles.statusWarning
+                            : coursStatus.type == 'primary'
+                            ? HomeStyles.statusPrimary
+                            : HomeStyles.statusSuccess
+                        }
+                      >
+                        {coursStatus.label}
+                      </Text>
                   </View>
 
                   {/* Card Footer */}

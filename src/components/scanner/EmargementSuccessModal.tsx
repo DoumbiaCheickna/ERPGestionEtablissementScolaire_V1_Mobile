@@ -95,7 +95,7 @@ export const EmargementSuccessModal: React.FC<EmargementSuccessModalProps> = ({
       };
 
       // For students - save to user document
-      if (userRole.toLowerCase() === 'etudiant') {
+      if (userRole.toLowerCase() == 'etudiant') {
         const userLogin = await AsyncStorage.getItem('userLogin');
         if (!userLogin) return;
         

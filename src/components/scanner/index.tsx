@@ -280,7 +280,7 @@ export default function Scanner({ navigation, route }: Props) {
         setCourseInfo(finalCourseInfo);
 
         // Save based on user role
-        if (userRole.toLowerCase() === 'etudiant') {
+        if (userRole.toLowerCase() == 'etudiant') {
           await saveEmargedCourseStudent(
             finalCourseInfo.matiere_id, 
             finalCourseInfo.libelle, 
@@ -288,7 +288,7 @@ export default function Scanner({ navigation, route }: Props) {
             finalCourseInfo.end, 
             finalCourseInfo.salle
           );
-        } else if (userRole.toLowerCase() === 'professeur') {
+        } else if (userRole.toLowerCase() == 'professeur') {
           await saveEmargedCourseProfessor(
             finalCourseInfo.matiere_id, 
             finalCourseInfo.libelle, 
