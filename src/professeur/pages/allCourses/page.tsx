@@ -485,6 +485,7 @@ export default function AllCoursesProfesseur({ navigation }: Props) {
               <View style={styles.nextCourseInfo}>
                 <Text style={styles.nextCourseTitle}>{nextCourse.matiere_libelle}</Text>
                 <Text style={styles.nextCourseText}>{nextCourse.enseignant}</Text>
+                <Text style={styles.nextCourseText}>{nextCourse.combined_classes}</Text>
                 <Text style={styles.nextCourseText}>{nextCourse.start} - {nextCourse.end}</Text>
                 <Text style={styles.nextCourseText}>{nextCourse.salle}</Text>
                 <Text style={styles.nextCourseDay}>{nextCourse.day}</Text>

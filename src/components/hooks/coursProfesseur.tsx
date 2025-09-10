@@ -1,4 +1,4 @@
-// Updated useProfesseurCourses hook for professors
+// Updated useProfesseurCourses hook for professors - Fixed duplicate courses
 import { useState, useEffect, useCallback } from 'react';
 import { getDoc, collection, query, where, getDocs, doc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'; 
@@ -14,7 +14,10 @@ export interface Slot {
   matiere_id: string;
   class_id: string;
   classe_libelle: string;
-  prof_doc_id?: string; // Add this field
+  prof_doc_id?: string;
+  // New fields for combined classes
+  combined_classes?: string; // "L3 Cyber, L3 Data IA, L3 GL"
+  class_ids?: string[]; // Array of all class IDs for this time slot
 }
 
 export interface DayCourses {
@@ -55,6 +58,57 @@ export const useProfesseurCourses = () => {
       console.error('Error getting user doc ID:', error);
       return null;
     }
+  };
+
+  // Helper function to create a unique key for grouping courses
+  const createCourseKey = (slot: any) => {
+    return `${slot.day}-${slot.start}-${slot.end}-${slot.salle}`;
+  };
+
+  // Helper function to deduplicate and combine courses
+  const deduplicateCourses = (slots: Slot[]): Slot[] => {
+    const courseMap = new Map<string, Slot>();
+
+    slots.forEach(slot => {
+      const courseKey = createCourseKey(slot);
+      
+      if (courseMap.has(courseKey)) {
+        // Course already exists, combine the class information
+        const existingSlot = courseMap.get(courseKey)!;
+        
+        // Add class info to combined classes if not already included
+        const existingClasses = existingSlot.combined_classes ? 
+          existingSlot.combined_classes.split(', ') : [existingSlot.classe_libelle];
+        
+        if (!existingClasses.includes(slot.classe_libelle)) {
+          existingClasses.push(slot.classe_libelle);
+        }
+        
+        // Update combined class IDs
+        const existingClassIds = existingSlot.class_ids || [existingSlot.class_id];
+        if (!existingClassIds.includes(slot.class_id)) {
+          existingClassIds.push(slot.class_id);
+        }
+        
+        // Update the existing slot
+        existingSlot.combined_classes = existingClasses.join(', ');
+        existingSlot.class_ids = existingClassIds;
+        
+        // Use the combined classes as the main classe_libelle if multiple classes
+        if (existingClasses.length > 1) {
+          existingSlot.classe_libelle = existingSlot.combined_classes;
+        }
+      } else {
+        // New course, add to map
+        courseMap.set(courseKey, {
+          ...slot,
+          combined_classes: slot.classe_libelle,
+          class_ids: [slot.class_id]
+        });
+      }
+    });
+
+    return Array.from(courseMap.values());
   };
 
   const fetchCourses = useCallback(async () => {
@@ -130,10 +184,8 @@ export const useProfesseurCourses = () => {
         return;
       }
 
-      const slotsByDay: DayCourses[] = dayNames.map(day => ({
-        title: day,
-        data: []
-      }));
+      // Collect all slots first (before deduplication)
+      const allSlots: Slot[] = [];
 
       // For each class the professor teaches
       for (const classe of classes) {
@@ -158,8 +210,8 @@ export const useProfesseurCourses = () => {
               
               // Additional check: if prof_doc_id exists in slot, use it for exact matching
               const profMatches = slot.prof_doc_id 
-                ? slot.prof_doc_id === profDocId 
-                : slot.enseignant === professorName; // Fallback to name matching
+                ? slot.prof_doc_id == profDocId 
+                : slot.enseignant == professorName; // Fallback to name matching
               
               return belongsToProf && profMatches;
             });
@@ -167,7 +219,7 @@ export const useProfesseurCourses = () => {
             professorSlots.forEach(slot => {
               const dayIndex = slot.day - 1;
               if (dayIndex >= 0 && dayIndex < 6) {
-                slotsByDay[dayIndex].data.push({
+                allSlots.push({
                   day: slot.day,
                   start: slot.start,
                   end: slot.end,
@@ -177,13 +229,38 @@ export const useProfesseurCourses = () => {
                   matiere_id: slot.matiere_id,
                   class_id: classId,
                   classe_libelle: classeLibelle,
-                  prof_doc_id: slot.prof_doc_id || profDocId, // Store professor doc ID
+                  prof_doc_id: slot.prof_doc_id || profDocId,
                 });
               }
             });
           });
         }
       }
+
+      // Now deduplicate the slots
+      const deduplicatedSlots = deduplicateCourses(allSlots);
+
+      // Group deduplicated slots by day
+      const slotsByDay: DayCourses[] = dayNames.map(day => ({
+        title: day,
+        data: []
+      }));
+
+      deduplicatedSlots.forEach(slot => {
+        const dayIndex = slot.day - 1;
+        if (dayIndex >= 0 && dayIndex < 6) {
+          slotsByDay[dayIndex].data.push(slot);
+        }
+      });
+
+      // Sort slots within each day by start time
+      slotsByDay.forEach(day => {
+        day.data.sort((a, b) => {
+          const timeA = a.start.split(':').map(n => parseInt(n));
+          const timeB = b.start.split(':').map(n => parseInt(n));
+          return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+        });
+      });
 
       // Cache the results
       coursesCache = slotsByDay;
@@ -199,9 +276,11 @@ export const useProfesseurCourses = () => {
     }
   }, []);
 
+
   useEffect(() => {
     fetchCourses();
   }, [fetchCourses]);
+
 
   // Add refresh function for manual refresh
   const refreshCourses = useCallback(() => {

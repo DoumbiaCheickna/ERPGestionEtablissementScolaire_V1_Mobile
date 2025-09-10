@@ -407,33 +407,35 @@ export default function HomeProfesseur({ navigation }: Props) {
   };
 
   const handleEmargerPress = async (matiereId: string, endTime: string, courseLibelle: string, course: any, startTime: string) => {
-    
-    if (!locationPermissionGranted) {
-      Alert.alert('Permission requise', 'Veuillez accorder la permission de localisation pour continuer.', [{ text: 'Accorder permission', onPress: () => requestLocationPermission() }]);
-      return;
-    }
-    if (!isNearSchool) {
-      Alert.alert('Localisation requise', 'Vous devez être sur le campus de l\'école pour émarger !', [{ text: 'Vérifier à nouveau', onPress: () => getCurrentLocation() }, { text: 'OK', style: 'cancel' }]);
-      return;
-    }
-    if (!canEmarger(matiereId, endTime, startTime)) {
-      Alert.alert('Information', isProfesseurEmargedForCourseSync(matiereId, startTime, endTime) ? 'Vous avez déjà émargé pour ce cours aujourd\'hui.' : 'Le temps d\'émargement pour ce cours est expiré.');
-      return;
-    }
+  
+  if (!locationPermissionGranted) {
+    Alert.alert('Permission requise', 'Veuillez accorder la permission de localisation pour continuer.', [{ text: 'Accorder permission', onPress: () => requestLocationPermission() }]);
+    return;
+  }
+  if (!isNearSchool) {
+    Alert.alert('Localisation requise', 'Vous devez être sur le campus de l\'école pour continuer !', [{ text: 'Vérifier à nouveau', onPress: () => getCurrentLocation() }, { text: 'OK', style: 'cancel' }]);
+    return;
+  }
+  if (!canEmarger(matiereId, endTime, startTime)) {
+    Alert.alert('Information', isProfesseurEmargedForCourseSync(matiereId, startTime, endTime) ? 'Vous avez déjà émargé pour ce cours aujourd\'hui.' : 'Le temps d\'émargement pour ce cours est expiré.');
+    return;
+  }
 
-    // Navigate to scanner with success callback and course information
-    navigation.navigate('Scanner', { 
-      matiereId, 
-      courseLibelle,
-      // Pass additional course information for the modal
-      courseInfo: {
-        start: course.start,
-        end: course.end,
-        enseignant: professorName,
-        salle: course.salle
-      }
-    });
-  };
+  // Navigate to scanner with success callback and course information
+  navigation.navigate('Scanner', { 
+    matiereId, 
+    courseLibelle,
+    // Pass additional course information for the modal
+    courseInfo: {
+      start: course.start,
+      end: course.end,
+      enseignant: professorName,
+      salle: course.salle,
+      classes: course.combined_classes || course.classe_libelle, // Combined classes
+      class_ids: course.class_ids || [course.class_id] // All class IDs
+    }
+  });
+};
 
 
   
@@ -621,7 +623,9 @@ export default function HomeProfesseur({ navigation }: Props) {
               />
               <View style={eStyles.nextCourseInfo}>
                 <Text style={eStyles.nextCourseTitle}>{nextCourse.matiere_libelle}</Text>
-                <Text style={eStyles.nextCourseText}>Classe: {nextCourse.classe_libelle}</Text>
+                <Text style={eStyles.nextCourseText}>
+                  Classe{nextCourse.class_ids && nextCourse.class_ids.length > 1 ? 's' : ''}: {nextCourse.combined_classes || nextCourse.classe_libelle}
+                </Text>
                 <Text style={eStyles.nextCourseText}>{nextCourse.start} - {nextCourse.end}</Text>
                 <Text style={eStyles.nextCourseText}>{nextCourse.salle}</Text>
                 <Text style={eStyles.nextCourseDay}>{nextCourse.day}</Text>
@@ -670,10 +674,12 @@ export default function HomeProfesseur({ navigation }: Props) {
                     {/* Class Info */}
                     <View style={MatieresStyles.professorInfo}>
                       <Text style={MatieresStyles.professorIcon}>👨‍🎓</Text>
-                      <Text style={MatieresStyles.professorName} numberOfLines={1}>
-                        {item.classe_libelle}
+                      <Text style={{fontSize: 12}}>
+                        {item.combined_classes || item.classe_libelle}
                       </Text>
                     </View>
+
+                    
 
                     {/* Schedule */}
                     <View style={MatieresStyles.matiereStats}>
@@ -724,8 +730,30 @@ export default function HomeProfesseur({ navigation }: Props) {
                     >
                       <Text style={MatieresStyles.viewCoursesText}>Générer QR Code</Text>
                       <Text style={MatieresStyles.arrowIcon}>→</Text>
+                      
                     </TouchableOpacity>
+                    {item.class_ids && item.class_ids.length > 1 && (
+                    <View style={{
+                      backgroundColor: '#E3F2FD',
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      marginVertical: 5,
+                      borderRadius: 12,
+                      alignSelf: 'flex-start',
+                      marginTop: 5
+                    }}>
+                      <Text style={{
+                        fontSize: 12,
+                        color: '#d29819ff',
+                        fontWeight: '500'
+                      }}>
+                        {item.class_ids.length} classes combinées
+                      </Text>
+                    </View>
+                  )}
                   </View>
+
+                  
                 </View>
               );
             })}

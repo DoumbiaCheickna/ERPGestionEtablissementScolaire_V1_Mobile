@@ -51,6 +51,8 @@ export type RootStackParamList = {
       start: string;
       end: string;
       enseignant: string;
+      class_ids: any;
+      classes: any;
       salle: string
     };
   };

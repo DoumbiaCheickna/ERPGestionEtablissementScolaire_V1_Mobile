@@ -1,7 +1,7 @@
-// Updated useMatieres hook with caching
+// Fixed useUserMatieres hook with proper deduplication for multiple classes
 import { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
-import { db } from '../../firebaseConfig';
+import { collection, getDocs, query, where, doc, getDoc, QuerySnapshot, DocumentData } from "firebase/firestore";
+import { db, getUserSnapchot } from '../../firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type Matiere = {
@@ -10,34 +10,31 @@ export type Matiere = {
   professeurNom: string;
   professeurPrenom: string;
   professeurFullName: string;
+  classeIds: string[]; // Changed to array to track multiple classes
 };
 
-// Global cache for matieres
+export type UserData = {
+  id: string;
+  login: string;
+  nom: string;
+  prenom: string;
+  classe_id?: string;
+  classe2_id?: string;
+  [key: string]: any;
+};
+
+// Global cache
+let userDataCache: UserData | null = null;
 let matieresCache: Matiere[] = [];
+let userDataLoaded = false;
 let matieresLoaded = false;
 
-export const useStudentMatieres = () => { 
+
+
+export const useStudentMatieres = () => {
+  const [userData, setUserData] = useState<UserData | null>(userDataCache);
   const [matieres, setMatieres] = useState<Matiere[]>(matieresCache);
-  const [loading, setLoading] = useState(!matieresLoaded);
-  const [userFiliereId, setUserFiliereId] = useState<string>('');
-  const [userNiveauId, setUserNiveauId] = useState<string>('');
-
-  // Get user data from AsyncStorage
-  const getUserData = async () => {
-    try {
-      const filiereId = await AsyncStorage.getItem('filiere');
-      const niveauId = await AsyncStorage.getItem('niveau');
-
-      if (filiereId && niveauId) {
-        setUserFiliereId(filiereId);
-        setUserNiveauId(niveauId);
-        return { filiereId, niveauId };
-      }
-      return null;
-    } catch (error) {
-      return null;
-    }
-  };
+  const [loading, setLoading] = useState(!userDataLoaded || !matieresLoaded);
 
   // Fetch professor information
   const fetchProfesseurInfo = async (professeurId: string) => {
@@ -54,57 +51,60 @@ export const useStudentMatieres = () => {
       }
       return { nom: '', prenom: '' };
     } catch (error) {
+      console.error("Error fetching professor info:", error);
       return { nom: '', prenom: '' };
     }
   };
 
-  const fetchUserMatières = async (filiereId: string, niveauId: string) => {
+  // Fetch user data
+  const fetchUserData = async () => {
     try {
       // If already loaded, use cache
-      if (matieresLoaded) {
-        setMatieres(matieresCache);
-        setLoading(false);
-        return;
+      if (userDataLoaded && userDataCache) {
+        setUserData(userDataCache);
+        return userDataCache;
       }
 
-      setLoading(true);
-
-      // Step 1: Find the classe with matching filiere_id and niveau_id
-      const classesRef = collection(db, "classes");
-      const classQuery = query(
-        classesRef,
-        where("filiere_id", "==", filiereId),
-        where("niveau_id", "==", niveauId)
-      );
-      const classSnapshot = await getDocs(classQuery);
-
-      if (classSnapshot.empty) {
-        const emptyResult: Matiere[] = [];
-        setMatieres(emptyResult);
-        matieresCache = emptyResult;
-        matieresLoaded = true;
-        setLoading(false);
-        return;
+      const userSnapshot = await getUserSnapchot();
+      
+      if (!userSnapshot || userSnapshot.empty) {
+        userDataCache = null;
+        userDataLoaded = true;
+        setUserData(null);
+        return null;
       }
 
-      const classeDoc = classSnapshot.docs[0];
-      const classeId = classeDoc.id;
+      const userDoc = userSnapshot.docs[0];
+      const userData = userDoc.data() as UserData;
+      userData.id = userDoc.id;
 
-      // Step 2: Query all EDT docs for this classe
+      // Cache the user data
+      userDataCache = userData;
+      userDataLoaded = true;
+      setUserData(userData);
+      return userData;
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      userDataCache = null;
+      userDataLoaded = true;
+      setUserData(null);
+      return null;
+    }
+  };
+
+  // Fetch matieres for a specific class
+  const fetchMatieresForClass = async (classeId: string): Promise<Matiere[]> => {
+    try {
+      // Step 1: Query all EDT docs for this classe
       const edtsRef = collection(db, "edts");
       const edtQuery = query(edtsRef, where("class_id", "==", classeId));
       const edtSnapshot = await getDocs(edtQuery);
 
       if (edtSnapshot.empty) {
-        const emptyResult: Matiere[] = [];
-        setMatieres(emptyResult);
-        matieresCache = emptyResult;
-        matieresLoaded = true;
-        setLoading(false);
-        return;
+        return [];
       }
 
-      // Step 3: Collect all unique matiere IDs from slots
+      // Step 2: Collect all unique matiere IDs from slots
       const uniqueMatiereIds = new Set<string>();
       edtSnapshot.forEach((edtDoc) => {
         const edtData = edtDoc.data();
@@ -117,15 +117,10 @@ export const useStudentMatieres = () => {
       });
 
       if (uniqueMatiereIds.size === 0) {
-        const emptyResult: Matiere[] = [];
-        setMatieres(emptyResult);
-        matieresCache = emptyResult;
-        matieresLoaded = true;
-        setLoading(false);
-        return;
+        return [];
       }
 
-      // Step 4: Query affectations_professeurs ONCE
+      // Step 3: Query affectations_professeurs ONCE
       const affectationsRef = collection(db, "affectations_professeurs");
       const affectationsSnapshot = await getDocs(affectationsRef);
 
@@ -145,9 +140,8 @@ export const useStudentMatieres = () => {
 
           // Find professor via affectations
           let professeurInfo = { nom: "", prenom: "" };
-
-          // If professor found, fetch user info
           let fullName = "Professeur non assigné";
+
           for (const affectationDoc of affectationsSnapshot.docs) {
             const affectationData = affectationDoc.data();
             const classes = affectationData.classes || [];
@@ -177,39 +171,107 @@ export const useStudentMatieres = () => {
             professeurNom: professeurInfo.nom,
             professeurPrenom: professeurInfo.prenom,
             professeurFullName: fullName,
+            classeIds: [classeId], // Initialize with current class as array
           });
         } catch (err) {
           console.error("Error fetching matiere", matiereId, err);
         }
       }
 
-      // Cache the results
-      matieresCache = matièresData;
-      matieresLoaded = true;
-      setMatieres(matièresData);
+      return matièresData;
     } catch (error) {
-      console.error(error);
+      console.error("Error fetching matieres for class", classeId, error);
+      return [];
+    }
+  };
+
+  // Fetch all matieres for user's classes
+  const fetchUserMatieres = async (userData: UserData) => {
+    try {
+      // If already loaded, use cache
+      if (matieresLoaded) {
+        setMatieres(matieresCache);
+        return;
+      }
+
+      const allMatieres: Matiere[] = [];
+      
+      // Fetch matieres for classe_id if it exists
+      if (userData.classe_id) {
+        const classe1Matieres = await fetchMatieresForClass(userData.classe_id);
+        allMatieres.push(...classe1Matieres);
+      }
+
+      // Fetch matieres for classe2_id if it exists
+      if (userData.classe2_id) {
+        const classe2Matieres = await fetchMatieresForClass(userData.classe2_id);
+        allMatieres.push(...classe2Matieres);
+      }
+
+      // FIXED: Remove duplicates based on matiere id ONLY and merge class information
+      const matieresMap = new Map<string, Matiere>();
+      
+      allMatieres.forEach((matiere) => {
+        if (matieresMap.has(matiere.id)) {
+          // If matiere already exists, merge the classeIds
+          const existingMatiere = matieresMap.get(matiere.id)!;
+          existingMatiere.classeIds = [...new Set([...existingMatiere.classeIds, ...matiere.classeIds])];
+        } else {
+          // Create a new matiere with classeIds as array
+          matieresMap.set(matiere.id, { 
+            ...matiere, 
+            classeIds: [...matiere.classeIds] // Ensure it's a copy
+          });
+        }
+      });
+      
+      console.log("Matieres after deduplication:", Array.from(matieresMap.values()));
+      const uniqueMatieres = Array.from(matieresMap.values());
+
+      // Cache the results
+      matieresCache = uniqueMatieres;
+      matieresLoaded = true;
+      setMatieres(uniqueMatieres);
+    } catch (error) {
+      console.error("Error fetching user matieres:", error);
       setMatieres([]);
+    }
+  };
+
+  // Initialize data
+  const initializeData = async () => {
+    try {
+      setLoading(true);
+      
+      // First get user data
+      const user = await fetchUserData();
+      
+      if (user && (user.classe_id || user.classe2_id)) {
+        // Then get matieres for user's classes
+        await fetchUserMatieres(user);
+      }
+    } catch (error) {
+      console.error("Error initializing data:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const initializeData = async () => {
-    const userData = await getUserData();
+  // Refresh function to clear cache and reload
+  const refreshUserMatieres = () => {
+    // Clear all caches
+    userDataLoaded = false;
+    matieresLoaded = false;
+    userDataCache = null;
+    matieresCache = [];
     
-    if (userData && userData.filiereId && userData.niveauId) {
-      await fetchUserMatières(userData.filiereId, userData.niveauId);
-    } else {
-      setLoading(false);
-    }
+    // Reinitialize
+    initializeData();
   };
 
-  const refreshMatieres = () => {
-    // Clear cache and force reload
-    matieresLoaded = false;
-    matieresCache = [];
-    initializeData();
+  // FIXED: Get matieres for specific class
+  const getMatieresForClass = (classeId: string): Matiere[] => {
+    return matieres.filter(matiere => matiere.classeIds.includes(classeId));
   };
 
   useEffect(() => {
@@ -217,10 +279,13 @@ export const useStudentMatieres = () => {
   }, []);
 
   return {
+    userData,
     matieres,
     loading,
-    userFiliereId,
-    userNiveauId,
-    refreshMatieres
+    refreshUserMatieres,
+    getMatieresForClass, // Helper function to get matieres by class
+    // Additional helpers
+    classe1Matieres: userData?.classe_id ? getMatieresForClass(userData.classe_id) : [],
+    classe2Matieres: userData?.classe2_id ? getMatieresForClass(userData.classe2_id) : [],
   };
 };

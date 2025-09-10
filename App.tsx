@@ -2,8 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import { AppState, Alert } from 'react-native';
 import AppNavigator from './src/navigation';
-import messaging from '@react-native-firebase/messaging';
-import { startAutomaticAbsenceService, stopAutomaticAbsenceService } from './src/etudiant/utils/emargement';
+import { startAutomaticAbsenceService, stopAutomaticAbsenceService } from './src/utils/emargement';
 
 export default function App() {
   const absenceServiceRef = useRef<NodeJS.Timeout | null>(null);

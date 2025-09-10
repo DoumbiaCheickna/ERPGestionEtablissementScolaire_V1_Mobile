@@ -26,6 +26,7 @@ interface Course {
   salle: string;
   type: string;
   day?: string;
+  class_id?: string; // Added to track which class the course belongs to
 }
 
 interface Matiere {
@@ -33,10 +34,11 @@ interface Matiere {
   title: string;
   professeurFullName: string;
   description?: string;
+  classeIds: string[]; // Added to match the hook's structure
 }
 
 export default function MatieresStudent({ navigation }: Props) {
-  const { matieres, loading: matieresLoading, refreshMatieres } = useStudentMatieres();
+  const { matieres, loading: matieresLoading, refreshUserMatieres } = useStudentMatieres();
   const { coursesByDay, loading: coursesLoading, refreshCourses } = useStudentCourses();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -48,7 +50,7 @@ export default function MatieresStudent({ navigation }: Props) {
 
   const refreshData = () => {
     refreshCourses();
-    refreshMatieres()
+    refreshUserMatieres()
   }
 
   // Get today's date info
@@ -57,53 +59,76 @@ export default function MatieresStudent({ navigation }: Props) {
   const todayDayName = dayNames[today.getDay()];
   const todayStr = `${today.getDate().toString().padStart(2,'0')}/${(today.getMonth()+1).toString().padStart(2,'0')}/${today.getFullYear()}`;
 
-  // Get course statistics for each matiere
-  const getMatiereStats = (matiereId: string) => {
+  // FIXED: Get course statistics for each matiere across all its classes
+  const getMatiereStats = (matiere: Matiere) => {
     let totalCourses = 0;
     let todayCourses = 0;
     
-    coursesByDay.forEach((day: any) => {
-      const dayCourses = day.data.filter((course: any) => course.matiere_id === matiereId);
-      totalCourses += dayCourses.length;
-      
-      if (day.title === todayDayName) {
-        todayCourses += dayCourses.length;
-      }
+    // Count courses across all classes this matiere belongs to
+    matiere.classeIds.forEach(classeId => {
+      coursesByDay.forEach((day: any) => {
+        const dayCourses = day.data.filter((course: any) => 
+          course.matiere_id === matiere.id && 
+          (course.class_id === classeId || !course.class_id) // Handle cases where class_id might not be set
+        );
+        totalCourses += dayCourses.length;
+        
+        if (day.title === todayDayName) {
+          todayCourses += dayCourses.length;
+        }
+      });
     });
     
     return { totalCourses, todayCourses };
   };
 
-  // Get all courses for a specific matiere - FIXED FUNCTION
-  const getCoursesForMatiere = (matiereId: string): Course[] => {
+  // FIXED: Get all courses for a specific matiere across all its classes
+  const getCoursesForMatiere = (matiere: Matiere): Course[] => {
     const allCourses: Course[] = [];
     
-    coursesByDay.forEach((day: any) => {
-      const dayCourses = day.data
-        .filter((course: any) => course.matiere_id === matiereId)
-        .map((course: any) => ({
-          id: course.matiere_id, // Using matiere_id as id
-          matiere_id: course.matiere_id,
-          start: course.start,
-          end: course.end,
-          salle: course.salle,
-          type: course.type || 'Cours', // Default type if not provided
-          day: day.title
-        }));
-      allCourses.push(...dayCourses);
+    matiere.classeIds.forEach(classeId => {
+      coursesByDay.forEach((day: any) => {
+        const dayCourses = day.data
+          .filter((course: any) => 
+            course.matiere_id === matiere.id && 
+            (course.class_id === classeId || !course.class_id)
+          )
+          .map((course: any) => ({
+            id: `${course.matiere_id}-${classeId}-${course.start}-${course.salle}`, // More unique ID
+            matiere_id: course.matiere_id,
+            start: course.start,
+            end: course.end,
+            salle: course.salle,
+            type: course.type || 'Cours',
+            day: day.title,
+            class_id: classeId
+          }));
+        allCourses.push(...dayCourses);
+      });
     });
     
-    return allCourses;
+    // Remove potential duplicates based on time, day, and room
+    const uniqueCourses = allCourses.filter((course, index, self) =>
+      index === self.findIndex((c) => 
+        c.start === course.start && 
+        c.end === course.end && 
+        c.day === course.day && 
+        c.salle === course.salle &&
+        c.matiere_id === course.matiere_id
+      )
+    );
+    
+    return uniqueCourses;
   };
 
-  // FIXED: Get next course for a specific matiere
-  const getNextCourseForMatiere = (matiereId: string): Course | null => {
+  // FIXED: Get next course for a specific matiere across all its classes
+  const getNextCourseForMatiere = (matiere: Matiere): Course | null => {
     const currentTime = today.getHours() * 60 + today.getMinutes();
     let nextCourse: Course | null = null;
     let minTimeDifference = Infinity;
 
-    // Get all courses for this matiere across all days
-    const allMatiereCourses = getCoursesForMatiere(matiereId);
+    // Get all courses for this matiere across all its classes
+    const allMatiereCourses = getCoursesForMatiere(matiere);
 
     // First, try to find upcoming courses for today
     const todayMatiereCourses = allMatiereCourses.filter(course => course.day === todayDayName);
@@ -298,8 +323,9 @@ export default function MatieresStudent({ navigation }: Props) {
           {matieres.length > 0 ? (
             <View style={MatieresStyles.matieresGrid}>
               {matieres.map((matiere, index) => {
-                const stats = getMatiereStats(matiere.id);
-                const nextCourse: Course | null = getNextCourseForMatiere(matiere.id);
+                // FIXED: Pass the entire matiere object instead of just ID
+                const stats = getMatiereStats(matiere);
+                const nextCourse: Course | null = getNextCourseForMatiere(matiere);
                 
                 return (
                   <TouchableOpacity 
@@ -400,15 +426,15 @@ export default function MatieresStudent({ navigation }: Props) {
 
       <BottomNavBar activeScreen="Matieres" />
 
-      {/* Matiere Details Modal - FIXED PROPS */}
+      {/* FIXED: Matiere Details Modal - Pass entire matiere object */}
       <MatiereDetailsModal
         visible={modalVisible}
         onClose={handleCloseModal}
         matiere={selectedMatiere}
-        courses={selectedMatiere ? getCoursesForMatiere(selectedMatiere.id) : []}
-        nextCourse={selectedMatiere ? getNextCourseForMatiere(selectedMatiere.id) : null}
-        totalCourses={selectedMatiere ? getMatiereStats(selectedMatiere.id).totalCourses : 0}
-        todayCourses={selectedMatiere ? getMatiereStats(selectedMatiere.id).todayCourses : 0}
+        courses={selectedMatiere ? getCoursesForMatiere(selectedMatiere) : []}
+        nextCourse={selectedMatiere ? getNextCourseForMatiere(selectedMatiere) : null}
+        totalCourses={selectedMatiere ? getMatiereStats(selectedMatiere).totalCourses : 0}
+        todayCourses={selectedMatiere ? getMatiereStats(selectedMatiere).todayCourses : 0}
         matiereIndex={selectedMatiereIndex}
       />
     </View>

@@ -29,6 +29,7 @@ export const useStudentCourses = () => {
   const [coursesByDay, setCoursesByDay] = useState<DayCourses[]>(coursesCache);
   const [loading, setLoading] = useState(!coursesLoaded);
   const [error, setError] = useState<string | null>(null);
+  const [ classe_ids, setClasseIds ] = useState<string[]>([]);
 
   const fetchCourses = useCallback(async () => {
     // If already loaded, use cache
@@ -66,6 +67,11 @@ export const useStudentCourses = () => {
       const userDoc = userQuerySnapshot.docs[0];
       const userData = userDoc.data();
       const userClasseId = userData.classe_id;
+      const userClasseId2 = userData.classe2_id;
+
+      const studentClassIds = [userClasseId, userClasseId2]
+
+      setClasseIds(studentClassIds);
       
 
       const existingClass = await getClasseSnapshot(userClasseId);
@@ -173,6 +179,7 @@ export const useStudentCourses = () => {
   }, [fetchCourses]);
 
   return { 
+    classe_ids,
     coursesByDay, 
     loading, 
     error, 
