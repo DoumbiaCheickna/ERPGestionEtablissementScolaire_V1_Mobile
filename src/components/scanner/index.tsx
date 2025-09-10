@@ -86,7 +86,7 @@ export default function Scanner({ navigation, route }: Props) {
         const userDoc = querySnapshot.docs[0];
         const userData = userDoc.data();
         
-        setUserRole(userData.role || '');
+        setUserRole(userData.role_libelle || '');
         setUserDocId(userDoc.id);
         
         // Try to get class_id from different possible locations
@@ -132,6 +132,7 @@ export default function Scanner({ navigation, route }: Props) {
     salle: string
   ) => {
     try {
+
       const userLogin = await AsyncStorage.getItem("userLogin");
       if (!userLogin) throw new Error("No user matricule found");
 
@@ -200,15 +201,15 @@ export default function Scanner({ navigation, route }: Props) {
 
       const enseignant = courseInfo?.enseignant;
       const today = new Date().toDateString();
-      
+
       // Calculate hours
       const calculateHours = (start: string, end: string): number => {
-        const [startHour, startMinute] = start.split(':').map(Number);
-        const [endHour, endMinute] = end.split(':').map(Number);
-        
+        const [startHour, startMinute] = start.split(":").map(Number);
+        const [endHour, endMinute] = end.split(":").map(Number);
+
         const startTotalMinutes = startHour * 60 + startMinute;
         const endTotalMinutes = endHour * 60 + endMinute;
-        
+
         const durationMinutes = endTotalMinutes - startTotalMinutes;
         return parseFloat((durationMinutes / 60).toFixed(2));
       };
@@ -225,25 +226,54 @@ export default function Scanner({ navigation, route }: Props) {
         date: today,
         salle,
         nbrHeures,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
 
-      // Save to user document
-      const userDocRef = doc(db, 'users', userDocId);
+      // Search dans chaque "edts" collection pour trouver un matching slot
+      const edtsRef = collection(db, "edts");
+      const edtsSnapshot = await getDocs(edtsRef);
+
+      let matchedClassId: string | null = null;
+
+      edtsSnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (data.slots && Array.isArray(data.slots)) {
+          const foundSlot = data.slots.find(
+            (slot: any) =>
+              slot.matiere_id == matiere_id &&
+              slot.matiere_libelle == matiere_libelle &&
+              slot.start == start &&
+              slot.end == end &&
+              slot.salle == salle
+          );
+
+          if (foundSlot) {
+            matchedClassId = data.class_id; 
+          }
+        }
+      });
+
+      if (!matchedClassId) {
+        console.warn("No matching class_id found for this emargement");
+        return;
+      }
+
+      // Save vers user document
+      const userDocRef = doc(db, "users", userDocId);
       await updateDoc(userDocRef, {
         emargements: arrayUnion({
           ...emargementData,
-          type: 'presence_prof'
-        })
+          type: "presence_prof",
+        }),
       });
 
-      // Save to separate professors emargements collection
-      const emargementsProfRef = collection(db, 'emargements_professeurs');
+      // Save vers emargements_professeurs collection with found class_id
+      const emargementsProfRef = collection(db, "emargements_professeurs");
       await addDoc(emargementsProfRef, {
         ...emargementData,
         professeur_id: userDocId,
-        class_id: classId || '',
-        type: 'presence'
+        class_id: matchedClassId,
+        type: "presence_prof",
       });
 
     } catch (error) {

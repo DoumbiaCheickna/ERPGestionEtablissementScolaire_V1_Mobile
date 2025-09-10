@@ -48,8 +48,6 @@ export const EmargementSuccessModal: React.FC<EmargementSuccessModalProps> = ({
 
   useEffect(() => {
     if (visible) {
-      // Save emargement data based on user role
-      saveEmargementData();
       
       // Clear any existing timeout
       if (timeoutRef.current) {
@@ -77,69 +75,6 @@ export const EmargementSuccessModal: React.FC<EmargementSuccessModalProps> = ({
     };
   }, [visible, onClose]);
 
-  const saveEmargementData = async () => {
-    try {
-      const today = new Date().toDateString();
-      const nbrHeures = calculateHours(start, end);
-      
-      // Common emargement data
-      const emargementData = {
-        matiere_id: matiereId,
-        matiere_libelle: courseLibelle,
-        date: today,
-        start: start,
-        end: end,
-        enseignant: enseignant,
-        nbrHeures: nbrHeures,
-        timestamp: new Date().toISOString()
-      };
-
-      // For students - save to user document
-      if (userRole.toLowerCase() == 'etudiant') {
-        const userLogin = await AsyncStorage.getItem('userLogin');
-        if (!userLogin) return;
-        
-        const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('login', '==', userLogin));
-        const querySnapshot = await getDocs(q);
-        
-        if (!querySnapshot.empty) {
-          const userDoc = querySnapshot.docs[0];
-          const userDocRef = doc(db, 'users', userDoc.id);
-          
-          await updateDoc(userDocRef, {
-            emargements: arrayUnion({
-              ...emargementData,
-              type: 'presence'
-            })
-          });
-        }
-      } 
-      // For professors - save to both user document and separate collection
-      else if (userRole.toLowerCase() === 'professeur') {
-        // Save to user document
-        if (userDocId) {
-          const userDocRef = doc(db, 'users', userDocId);
-          await updateDoc(userDocRef, {
-            emargements: arrayUnion({
-              ...emargementData,
-              type: 'presence_prof'
-            })
-          });
-        }
-        
-        // Save to separate professors emargements collection
-        await addDoc(collection(db, 'emargements_professeurs'), {
-          ...emargementData,
-          professeur_id: userDocId,
-          class_id: classId || '',
-          type: 'presence'
-        });
-      }
-    } catch (error) {
-      console.error('Error saving emargement data:', error);
-    }
-  };
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>

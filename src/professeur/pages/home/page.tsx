@@ -321,7 +321,7 @@ export default function HomeProfesseur({ navigation }: Props) {
 
       // Check if there's a presence record for this course today with matching time
       const hasPresence = emargements.some(emargement =>
-        emargement.type == 'presence' &&
+        emargement.type == 'presence_prof' &&
         emargement.matiere_id == matiereId &&
         emargement.date == today &&
         emargement.start == startTime &&

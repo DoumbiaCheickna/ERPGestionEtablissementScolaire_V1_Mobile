@@ -12,7 +12,7 @@ import {
   serverTimestamp,
   Timestamp
 } from 'firebase/firestore';
-import { db, findClasseName } from '../../firebaseConfig';
+import { db, findClasseName } from '../firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // In-memory tracking to prevent duplicate notifications within the same session
@@ -272,7 +272,7 @@ const getAllStudents = async (): Promise<StudentData[]> => {
   try {
     const studentsQuery = query(
       collection(db, 'users'), 
-      where('role_libelle', '==', 'Etudiant')
+      where('role_libelle', '==', 'Etudiant'),
     );
     const studentsSnapshot = await getDocs(studentsQuery);
     
