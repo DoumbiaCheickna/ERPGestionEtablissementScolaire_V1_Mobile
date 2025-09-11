@@ -318,7 +318,7 @@ container: {
     fontSize: 16,
     color: theme.colors.textSecondary,
   },
-
+  // Add these styles to your HomeStyles.js file
   // Empty State
   emptyState: {
     marginTop: 20,
@@ -437,5 +437,133 @@ container: {
     textAlign: 'center'
 
   },
+
+
+
+  modalOverlay: {
+  flex: 1,
+  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  paddingHorizontal: 20,
+},
+
+modalContent: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 20,
+  padding: 25,
+  width: '100%',
+  maxHeight: '70%',
+  shadowColor: '#000',
+  shadowOffset: {
+    width: 0,
+    height: 4,
+  },
+  shadowOpacity: 0.25,
+  shadowRadius: 10,
+  elevation: 10,
+},
+
+modalTitle: {
+  fontSize: 20,
+  fontWeight: 'bold',
+  color: '#1a1a1a',
+  textAlign: 'center',
+  marginBottom: 20,
+},
+
+modalItem: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  paddingVertical: 15,
+  paddingHorizontal: 20,
+  marginVertical: 5,
+  borderRadius: 12,
+  backgroundColor: '#F8F9FA',
+  borderWidth: 1,
+  borderColor: '#E9ECEF',
+},
+
+modalItemSelected: {
+  backgroundColor: '#E3F2FD',
+  borderColor: '#2196F3',
+},
+
+modalItemText: {
+  fontSize: 16,
+  color: '#495057',
+  flex: 1,
+},
+
+modalItemTextSelected: {
+  color: '#2196F3',
+  fontWeight: '600',
+},
+
+modalItemCheck: {
+  fontSize: 18,
+  color: '#2196F3',
+  fontWeight: 'bold',
+},
+
+modalCloseButton: {
+  marginTop: 20,
+  paddingVertical: 12,
+  paddingHorizontal: 30,
+  backgroundColor: '#6C757D',
+  borderRadius: 25,
+  alignSelf: 'center',
+},
+
+modalCloseButtonText: {
+  color: '#FFFFFF',
+  fontSize: 16,
+  fontWeight: '600',
+  textAlign: 'center',
+},
+
+// Also update the classSelector styles if they don't exist:
+classSelector: {
+  marginTop: 15,
+  backgroundColor: '#FFFFFF',
+  borderRadius: 12,
+  padding: 15,
+  shadowColor: '#000',
+  shadowOffset: {
+    width: 0,
+    height: 2,
+  },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  elevation: 3,
+},
+
+classSelectorContent: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+},
+
+classSelectorLabel: {
+  fontSize: 14,
+  color: '#6C757D',
+  fontWeight: '500',
+},
+
+classSelectorValue: {
+  fontSize: 16,
+  color: '#1a1a1a',
+  fontWeight: '600',
+  flex: 1,
+  marginLeft: 10,
+  textAlign: 'right',
+},
+
+classSelectorIcon: {
+  fontSize: 12,
+  color: '#6C757D',
+  marginLeft: 5,
+},
 
 });

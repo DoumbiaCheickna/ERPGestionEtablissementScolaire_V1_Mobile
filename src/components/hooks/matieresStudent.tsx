@@ -194,19 +194,17 @@ export const useStudentMatieres = () => {
         return;
       }
 
+      const activeClass: any = await AsyncStorage.getItem('active_classe_id');
       const allMatieres: Matiere[] = [];
       
+
       // Fetch matieres for classe_id if it exists
-      if (userData.classe_id) {
-        const classe1Matieres = await fetchMatieresForClass(userData.classe_id);
-        allMatieres.push(...classe1Matieres);
+      if (activeClass) {
+        const classeMatieres = await fetchMatieresForClass(activeClass);
+        allMatieres.push(...classeMatieres);
       }
 
-      // Fetch matieres for classe2_id if it exists
-      if (userData.classe2_id) {
-        const classe2Matieres = await fetchMatieresForClass(userData.classe2_id);
-        allMatieres.push(...classe2Matieres);
-      }
+
 
       // FIXED: Remove duplicates based on matiere id ONLY and merge class information
       const matieresMap = new Map<string, Matiere>();
@@ -225,7 +223,6 @@ export const useStudentMatieres = () => {
         }
       });
       
-      console.log("Matieres after deduplication:", Array.from(matieresMap.values()));
       const uniqueMatieres = Array.from(matieresMap.values());
 
       // Cache the results

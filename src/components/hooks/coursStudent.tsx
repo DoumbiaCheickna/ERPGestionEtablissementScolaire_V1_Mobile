@@ -73,8 +73,19 @@ export const useStudentCourses = () => {
 
       setClasseIds(studentClassIds);
       
+      let activeClass = userClasseId;
 
-      const existingClass = await getClasseSnapshot(userClasseId);
+      if (userClasseId2) {
+        const savedActive = await AsyncStorage.getItem('active_classe_id');
+        if (savedActive && savedActive.trim() !== '') {
+          activeClass = savedActive;
+        } else {
+          await AsyncStorage.setItem('active_classe_id', userClasseId);
+        }
+      }
+
+      const existingClass = await getClasseSnapshot(activeClass);
+      
       if (existingClass?.empty) {
         const emptyResult: DayCourses[] = [];
         setCoursesByDay(emptyResult);
@@ -85,7 +96,7 @@ export const useStudentCourses = () => {
       }
 
       const edtsRef = collection(db, 'edts');
-      const edtQuery = query(edtsRef, where('class_id', '==', userClasseId));
+      const edtQuery = query(edtsRef, where('class_id', '==', activeClass));
       const edtsSnap = await getDocs(edtQuery);
 
       if (edtsSnap.empty) {

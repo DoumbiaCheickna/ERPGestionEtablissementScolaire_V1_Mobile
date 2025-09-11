@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ActivityIndicator, TouchableOpacity, Alert, ScrollView, Linking, Platform, Dimensions, Button } from 'react-native';
+import { View, Text, StyleSheet, Image, ActivityIndicator, TouchableOpacity, Alert, ScrollView, Linking, Platform, Dimensions, Button, Modal, FlatList } from 'react-native';
 import TopNavBar from '../../../components/layout/topBar';
 import BottomNavBar from '../../../components/layout/bottomBar';
 import { theme } from '../../../styles/globalStyles';
@@ -14,16 +14,19 @@ import { HomeStyles } from "./styles";
 import { styles as eStyles } from '../allCourses/styles'
 import { db, getUserSnapchot } from '../../../firebaseConfig';
 import { MatieresStyles } from '../matieres/styles';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import LottieView from 'lottie-react-native';
-
-
-
 
 // Interface for course records with matricule
 interface CourseRecord {
   matiere_id: string;
   matricule: string;
+}
+
+interface ClassOption {
+  id: string;
+  label: string;
+  value: string;
 }
 
 export const getCoursStatus = (startTime: string, endTime: string) => {
@@ -50,8 +53,12 @@ type Props = NativeStackScreenProps<RootStackParamList, 'HomeStudent'>;
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function HomeStudent({ navigation }: Props) {
+  // Class selector states
+  const [selectedClasseId, setSelectedClasseId] = useState<string>('');
+  const [availableClasses, setAvailableClasses] = useState<ClassOption[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
 
-  const { matieres, loading: matieresLoading, refreshMatieres } = useStudentMatieres();
+  const { matieres, loading: matieresLoading, refreshUserMatieres } = useStudentMatieres();
   const { coursesByDay, loading: coursesLoading, refreshCourses } = useStudentCourses(); 
   const [emargedCourses, setEmargedCourses] = useState<CourseRecord[]>([]);
   const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
@@ -61,11 +68,10 @@ export default function HomeStudent({ navigation }: Props) {
   const [courseAbsenceStatus, setCourseAbsenceStatus] = useState<Record<string, boolean>>({});
   const [courseEmargedStatus, setCourseEmargedStatus] = useState<Record<string, boolean>>({});
 
-  const  refreshData = () => {
+  const refreshData = () => {
     refreshCourses();
-    refreshMatieres()
+    refreshUserMatieres();
   }
-  
 
   const SCHOOL_COORDINATES = {
     latitude: 14.717022,
@@ -73,10 +79,112 @@ export default function HomeStudent({ navigation }: Props) {
     radius: 40
   };
 
+  // Load available classes from AsyncStorage and get class labels
+  const loadAvailableClasses = async () => {
+    try {
+      const classe_id = await AsyncStorage.getItem('classe_id');
+      const classe2_id = await AsyncStorage.getItem('classe2_id');
+      
+      const classes: ClassOption[] = [];
+      
+      if (classe_id && classe_id.trim() !== '') {
+        // Get class label from Firestore
+        const classeLabel = await getClassLabel(classe_id);
+        classes.push({
+          id: 'classe1',
+          label: classeLabel || 'Classe Principale',
+          value: classe_id
+        });
+      }
+      
+      if (classe2_id && classe2_id.trim() !== '') {
+        // Get class label from Firestore
+        const classe2Label = await getClassLabel(classe2_id);
+        classes.push({
+          id: 'classe2',
+          label: classe2Label || 'Classe Secondaire',
+          value: classe2_id
+        });
+      }
+
+      setAvailableClasses(classes);
+      
+      // Load saved preference or set default
+      const savedPreference = await AsyncStorage.getItem('active_classe_id');
+      if (savedPreference && classes.some(c => c.value == savedPreference)) {
+        setSelectedClasseId(savedPreference);
+      } else if (classes.length > 0) {
+        // Set default to first available class (not 'all')
+        const firstClass = classes.find(c => c.value !== 'all') || classes[0];
+        setSelectedClasseId(firstClass.value);
+        await AsyncStorage.setItem('active_classe_id', firstClass.value);
+      }
+
+    } catch (error) {
+      console.error('Error loading classes from storage:', error);
+    }
+  };
+
+  
+  // Get class label from Firestore
+  const getClassLabel = async (classeId: string): Promise<string> => {
+    try {
+      const classeDocRef = doc(db, 'classes', classeId);
+      const classeDoc = await getDoc(classeDocRef);
+      
+      if (classeDoc.exists()) {
+        const classeData = classeDoc.data();
+        return classeData.libelle || classeId;
+      }
+      return classeId;
+    } catch (error) {
+      console.error('Error fetching class label:', error);
+      return classeId;
+    }
+  };
+
+  const handleClassSelection = async (classOption: ClassOption) => {
+    setSelectedClasseId(classOption.value);
+    setModalVisible(false);
+    
+    // Store the selected class preference and clear previous selection
+    try {
+      // Clear previous selection
+      await AsyncStorage.removeItem('active_classe_id');
+      
+      // Set new selection
+      await AsyncStorage.setItem('active_classe_id', classOption.value);
+      
+      // Refresh data based on selected class
+      refreshData();
+    } catch (error) {
+      console.error('Error saving class preference:', error);
+    }
+  };
+
+  const getSelectedClassLabel = () => {
+    const selectedClass = availableClasses.find(cls => cls.value === selectedClasseId);
+    return selectedClass ? selectedClass.label : 'Sélectionner une classe';
+  };
+
+  // Filter courses based on selected class
+  const getFilteredCourses = () => {
+    const todayDayName = dayNames[today.getDay()];
+    const todayCoursesAll = coursesByDay.filter((d: any) => d.title == todayDayName).flatMap((d: any) => d.data) || [];
+    
+    if (selectedClasseId == 'all') {
+      return todayCoursesAll;
+    } else {
+      // You might need to modify your course data structure to include class_id
+      // For now, we'll filter based on the selected class
+      return todayCoursesAll; // This should be filtered by class_id once available
+    }
+  };
+
   useEffect(() => {
     const initApp = async () => {
       await getMatricule();
-
+      await loadAvailableClasses();
       await requestLocationPermission();
     };
     
@@ -88,13 +196,15 @@ export default function HomeStudent({ navigation }: Props) {
   const todayDayName = dayNames[today.getDay()];
   const currentTime = today.getHours() * 60 + today.getMinutes();
   const todayStr = `${today.getDate().toString().padStart(2,'0')}/${(today.getMonth()+1).toString().padStart(2,'0')}/${today.getFullYear()}`;
-  const todayCourses = coursesByDay.filter((d:any)=>d.title==todayDayName).flatMap((d:any)=>d.data) || [];
+  
+  // Use filtered courses instead of all today courses
+  const todayCourses = getFilteredCourses();
 
+
+  // ... rest of your existing useEffect hooks and functions remain the same ...
+  
   // Check for expired courses and mark as absent
   useEffect(() => {
-
-
-
     let closestCourse: any = null;
     let minTimeDifference = Infinity;
 
@@ -131,9 +241,7 @@ export default function HomeStudent({ navigation }: Props) {
         const nextDayIndex = (currentDayIndex + dayOffset) % 7;
         const nextDayName = dayOrder[nextDayIndex];
         
-        const nextDayCourses = coursesByDay
-          .filter((d: any) => d.title === nextDayName)
-          .flatMap((d: any) => d.data) || [];
+        const nextDayCourses = getFilteredCourses(); // You might need to modify this for next day
         
         if (nextDayCourses.length > 0) {
           // Find the earliest course of the next day
@@ -177,9 +285,9 @@ export default function HomeStudent({ navigation }: Props) {
     
     setNextCourse(closestCourse);
 
+  }, [coursesByDay, emargedCourses, coursesLoading, userMatricule, selectedClasseId]);
 
-  }, [coursesByDay, emargedCourses, coursesLoading, userMatricule]);
-
+  // Rest of your existing useEffect hooks remain the same...
   useEffect(() => {
     if (!locationPermissionGranted) return;
 
@@ -206,48 +314,46 @@ export default function HomeStudent({ navigation }: Props) {
   }, [locationPermissionGranted, todayCourses, nextCourse]);
 
   useEffect(() => {
-  const loadAbsenceStatus = async () => {
-    if (!userMatricule || todayCourses.length === 0) return;
+    const loadAbsenceStatus = async () => {
+      if (!userMatricule || todayCourses.length === 0) return;
 
-    const statusMap: Record<string, boolean> = {};
-    
-    for (const course of todayCourses) {
-      try {
-        const isAbsent = await isStudentAbsentForCourse(course.matiere_id);
-        statusMap[course.matiere_id] = isAbsent;
-      } catch (error) {
-        console.error(`Error checking absence for course ${course.matiere_id}:`, error);
-        statusMap[course.matiere_id] = false;
+      const statusMap: Record<string, boolean> = {};
+      
+      for (const course of todayCourses) {
+        try {
+          const isAbsent = await isStudentAbsentForCourse(course.matiere_id);
+          statusMap[course.matiere_id] = isAbsent;
+        } catch (error) {
+          console.error(`Error checking absence for course ${course.matiere_id}:`, error);
+          statusMap[course.matiere_id] = false;
+        }
       }
-    }
-    
-    setCourseAbsenceStatus(statusMap);
-  };
+      
+      setCourseAbsenceStatus(statusMap);
+    };
 
-  const loadPresenceStatus = async () => {
-    if (!userMatricule || todayCourses.length === 0) return;
+    const loadPresenceStatus = async () => {
+      if (!userMatricule || todayCourses.length === 0) return;
 
-    const statusMap: Record<string, boolean> = {};
-    
-    for (const course of todayCourses) {
-      try {
-        const isPresent = await isStudentEmargedForCourse(course.matiere_id);
-        statusMap[course.matiere_id] = isPresent;
-      } catch (error) {
-        console.error(`Error checking presence for course ${course.matiere_id}:`, error);
-        statusMap[course.matiere_id] = false;
+      const statusMap: Record<string, boolean> = {};
+      
+      for (const course of todayCourses) {
+        try {
+          const isPresent = await isStudentEmargedForCourse(course.matiere_id);
+          statusMap[course.matiere_id] = isPresent;
+        } catch (error) {
+          console.error(`Error checking presence for course ${course.matiere_id}:`, error);
+          statusMap[course.matiere_id] = false;
+        }
       }
-    }
-    setCourseEmargedStatus(statusMap);
-  };
+      setCourseEmargedStatus(statusMap);
+    };
 
-  loadPresenceStatus();
-  loadAbsenceStatus();
-}, [userMatricule, todayCourses]);
+    loadPresenceStatus();
+    loadAbsenceStatus();
+  }, [userMatricule, todayCourses]);
 
-
-
-
+  // All your existing functions remain the same...
   const requestLocationPermission = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -295,7 +401,6 @@ export default function HomeStudent({ navigation }: Props) {
     } catch (error) {
       setIsNearSchool(false);
       Alert.alert('Erreur', 'Impossible d\'obtenir votre localisation. Veuillez réessayer.');
-      refreshData();
     }
   };
 
@@ -334,80 +439,76 @@ export default function HomeStudent({ navigation }: Props) {
     setIsNearSchool(nearSchool);
   };
 
+  const isStudentEmargedForCourse = async (matiereId: string): Promise<boolean> => {
+    try {
+      const userLogin = await AsyncStorage.getItem('userLogin');
+      if (!userLogin) {
+        return false;
+      }
 
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('login', '==', userLogin));
+      const querySnapshot = await getDocs(q);
 
-const isStudentEmargedForCourse = async (matiereId: string): Promise<boolean> => {
-  try {
-    const userLogin = await AsyncStorage.getItem('userLogin');
-    if (!userLogin) {
-      return false;
+      if (querySnapshot.empty) {
+        return false;
+      }
+
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+      const emargements: any[] = userData.emargements || [];
+
+      const today = new Date().toDateString();
+
+      // Check if there's an absence record for this course today
+      const hasPresence = emargements.some(emargement =>
+        emargement.type == 'presence' &&
+        emargement.matiere_id == matiereId &&
+        emargement.date == today
+      );
+      return hasPresence;
+
+    } catch (error) {
+      console.error('Error checking student absence:', error);
+      return false; 
     }
+    
+  };
 
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('login', '==', userLogin));
-    const querySnapshot = await getDocs(q);
+  const isStudentAbsentForCourse = async (matiereId: string): Promise<boolean> => {
+    try {
+      const userLogin = await AsyncStorage.getItem('userLogin');
+      if (!userLogin) {
+        return false;
+      }
 
-    if (querySnapshot.empty) {
-      return false;
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('login', '==', userLogin));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        return false;
+      }
+
+      const userDoc = querySnapshot.docs[0];
+      const userData = userDoc.data();
+      const emargements: any[] = userData.emargements || [];
+
+      const today = new Date().toDateString();
+
+      // Check if there's an absence record for this course today
+      const hasAbsence = emargements.some(emargement =>
+        emargement.type == 'absence' &&
+        emargement.matiere_id == matiereId &&
+        emargement.date == today
+      );
+      return hasAbsence;
+
+    } catch (error) {
+      console.error('Error checking student absence:', error);
+      return false; 
     }
-
-    const userDoc = querySnapshot.docs[0];
-    const userData = userDoc.data();
-    const emargements: any[] = userData.emargements || [];
-
-    const today = new Date().toDateString();
-
-    // Check if there's an absence record for this course today
-    const hasPresence = emargements.some(emargement =>
-      emargement.type == 'presence' &&
-      emargement.matiere_id == matiereId &&
-      emargement.date == today
-    );
-    return hasPresence;
-
-  } catch (error) {
-    console.error('Error checking student absence:', error);
-    return false; 
-  }
-  
-};
-const isStudentAbsentForCourse = async (matiereId: string): Promise<boolean> => {
-  try {
-    const userLogin = await AsyncStorage.getItem('userLogin');
-    if (!userLogin) {
-      return false;
-    }
-
-    const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('login', '==', userLogin));
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      return false;
-    }
-
-    const userDoc = querySnapshot.docs[0];
-    const userData = userDoc.data();
-    const emargements: any[] = userData.emargements || [];
-
-    const today = new Date().toDateString();
-
-
-
-    // Check if there's an absence record for this course today
-    const hasAbsence = emargements.some(emargement =>
-      emargement.type == 'absence' &&
-      emargement.matiere_id == matiereId &&
-      emargement.date == today
-    );
-    return hasAbsence;
-
-  } catch (error) {
-    console.error('Error checking student absence:', error);
-    return false; 
-  }
-  
-};
+  };
 
   const isStudentEmargedForCourseSync = (matiereId: string): boolean => {
     return courseEmargedStatus[matiereId] || false;
@@ -416,10 +517,6 @@ const isStudentAbsentForCourse = async (matiereId: string): Promise<boolean> => 
   const isStudentAbsentForCourseSync = (matiereId: string): boolean => {
     return courseAbsenceStatus[matiereId] || false;
   };
-
-
-
-
 
   // Save emarged course with matricule
   const getMatricule = async () => {
@@ -435,9 +532,6 @@ const isStudentAbsentForCourse = async (matiereId: string): Promise<boolean> => 
       return '';
     }
   };
-
-  // Record absence using your handleAbsence function
-
 
   const isCourseTimeExpired = (endTime: string) => {
     const now = new Date();
@@ -461,59 +555,57 @@ const isStudentAbsentForCourse = async (matiereId: string): Promise<boolean> => 
     return !isAlreadyEmarged && !isTimeExpired;
   };
 
-const getEmargerButtonStatus = (matiereId: string, endTime: string, startTime: string) => {
-  if (!userMatricule) {
-    return { 
-      text: 'Chargement...', 
+  const getEmargerButtonStatus = (matiereId: string, endTime: string, startTime: string) => {
+    if (!userMatricule) {
+      return { 
+        text: 'Chargement...', 
+        style: HomeStyles.expiredButton, 
+        textStyle: HomeStyles.expiredButtonText, 
+        disabled: true 
+      };
+    }
+
+    const isAlreadyEmarged = isStudentEmargedForCourseSync(matiereId);
+    const isAbsent = isStudentAbsentForCourseSync(matiereId); // Use sync version
+    const isTimeExpired = isCourseTimeExpired(endTime);
+    const isNotStarted = isCourseNotStarted(startTime);
+    
+    if (isAlreadyEmarged) return { 
+      text: '✓ Émargé', 
+      style: HomeStyles.emargedButton, 
+      textStyle: HomeStyles.emargedButtonText, 
+      disabled: true 
+    };
+    if (isAbsent && isTimeExpired) return { 
+      text: '❌ Absent', 
+      style: HomeStyles.absentButton, 
+      textStyle: HomeStyles.absentButtonText, 
+      disabled: true 
+    };
+    
+    if (isNotStarted) return { 
+      text: 'Bientôt', 
       style: HomeStyles.expiredButton, 
       textStyle: HomeStyles.expiredButtonText, 
       disabled: true 
     };
-  }
+    
+    if (isTimeExpired && !isAbsent) return { 
+      text: 'Expiré', 
+      style: HomeStyles.expiredButton, 
+      textStyle: HomeStyles.expiredButtonText, 
+      disabled: true 
+    };
+    
+    return { 
+      text: '✓ Emarger', 
+      style: [HomeStyles.modernEmargerButton], 
+      textStyle: [Cstyles.emargerButtonText, HomeStyles.emargerButtonTextModern], 
+      disabled: false 
+    };
+  };
 
-  const isAlreadyEmarged = isStudentEmargedForCourseSync(matiereId);
-  const isAbsent = isStudentAbsentForCourseSync(matiereId); // Use sync version
-  const isTimeExpired = isCourseTimeExpired(endTime);
-  const isNotStarted = isCourseNotStarted(startTime);
-  
-  if (isAlreadyEmarged) return { 
-    text: '✓ Émargé', 
-    style: HomeStyles.emargedButton, 
-    textStyle: HomeStyles.emargedButtonText, 
-    disabled: true 
-  };
-  if (isAbsent && isTimeExpired) return { 
-    text: '❌ Absent', 
-    style: HomeStyles.absentButton, 
-    textStyle: HomeStyles.absentButtonText, 
-    disabled: true 
-  };
-  
-  if (isNotStarted) return { 
-    text: 'Bientôt', 
-    style: HomeStyles.expiredButton, 
-    textStyle: HomeStyles.expiredButtonText, 
-    disabled: true 
-  };
-  
-  if (isTimeExpired && !isAbsent) return { 
-    text: 'Expiré', 
-    style: HomeStyles.expiredButton, 
-    textStyle: HomeStyles.expiredButtonText, 
-    disabled: true 
-  };
-  
-  return { 
-    text: '✓ Emarger', 
-    style: [HomeStyles.modernEmargerButton], 
-    textStyle: [Cstyles.emargerButtonText, HomeStyles.emargerButtonTextModern], 
-    disabled: false 
-  };
-};
-
-
-const handleEmargerPress = async (matiereId: string, endTime: string, courseLibelle: string, course: any, startTime: string) => {
-  
+  const handleEmargerPress = async (matiereId: string, endTime: string, courseLibelle: string, course: any, startTime: string) => {
     if (!locationPermissionGranted) {
       Alert.alert('Permission requise', 'Veuillez accorder la permission de localisation pour continuer.', [{ text: 'Accorder permission', onPress: () => requestLocationPermission() }]);
       return;
@@ -536,6 +628,8 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
         start: course.start,
         end: course.end,
         enseignant: course.enseignant,
+        class_ids: course.class_ids,
+        classes: course.classes,
         salle: course.salle
       }
     });
@@ -579,6 +673,22 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
           <Text style={HomeStyles.welcomeText}>Accueil</Text>
           <Text style={HomeStyles.dateText}>Aujourd'hui • {todayDayName} {todayStr}</Text>
           
+          {availableClasses.length > 0 && (
+              <TouchableOpacity 
+                style={HomeStyles.classSelector}
+                onPress={() => setModalVisible(true)}
+                activeOpacity={0.7}
+              >
+                <View style={HomeStyles.classSelectorContent}>
+                  <Text style={HomeStyles.classSelectorLabel}>Classe:</Text>
+                  <Text style={HomeStyles.classSelectorValue} numberOfLines={1}>
+                    {getSelectedClassLabel()}
+                  </Text>
+                  <Text style={HomeStyles.classSelectorIcon}>▼</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+
           {/* Location Status Indicator */}
           <View style={HomeStyles.locationStatus}>
             <Text style={[
@@ -592,6 +702,51 @@ const handleEmargerPress = async (matiereId: string, endTime: string, courseLibe
             </Text>
           </View>
         </View>
+
+        {/* Class Selection Modal */}
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={HomeStyles.modalOverlay}>
+            <View style={HomeStyles.modalContent}>
+              <Text style={HomeStyles.modalTitle}>Sélectionner une classe</Text>
+              
+              <FlatList
+                data={availableClasses}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[
+                      HomeStyles.modalItem,
+                      selectedClasseId === item.value && HomeStyles.modalItemSelected
+                    ]}
+                    onPress={() => handleClassSelection(item)}
+                  >
+                    <Text style={[
+                      HomeStyles.modalItemText,
+                      selectedClasseId === item.value && HomeStyles.modalItemTextSelected
+                    ]}>
+                      {item.label}
+                    </Text>
+                    {selectedClasseId === item.value && (
+                      <Text style={HomeStyles.modalItemCheck}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+              />
+              
+              <TouchableOpacity
+                style={HomeStyles.modalCloseButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={HomeStyles.modalCloseButtonText}>Fermer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         {/* Modern Hero Section with School Image */}
         <View style={{

@@ -312,6 +312,11 @@ export default function Login({ navigation }: Props) {
         if (roleName === 'etudiant') {
           // Student-specific data
           await AsyncStorage.setItem('classe_id', userDoc.classe_id || '');
+
+          if (userDoc.classe2_id && userDoc.classe2_id.trim() !== '') {
+            await AsyncStorage.setItem('classe2_id', userDoc.classe2_id);
+          }
+
           await AsyncStorage.setItem('filiere', userDoc.filiere_id || '');
           await AsyncStorage.setItem('niveau', userDoc.niveau_id || '');
         } else if (roleName === 'professeur') {

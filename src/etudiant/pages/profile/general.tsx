@@ -173,6 +173,9 @@ export default function ProfileStudent({ navigation }: Props) {
           style: 'destructive',
           onPress: async () => {
             try {
+              await AsyncStorage.removeItem('active_classe_id');
+              await AsyncStorage.removeItem('classe_id');
+              await AsyncStorage.removeItem('classe2_id');
               await AsyncStorage.removeItem('userLogin');
               await AsyncStorage.removeItem('userRole');
               await AsyncStorage.removeItem('classe_id');

@@ -637,15 +637,17 @@ export default function AllCoursesStudent({ navigation }: Props) {
             {filteredCoursesByDay.length > 0 ? (
               filteredCoursesByDay.map((section, index) => (
                 <View key={index}>
-                  <View style={[MatieresStyles.badgeContainerDays]}>
-                    <Text style={[MatieresStyles.badgeText]}>
-                      {section.title} 📚
-                      {selectedDate && ` - ${selectedDate.getDate()}/${selectedDate.getMonth() + 1}`}
-                    </Text>
-                    <View style={MatieresStyles.badgeCount}>
-                      <Text style={MatieresStyles.badgeCountText}>{section.data.length}</Text>
+                  {section.data.length > 0 && (
+                    <View style={[MatieresStyles.badgeContainerDays]}>
+                      <Text style={[MatieresStyles.badgeText]}>
+                        {section.title} 📚
+                        {selectedDate && ` - ${selectedDate.getDate()}/${selectedDate.getMonth() + 1}`}
+                      </Text>
+                      <View style={MatieresStyles.badgeCount}>
+                        <Text style={MatieresStyles.badgeCountText}>{section.data.length}</Text>
+                      </View>
                     </View>
-                  </View>
+                  )}
                   {renderCoursesInRows(section.data)}
                 </View>
               ))
