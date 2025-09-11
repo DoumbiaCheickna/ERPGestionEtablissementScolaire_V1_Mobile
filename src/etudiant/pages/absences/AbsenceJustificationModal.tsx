@@ -349,6 +349,37 @@ export default function AbsenceJustificationModal({
                 <Text style={styles.detailText}>Salle: {absence.salle}</Text>
               </View>
             )}
+
+            {absence.justification && (
+              <>
+                <View style={styles.detailRow}>
+                  <Ionicons name="location-outline" size={20} color="#666" />
+                  <Text style={styles.detailText}>Contenu: {absence.justification?.contenu}</Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Ionicons name="location-outline" size={20} color="#666" />
+                  <Text style={styles.detailText}>
+                    Date de justification:
+                    {" "}Le{" "}
+                    {absence.justification?.dateJustification.split('T')[0]}
+                    {" "}à{" "}
+                    { absence.justification?.dateJustification.split('T')[1].split('.')[0]} 
+                  </Text>
+                </View>
+
+                 <View style={styles.detailRow}>
+                  <Ionicons name="location-outline" size={20} color="#666" />
+                  <Text style={styles.detailText}>Documents: {absence.justification?.documents != '' || 'Pas de documents'}</Text>
+                </View>
+
+                 <View style={styles.detailRow}>
+                  <Ionicons name="location-outline" size={20} color="#666" />
+                  <Text style={styles.detailText}>Statut: {absence.justification?.statut}</Text>
+                </View>
+              </>
+            )}
+
             {absence.justification?.statut == "En cours" && (
                 <View 
                     style={{
@@ -375,6 +406,36 @@ export default function AbsenceJustificationModal({
                         autoPlay
                         loop={true}
                         style={{ width: 400, height: 400 }}
+                    />
+                </View>
+            )}
+
+            {absence.justification?.statut == "Approuvée" && (
+                <View 
+                    style={{
+                        alignItems: 'center', 
+                        borderRadius: 15, 
+                    }}>
+                    <Text 
+                        style={{
+                            alignItems: "center", 
+                            textAlign: "center", 
+                            color: "green", 
+                            fontSize: 15, 
+                            marginTop: 20, 
+                            marginBottom: -50,
+                            fontFamily: 'Times New Roman'   ,
+                            fontWeight: 600 ,   
+                            width: 300                 
+                        }}
+                    >
+                        Votre justification a été approuvée !
+                    </Text>
+                    <LottieView 
+                        source={require('../../../assets/Winning businessman.json')}
+                        autoPlay
+                        loop={true}
+                        style={{ width: 300, height: 500 }}
                     />
                 </View>
             )}

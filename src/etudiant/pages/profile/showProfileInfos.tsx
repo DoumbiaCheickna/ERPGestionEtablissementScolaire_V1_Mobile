@@ -84,7 +84,7 @@ export default function ProfileSettings({ navigation }: Props) {
         const userData = userSnapshot.docs[0].data();
         const userId = userSnapshot.docs[0].id;
 
-        const className = await FindUserClassName(userData.filiere_id, userData.niveau_id);
+        const className2 = userData.classe2
 
         setUserInfo({
           id: userId,
@@ -95,7 +95,7 @@ export default function ProfileSettings({ navigation }: Props) {
           filiereId: userData.filiere_id || '',
           telephone: userData.telephone || '',
           niveauId: userData.niveau_id || '',
-          className: className,
+          className: className2 ? `${userData.classe},  ${className2}` : userData.classe,
           avatar: userData.avatar
         });
 
@@ -382,7 +382,7 @@ const pickImage = async () => {
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>
                <Ionicons name='home-outline' style={{color:  '#54c985ff'}}>
-              </Ionicons>Classe</Text>
+              </Ionicons>Classe(s)</Text>
             <View style={styles.infoValueContainer}>
               <Text style={styles.infoValue}>{userInfo.className}</Text>
             </View>

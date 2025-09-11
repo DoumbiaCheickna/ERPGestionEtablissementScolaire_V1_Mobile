@@ -182,7 +182,7 @@ export default function ProfileStudent({ navigation }: Props) {
               await AsyncStorage.removeItem('filiere');
               await AsyncStorage.removeItem('niveau');
               
-              navigation.navigate('Login' as never);
+              navigation.navigate('Landing' as never);
             } catch (error) {
               Alert.alert('Erreur', 'Erreur lors de la déconnexion');
             }

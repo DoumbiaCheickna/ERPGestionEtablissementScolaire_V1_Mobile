@@ -19,6 +19,7 @@ import MatieresClassesProfesseur from '../professeur/pages/enseignments/page';
 import Notifications from '../notifications/page';
 import ProfileStudent from '../etudiant/pages/profile/general';
 import ProfileProfesseur from '../professeur/pages/profile/general';
+import Landing from '../landing/Landing';
 
 export type RootStackParamList = {
   Login: { userLogin: string; userRole: string; firstLogin: number };
@@ -56,6 +57,7 @@ export type RootStackParamList = {
       salle: string
     };
   };
+  Landing: undefined;
   MatieresStudent: {
     matieres?: any[];
   }
@@ -70,7 +72,8 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
+      <Stack.Navigator initialRouteName="Landing" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Landing" component={Landing} />
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Scanner" component={Scanner} />
         <Stack.Screen name="QRCodeScreen" component={QRCodeScreen} />

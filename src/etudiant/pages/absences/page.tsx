@@ -530,9 +530,7 @@ export default function Absences({navigation}: Props) {
                     <Animated.View style={{ transform: [{ translateX: isSwipeable ? translateX : new Animated.Value(0) }] }}>
                         <Pressable
                             onPress={() => {
-                                if (absence.justification?.statut != "Approuvée") {
                                     handleAbsenceTap(absence);
-                                }
                             }}
                             onLongPress={isSwipeable ? (event) => handleLongPress(absence, event) : undefined}
                             delayLongPress={500}

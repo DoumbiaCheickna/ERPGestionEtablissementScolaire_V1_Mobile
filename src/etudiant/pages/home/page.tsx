@@ -156,7 +156,12 @@ export default function HomeStudent({ navigation }: Props) {
       await AsyncStorage.setItem('active_classe_id', classOption.value);
       
       // Refresh data based on selected class
-      refreshData();
+      const activeClass: any = await AsyncStorage.getItem('active_classe_id');
+      console.log('Selected class changed to:', activeClass);
+      console.log('Class option value:', classOption.value);
+      if(activeClass == classOption.value) {
+        refreshData();
+      }
     } catch (error) {
       console.error('Error saving class preference:', error);
     }
