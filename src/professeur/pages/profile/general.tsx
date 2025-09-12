@@ -193,7 +193,7 @@ export default function ProfileProfesseur({ navigation }: Props) {
     const handleQuickAction = (action: string) => {
     switch (action) {
       case 'Matieres':
-        navigation.navigate('MatieresProfesseur' as never);
+        navigation.navigate('MatieresClassesProfesseur' as never);
         break;
       case 'grades':
         Alert.alert('Info', 'Notes à implémenter');

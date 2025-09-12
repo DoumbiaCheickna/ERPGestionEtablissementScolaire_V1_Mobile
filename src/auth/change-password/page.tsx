@@ -209,13 +209,11 @@ export default function ChangePassword() {
                     { transform: [{ scale: logoScale }] }
                   ]}
                 >
-                  <View style={localStyles.logoBackground}>
                     <Image
-                      source={require('../../assets/iibs-logo.png')}
+                      source={require('../../assets/logo8.png')}
                       style={localStyles.logo}
                       resizeMode="contain"
                     />
-                  </View>
                 </Animated.View>
                 
                 <Text style={localStyles.title}>Changement de mot de passe</Text>
@@ -258,7 +256,7 @@ export default function ChangePassword() {
                         localStyles.textInput,
                         password.length > 0 && localStyles.inputFocused
                       ]}
-                      placeholder="Entrez votre nouveau mot de passe"
+                      placeholder="Entrez nouveau mot de passe"
                       placeholderTextColor="#A0A0A0"
                       secureTextEntry={!showPassword}
                       value={password}
@@ -286,7 +284,7 @@ export default function ChangePassword() {
                         localStyles.textInput,
                         confirmPassword.length > 0 && localStyles.inputFocused
                       ]}
-                      placeholder="Confirmez votre nouveau mot de passe"
+                      placeholder="Confirmez mot de passe"
                       placeholderTextColor="#A0A0A0"
                       secureTextEntry={!showConfirmPassword}
                       value={confirmPassword}
@@ -349,7 +347,7 @@ const localStyles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 75,
-    backgroundColor: 'rgb(1, 1, 34)',
+    backgroundColor: '#2196F3',
   },
 
   circle2: {
@@ -359,7 +357,7 @@ const localStyles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 75,
-    backgroundColor: 'rgb(1, 1, 34)',
+    backgroundColor: '#2196F3',
   },
 
   keyboardContainer: {
@@ -377,7 +375,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 24,
     padding: 32,
     marginTop: screenHeight * 0.05,
-    shadowColor: '#000',
+    shadowColor: '#2196F3',
     shadowOffset: {
       width: 0,
       height: 10,
@@ -421,7 +419,7 @@ const localStyles = StyleSheet.create({
   },
 
   logo: {
-    width: 60,
+    width: 200,
     height: 60,
   },
 
@@ -492,12 +490,12 @@ const localStyles = StyleSheet.create({
 
   changePasswordButton: {
     height: 54,
-    backgroundColor: 'rgb(1, 1, 34)',
+    backgroundColor: '#2196F3',
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: '#28292bff',
+    shadowColor: '#0f0f23',
     shadowOffset: {
       width: 0,
       height: 4,

@@ -440,13 +440,11 @@ export default function Login({ navigation }: Props) {
                     { transform: [{ scale: logoScale }] }
                   ]}
                 >
-                  <View style={localStyles.logoBackground}>
-                    <Image
-                      source={require('../../assets/iibs_logo.png')}
-                      style={localStyles.logo}
-                      resizeMode="contain"
-                    />
-                  </View>
+                  <Image
+                    source={require('../../assets/logo8.png')}
+                    style={localStyles.logo}
+                    resizeMode="contain"
+                  />
                 </Animated.View>
                 
                 <Text style={localStyles.schoolName}>

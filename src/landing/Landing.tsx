@@ -116,7 +116,7 @@ const LandingPage = ({ navigation }: Props) => {
             <Text style={styles.heroAccent}>l'éducation connectée</Text>
           </Text>
           <Text style={styles.heroDescription}>
-            Gérez vos cours, émargez en temps réel et restez connecté avec votre campus où que vous soyez
+            Consultez vos cours, émargez en temps réel et restez connecté avec votre campus où que vous soyez
           </Text>
         </Animated.View>
 

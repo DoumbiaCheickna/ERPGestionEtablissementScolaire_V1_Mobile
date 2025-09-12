@@ -42,32 +42,47 @@ const StudentsModal: React.FC<StudentsModalProps> = ({
   // Fetch students for the specific class
   const fetchStudents = async () => {
     if (!classId) return;
-    
+
     setLoading(true);
     try {
-      const usersRef = collection(db, 'users');
-      const q = query(
+      const usersRef = collection(db, "users");
+
+      const q1 = query(
         usersRef,
-        where('role_libelle', '==', 'Etudiant'),
-        where('classe_id', '==', classId)
+        where("role_libelle", "==", "Etudiant"),
+        where("classe_id", "==", classId)
       );
-      
-      const querySnapshot = await getDocs(q);
-      const studentsData: Student[] = [];
-      
-      querySnapshot.forEach((doc) => {
+
+      const q2 = query(
+        usersRef,
+        where("role_libelle", "==", "Etudiant"),
+        where("classe2_id", "==", classId)
+      );
+
+      const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+
+      const studentsMap = new Map<string, Student>();
+
+      // Helper to add student without duplicates
+      const addStudent = (doc: any) => {
         const data = doc.data();
-        studentsData.push({
+        studentsMap.set(doc.id, {
           id: doc.id,
-          nom: data.nom || '',
-          prenom: data.prenom || '',
-          login: data.login || '',
-          email: data.email || '',
-          classe: data.classe || '',
-          telephone: data.telephone || ''
+          nom: data.nom || "",
+          prenom: data.prenom || "",
+          login: data.login || "",
+          email: data.email || "",
+          classe: data.classe || "",
+          telephone: data.telephone || ""
         });
-      });
-      
+      };
+
+      snap1.forEach(addStudent);
+      snap2.forEach(addStudent);
+
+      // Convert map → array
+      const studentsData = Array.from(studentsMap.values());
+
       // Sort students by last name, then first name
       studentsData.sort((a, b) => {
         const lastNameCompare = a.nom.localeCompare(b.nom);
@@ -76,11 +91,11 @@ const StudentsModal: React.FC<StudentsModalProps> = ({
         }
         return lastNameCompare;
       });
-      
+
       setStudents(studentsData);
     } catch (error) {
-      console.error('Error fetching students:', error);
-      Alert.alert('Erreur', 'Impossible de charger les étudiants');
+      console.error("Error fetching students:", error);
+      Alert.alert("Erreur", "Impossible de charger les étudiants");
     } finally {
       setLoading(false);
     }

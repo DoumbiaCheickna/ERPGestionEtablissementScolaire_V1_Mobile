@@ -6,7 +6,7 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 export const localStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffffff',
+    backgroundColor: 'white',
   },
 
   circle1: {
@@ -16,7 +16,7 @@ export const localStyles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 75,
-    backgroundColor: 'rgb(1, 1, 34)',
+    backgroundColor: '#2196F3',
     opacity: 0.8,
   },
 
@@ -27,7 +27,7 @@ export const localStyles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 75,
-    backgroundColor: 'rgb(1, 1, 34)',
+    backgroundColor: '#2196F3',
     opacity: 0.8,
   },
 
@@ -42,11 +42,11 @@ export const localStyles = StyleSheet.create({
   },
 
   formContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'white',
     borderRadius: 24,
     padding: 32,
     marginTop: screenHeight * 0.05,
-    shadowColor: '#000',
+    shadowColor: '#2196F3',
     shadowOffset: {
       width: 0,
       height: 10,
@@ -83,14 +83,14 @@ export const localStyles = StyleSheet.create({
   },
 
   logo: {
-    width: 60,
-    height: 60,
+    width: 200,
+    height: 100,
   },
 
   schoolName: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1a1a2e',
+    color: '#0f0f23',
     textAlign: 'center',
     marginBottom: 8,
     lineHeight: 26,
@@ -98,7 +98,7 @@ export const localStyles = StyleSheet.create({
 
   welcomeText: {
     fontSize: 14,
-    color: '#666',
+    color: '#0f0f23',
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -114,7 +114,7 @@ export const localStyles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: '#0f0f23',
     marginBottom: 8,
   },
 
@@ -154,7 +154,7 @@ export const localStyles = StyleSheet.create({
 
   loginButton: {
     height: 54,
-    backgroundColor: 'rgb(1, 1, 34)',
+    backgroundColor: '#2196F3',
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
