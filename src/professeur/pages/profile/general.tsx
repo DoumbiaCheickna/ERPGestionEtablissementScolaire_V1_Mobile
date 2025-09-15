@@ -90,6 +90,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'ProfileProfesseur'>;
 export default function ProfileProfesseur({ navigation }: Props) {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [allClasses, setAllClasses] = useState<String>('');
   const [error, setError] = useState<string | null>(null);
   const { matieres } = useProfesseurMatieres()
   const { coursesByDay } = useProfesseurCourses()
@@ -97,7 +98,48 @@ export default function ProfileProfesseur({ navigation }: Props) {
 
   useEffect(() => {
     fetchUserInfo();
+    getAllClasses();
   }, []);
+
+
+  const getAllClasses = async () => {
+    try {
+      const userSnapshot: any = await getUserSnapchot();
+      if (!userSnapshot || userSnapshot.empty) {
+        setError('Utilisateur non trouvé');
+        return;
+      }
+
+      const userDoc = userSnapshot.docs[0];
+      const professeurId = userDoc.id;  
+
+      const q = query(
+        collection(db, 'affectations_professeurs'),
+        where('prof_doc_id', '==', professeurId)  
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        setAllClasses('0');
+        return;
+      }
+
+      let totalClasses = 0;
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (Array.isArray(data.classes)) {
+          totalClasses += data.classes.length;
+        }
+      });
+
+      setAllClasses(totalClasses.toString());
+    } catch (error) {
+      console.error("Error fetching classes: ", error);
+      setAllClasses('0');
+    }
+  };
+
+
 
   const fetchUserInfo = async () => {
     try {
@@ -351,7 +393,7 @@ export default function ProfileProfesseur({ navigation }: Props) {
           </View>
           <View style={generalStyles.statDivider} />
           <View style={generalStyles.statItem}>
-            <Text style={generalStyles.statNumber}>-</Text>
+            <Text style={generalStyles.statNumber}>{allClasses}</Text>
             <Text style={generalStyles.statLabel}>Classes</Text>
           </View>
         </View>

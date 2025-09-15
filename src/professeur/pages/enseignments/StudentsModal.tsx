@@ -164,7 +164,7 @@ const StudentsModal: React.FC<StudentsModalProps> = ({
                   onPress={() => {
                     Alert.alert(
                       'Détails Étudiant',
-                      `Nom: ${student.nom}\nPrénom: ${student.prenom}\nClasse: ${student.classe}\nLogin: ${student.login}${student.email ? `\nEmail: ${student.email}` : ''}${student.telephone ? `\nTéléphone: ${student.telephone}` : ''}`,
+                      `Nom: ${student.nom}\nPrénom: ${student.prenom}\nClasse: ${student.classe}${student.email ? `\nEmail: ${student.email}` : ''}${student.telephone ? `\nTéléphone: ${student.telephone}` : ''}`,
                       [{ text: 'OK' }]
                     );
                   }}

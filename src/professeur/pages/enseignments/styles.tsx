@@ -404,9 +404,10 @@ export const MatieresStyles = StyleSheet.create({
   },
   classInfo: {
     flex: 1,
+    margin: 3
   },
   className: {
-    fontSize: 18,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#1e293b',
     marginBottom: 4,

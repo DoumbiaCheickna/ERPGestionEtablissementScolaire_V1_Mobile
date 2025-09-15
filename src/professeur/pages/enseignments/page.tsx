@@ -430,6 +430,12 @@ const handleCloseStudentsModal = () => {
                           </Text>
                         </View>
 
+                        <View style={MatieresStyles.classInfo}>
+                          <Text style={MatieresStyles.className}>
+                            {matiere.classes.map(c => c.classe_libelle).join(', ')}
+                          </Text>
+                        </View>
+
                         <View style={MatieresStyles.matiereStats}>
                           <View style={MatieresStyles.statChip}>
                             <Text style={MatieresStyles.statChipText}>
