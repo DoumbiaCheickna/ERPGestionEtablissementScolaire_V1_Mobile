@@ -79,10 +79,6 @@ export default function HomeStudent({ navigation }: Props) {
         refreshUserMatieres()
       ]);
       
-      // Show success alert once
-      Alert.alert('Succès', 'Données actualisées avec succès!', [
-        { text: 'OK', style: 'default' }
-      ]);
     } catch (error) {
       // Show error alert once
       Alert.alert('Erreur', 'Échec de l\'actualisation des données', [
@@ -92,7 +88,7 @@ export default function HomeStudent({ navigation }: Props) {
       setIsRefreshing(false);
     }
   };
-  
+
   const SCHOOL_COORDINATES = {
     latitude: 14.717022,
     longitude: -17.4674526,
