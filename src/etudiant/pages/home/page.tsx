@@ -68,11 +68,31 @@ export default function HomeStudent({ navigation }: Props) {
   const [courseAbsenceStatus, setCourseAbsenceStatus] = useState<Record<string, boolean>>({});
   const [courseEmargedStatus, setCourseEmargedStatus] = useState<Record<string, boolean>>({});
 
-  const refreshData = () => {
-    refreshCourses();
-    refreshUserMatieres();
-  }
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
+
+  const refreshData = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        refreshCourses(),
+        refreshUserMatieres()
+      ]);
+      
+      // Show success alert once
+      Alert.alert('Succès', 'Données actualisées avec succès!', [
+        { text: 'OK', style: 'default' }
+      ]);
+    } catch (error) {
+      // Show error alert once
+      Alert.alert('Erreur', 'Échec de l\'actualisation des données', [
+        { text: 'OK', style: 'default' }
+      ]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+  
   const SCHOOL_COORDINATES = {
     latitude: 14.717022,
     longitude: -17.4674526,
@@ -292,26 +312,26 @@ export default function HomeStudent({ navigation }: Props) {
 
   }, [coursesByDay, emargedCourses, coursesLoading, userMatricule, selectedClasseId]);
 
-  // Rest of your existing useEffect hooks remain the same...
   useEffect(() => {
     if (!locationPermissionGranted) return;
 
-    let locationInterval: ReturnType<typeof setInterval>;
+    let locationInterval: ReturnType<typeof setInterval> | null = null;
 
-    const updateLocationInterval = () => {
-      const currentCourse = getCurrentCourse();
-
+    const startLocationTracking = () => {
       if (locationInterval) clearInterval(locationInterval);
-
+      
+      const currentCourse = getCurrentCourse();
+      const intervalTime = currentCourse ? 5 * 60 * 1000 : 15 * 60 * 1000;
+      
       locationInterval = setInterval(() => {
-        getCurrentLocation();
-      }, currentCourse ? 5 * 60 * 1000 : 15 * 60 * 1000); 
+        getCurrentLocationSilent(); 
+      }, intervalTime);
 
-      // run immediately
-      getCurrentLocation();
+      // Run once immediately
+      getCurrentLocationSilent();
     };
 
-    updateLocationInterval();
+    startLocationTracking();
 
     return () => {
       if (locationInterval) clearInterval(locationInterval);
@@ -400,7 +420,10 @@ export default function HomeStudent({ navigation }: Props) {
 
   const getCurrentLocation = async () => {
     try {
-      const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
+      const location = await Location.getCurrentPositionAsync({ 
+        accuracy: Location.Accuracy.Highest,
+        timeInterval: 10000,
+      });
       const { latitude, longitude } = location.coords;
       checkIfNearSchool(latitude, longitude);
     } catch (error) {
@@ -408,6 +431,20 @@ export default function HomeStudent({ navigation }: Props) {
       Alert.alert('Erreur', 'Impossible d\'obtenir votre localisation. Veuillez réessayer.');
     }
   };
+
+
+  const getCurrentLocationSilent = async () => {
+  try {
+    const location = await Location.getCurrentPositionAsync({ 
+      accuracy: Location.Accuracy.Balanced, 
+      timeInterval: 5000, 
+    });
+    const { latitude, longitude } = location.coords;
+    checkIfNearSchool(latitude, longitude);
+  } catch (error) {
+    setIsNearSchool(false);
+  }
+};
 
   const getCurrentCourse = () => {
     const now = new Date();
@@ -858,11 +895,17 @@ export default function HomeStudent({ navigation }: Props) {
         </View>
 
          <TouchableOpacity 
-            style={MatieresStyles.refreshButton}
+            style={[
+              MatieresStyles.refreshButton,
+              isRefreshing && { opacity: 0.6 }
+            ]}
             onPress={refreshData}
             activeOpacity={0.7}
+            disabled={isRefreshing}
           >
-            <Text style={MatieresStyles.refreshButtonText}>🔄 Actualiser Les données</Text>
+            <Text style={MatieresStyles.refreshButtonText}>
+              {isRefreshing ? '🔄 Actualisation...' : '🔄 Actualiser Les données'}
+            </Text>
           </TouchableOpacity>
 
         {nextCourse && (
