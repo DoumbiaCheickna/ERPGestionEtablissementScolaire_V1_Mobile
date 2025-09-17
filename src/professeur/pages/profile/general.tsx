@@ -161,7 +161,7 @@ export default function ProfileProfesseur({ navigation }: Props) {
         email: userDoc.email || '',
         login: userDoc.login || '',
         role: userDoc.role || '',
-        avatar: userDoc.avatar
+        avatar: userDoc.avatar 
       });
 
     } catch (error) {

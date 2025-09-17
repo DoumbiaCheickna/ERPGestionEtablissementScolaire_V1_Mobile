@@ -146,15 +146,12 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
 
   // Handle logo press - navigate to Home or refresh if already on Home
   const handleLogoPress = async () => {
-    // Check if current route is Home
-    if (route.name === 'HomeStudent') {
-      // Already on Home, refresh the data
-      await refreshData();
-      if (onRefreshHome) {
-        await onRefreshHome();
-      }
-    } else {
-      // Navigate to Home
+
+    const userRole = await AsyncStorage.getItem("userRole");
+   
+    if(userRole?.toLocaleLowerCase() == 'etudiant'){
+      navigation.navigate('HomeStudent' as never);
+    } else if (userRole?.toLocaleLowerCase() == 'professeur'){
       navigation.navigate('HomeProfesseur' as never);
     }
   };

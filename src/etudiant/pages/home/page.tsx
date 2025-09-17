@@ -173,8 +173,7 @@ export default function HomeStudent({ navigation }: Props) {
       
       // Refresh data based on selected class
       const activeClass: any = await AsyncStorage.getItem('active_classe_id');
-      console.log('Selected class changed to:', activeClass);
-      console.log('Class option value:', classOption.value);
+
       if(activeClass == classOption.value) {
         refreshData();
       }
@@ -593,7 +592,7 @@ export default function HomeStudent({ navigation }: Props) {
     return !isAlreadyEmarged && !isTimeExpired;
   };
 
-  const getEmargerButtonStatus = (matiereId: string, endTime: string, startTime: string) => {
+  const getEmargerButtonStatus = (matiereId: string, endTime: string, startTime: string, indisponible: number) => {
     if (!userMatricule) {
       return { 
         text: 'Chargement...', 
@@ -603,10 +602,18 @@ export default function HomeStudent({ navigation }: Props) {
       };
     }
 
+    const isAvailable = indisponible != 1
     const isAlreadyEmarged = isStudentEmargedForCourseSync(matiereId);
     const isAbsent = isStudentAbsentForCourseSync(matiereId); // Use sync version
     const isTimeExpired = isCourseTimeExpired(endTime);
     const isNotStarted = isCourseNotStarted(startTime);
+
+    if (!isAvailable) return {
+      text: 'Cours Indisponible',
+      style: HomeStyles.expiredButton,
+      textStyle: HomeStyles.expiredButtonText,
+      disabled: true
+    };
     
     if (isAlreadyEmarged) return { 
       text: '✓ Émargé', 
@@ -948,7 +955,7 @@ export default function HomeStudent({ navigation }: Props) {
         {todayCourses.length > 0 && (
           <View style={HomeStyles.courseGrid}>
             {todayCourses.map((item: any, index: number) => {
-              const buttonStatus = getEmargerButtonStatus(item.matiere_id, item.end, item.start);
+              const buttonStatus = getEmargerButtonStatus(item.matiere_id, item.end, item.start, item.indisponible);
               const coursStatus = getCoursStatus(item.start, item.end);
 
               return (

@@ -350,7 +350,7 @@ export default function AbsenceJustificationModal({
               </View>
             )}
 
-            {absence.justification && (
+            {absence.justification?.statut == 'Approuvée' && (
               <>
                 <View style={styles.detailRow}>
                   <Ionicons name="location-outline" size={20} color="#666" />
@@ -361,10 +361,16 @@ export default function AbsenceJustificationModal({
                   <Ionicons name="location-outline" size={20} color="#666" />
                   <Text style={styles.detailText}>
                     Date de justification:
-                    {" "}Le{" "}
-                    {absence.justification?.dateJustification.split('T')[0]}
-                    {" "}à{" "}
-                    { absence.justification?.dateJustification.split('T')[1].split('.')[0]} 
+                    {absence?.justification?.dateJustification ? (
+                      <>
+                        {" "}Le{" "}
+                        {absence.justification.dateJustification.split('T')[0]}
+                        {" "}à{" "}
+                        {absence.justification.dateJustification.split('T')[1].split('.')[0]}
+                      </>
+                    ) : (
+                      "Non définie"
+                    )}
                   </Text>
                 </View>
 
