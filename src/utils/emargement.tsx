@@ -38,6 +38,7 @@ interface CourseSlot {
   enseignant?: string;
   salle?: string;
   day?: number;
+  indisponible?: number;
 }
 
 interface EdtData {
@@ -331,6 +332,12 @@ const processClassSlotAbsences = async (
   className: string
 ): Promise<void> => {
   try {
+
+    
+    if (slot.indisponible == 1) {
+      return;
+    }
+
     const today = normalizeDate(new Date());
     
     const sessionId = generateSessionId(

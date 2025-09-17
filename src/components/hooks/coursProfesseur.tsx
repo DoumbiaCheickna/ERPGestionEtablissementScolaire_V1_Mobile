@@ -15,6 +15,7 @@ export interface Slot {
   class_id: string;
   classe_libelle: string;
   prof_doc_id?: string;
+  indisponible?: number;
   // New fields for combined classes
   combined_classes?: string; // "L3 Cyber, L3 Data IA, L3 GL"
   class_ids?: string[]; // Array of all class IDs for this time slot
@@ -230,6 +231,7 @@ export const useProfesseurCourses = () => {
                   class_id: classId,
                   classe_libelle: classeLibelle,
                   prof_doc_id: slot.prof_doc_id || profDocId,
+                  indisponible: slot.indisponible || 0
                 });
               }
             });

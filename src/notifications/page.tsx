@@ -128,10 +128,10 @@ export default function Notifications({navigation}: Props) {
             });
 
             setNotifications([...updatedNotifications].reverse());
-            setToast({ message: "Toutes les notifications marquées comme lues", type: "success" });
+            Alert.alert("Toutes les notifications marquées comme lues");
 
         } catch (err) {
-            setToast({ message: "Erreur lors de la mise à jour", type: "error" });
+            Alert.alert("Erreur lors de la mise à jour");
         }
     }, [userRef]);
 

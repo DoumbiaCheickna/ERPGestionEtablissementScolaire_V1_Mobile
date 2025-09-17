@@ -313,6 +313,7 @@ export const MatieresStyles = StyleSheet.create({
   viewCoursesButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    textAlign: 'center',
     justifyContent: 'center',
     backgroundColor: '#2196F3',
     paddingVertical: 12,
@@ -324,6 +325,30 @@ export const MatieresStyles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginRight: 8,
+    alignItems: 'center',
+    textAlign: 'center',
+  },
+
+  unavailableCourse: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#e03939ff',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 15,
+    marginTop: 10
+  },
+
+  availableCourse: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 15,
+    marginTop: 10
   },
   arrowIcon: {
     color: '#ffffff',

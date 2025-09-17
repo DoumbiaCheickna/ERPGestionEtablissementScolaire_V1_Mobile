@@ -12,6 +12,7 @@ export interface Slot {
   enseignant: string;
   salle: string;
   matiere_id: string;
+  indisponible?: number;
 }
 
 export interface DayCourses {
@@ -158,6 +159,7 @@ export const useStudentCourses = () => {
               enseignant: slot.enseignant,
               salle: slot.salle,
               matiere_id: slot.matiere_id,
+              indisponible: slot.indisponible || 0
             });
           }
         });

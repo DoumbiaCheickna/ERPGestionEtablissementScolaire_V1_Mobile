@@ -363,7 +363,7 @@ export default function HomeProfesseur({ navigation }: Props) {
   };
 
   // FIXED: Using same logic as student version
-  const getEmargerButtonStatus = (matiereId: string, endTime: string, startTime: string) => {
+  const getEmargerButtonStatus = (matiereId: string, endTime: string, startTime: string, indisponible: number) => {
     if (!userDocId) {
       return { 
         text: 'Chargement...', 
@@ -373,10 +373,18 @@ export default function HomeProfesseur({ navigation }: Props) {
       };
     }
 
+    const isAvailable = indisponible != 1;
     const isAlreadyEmarged = isProfesseurEmargedForCourseSync(matiereId, startTime, endTime);
     const isTimeExpired = isCourseTimeExpired(endTime);
     const isNotStarted = isCourseNotStarted(startTime);
     
+    if (!isAvailable) return {
+      text: 'Cours Indisponible',
+      style: HomeStyles.expiredButton,
+      textStyle: HomeStyles.expiredButtonText,
+      disabled: true
+    };
+
     if (isAlreadyEmarged) return { 
       text: '✓ Émargé', 
       style: HomeStyles.emargedButton, 
@@ -407,35 +415,163 @@ export default function HomeProfesseur({ navigation }: Props) {
   };
 
   const handleEmargerPress = async (matiereId: string, endTime: string, courseLibelle: string, course: any, startTime: string) => {
-  
-  if (!locationPermissionGranted) {
-    Alert.alert('Permission requise', 'Veuillez accorder la permission de localisation pour continuer.', [{ text: 'Accorder permission', onPress: () => requestLocationPermission() }]);
-    return;
-  }
-  if (!isNearSchool) {
-    Alert.alert('Localisation requise', 'Vous devez être sur le campus de l\'école pour continuer !', [{ text: 'Vérifier à nouveau', onPress: () => getCurrentLocation() }, { text: 'OK', style: 'cancel' }]);
-    return;
-  }
-  if (!canEmarger(matiereId, endTime, startTime)) {
-    Alert.alert('Information', isProfesseurEmargedForCourseSync(matiereId, startTime, endTime) ? 'Vous avez déjà émargé pour ce cours aujourd\'hui.' : 'Le temps d\'émargement pour ce cours est expiré.');
-    return;
-  }
+    
+    if (!locationPermissionGranted) {
+      Alert.alert('Permission requise', 'Veuillez accorder la permission de localisation pour continuer.', [{ text: 'Accorder permission', onPress: () => requestLocationPermission() }]);
+      return;
+    }
+    if (!isNearSchool) {
+      Alert.alert('Localisation requise', 'Vous devez être sur le campus de l\'école pour continuer !', [{ text: 'Vérifier à nouveau', onPress: () => getCurrentLocation() }, { text: 'OK', style: 'cancel' }]);
+      return;
+    }
+    if (!canEmarger(matiereId, endTime, startTime)) {
+      Alert.alert('Information', isProfesseurEmargedForCourseSync(matiereId, startTime, endTime) ? 'Vous avez déjà émargé pour ce cours aujourd\'hui.' : 'Le temps d\'émargement pour ce cours est expiré.');
+      return;
+    }
 
   // Navigate to scanner with success callback and course information
-  navigation.navigate('Scanner', { 
-    matiereId, 
-    courseLibelle,
-    // Pass additional course information for the modal
-    courseInfo: {
-      start: course.start,
-      end: course.end,
-      enseignant: professorName,
-      salle: course.salle,
-      classes: course.combined_classes || course.classe_libelle, // Combined classes
-      class_ids: course.class_ids || [course.class_id] // All class IDs
+    navigation.navigate('Scanner', { 
+      matiereId, 
+      courseLibelle,
+      // Pass additional course information for the modal
+      courseInfo: {
+        start: course.start,
+        end: course.end,
+        enseignant: professorName,
+        salle: course.salle,
+        classes: course.combined_classes || course.classe_libelle, // Combined classes
+        class_ids: course.class_ids || [course.class_id] // All class IDs
+      }
+    });
+  };
+
+  const confirmRendreDisponible = async (course: any) => {
+    Alert.alert("Confirmer", "Voulez-vous vraiment rendre ce cours disponible pour toutes les classes concernées ?", [
+      { text: "Annuler", style: "destructive" },
+      { text: "Oui", onPress: () => rendreDisponible(course) }
+    ]);
+  };
+
+  const rendreDisponible = async (course: any) => {
+    try {
+      const today = new Date();
+      const currentDay = today.getDay() === 0 ? 7 : today.getDay();
+
+      // Query edts collection
+      const edtsRef = collection(db, 'edts');
+      const edtsSnapshot = await getDocs(edtsRef);
+
+      let updatedCount = 0;
+
+      for (const edtDoc of edtsSnapshot.docs) {
+        const edtData = edtDoc.data();
+        const slots = edtData.slots || [];
+
+        // Find the matching slot index
+        const slotIndex = slots.findIndex((slot: any) => 
+          slot.day == currentDay &&
+          slot.start == course.start &&
+          slot.end == course.end &&
+          slot.matiere_id == course.matiere_id &&
+          slot.matiere_libelle == course.matiere_libelle
+        );
+
+        // If matching slot found, update only that slot
+        if (slotIndex !== -1) {
+          if(slots[slotIndex].indisponible != 1) {
+            Alert.alert('Information', 'Ce cours est déjà disponible.');
+            return;
+          }
+          slots[slotIndex] = { ...slots[slotIndex], indisponible: 0 };
+          updatedCount++;
+
+          // Update the document with the modified slots array
+          await updateDoc(doc(db, 'edts', edtDoc.id), {
+            slots: slots
+          });
+        }
+      }
+
+      if (updatedCount > 0) {
+        Alert.alert(
+          'Succès', 
+          `Le cours a été rendu disponible pour ${updatedCount} classe(s).`,
+          [{ text: 'OK', onPress: () => refreshData() }]
+        );
+      } else {
+        Alert.alert('Information', 'Aucun cours correspondant trouvé dans les emplois du temps.');
+      }
+
+    } catch (error) {
+      console.error('Error making course available:', error);
+      Alert.alert('Erreur', 'Impossible de rendre le cours disponible. Veuillez réessayer.');
     }
-  });
-};
+  };
+
+  const confirmRendreIndisponible = async (course: any) => {
+    Alert.alert("Confirmer", "Voulez-vous vraiment rendre ce cours indisponible pour toutes les classes concernées ?", [
+      { text: "Annuler", style: "destructive" },
+      { text: "Oui", onPress: () => rendreIndisponible(course) }
+    ]);
+  };
+
+
+  const rendreIndisponible = async (course: any) => {
+
+    try {
+      const today = new Date();
+      const currentDay = today.getDay() === 0 ? 7 : today.getDay();
+
+      // Query edts collection
+      const edtsRef = collection(db, 'edts');
+      const edtsSnapshot = await getDocs(edtsRef);
+
+      let updatedCount = 0;
+
+      for (const edtDoc of edtsSnapshot.docs) {
+        const edtData = edtDoc.data();
+        const slots = edtData.slots || [];
+
+        // Find the matching slot index
+        const slotIndex = slots.findIndex((slot: any) => 
+          slot.day == currentDay &&
+          slot.start == course.start &&
+          slot.end == course.end &&
+          slot.matiere_id == course.matiere_id &&
+          slot.matiere_libelle == course.matiere_libelle
+        );
+
+        // If matching slot found, update only that slot
+        if (slotIndex !== -1) {
+          if(slots[slotIndex].indisponible == 1) {
+            Alert.alert('Information', 'Ce cours est déjà marqué comme indisponible.');
+            return;
+          }
+          slots[slotIndex] = { ...slots[slotIndex], indisponible: 1 };
+          updatedCount++;
+
+          // Update the document with the modified slots array
+          await updateDoc(doc(db, 'edts', edtDoc.id), {
+            slots: slots
+          });
+        }
+      }
+
+      if (updatedCount > 0) {
+        Alert.alert(
+          'Succès', 
+          `Le cours a été rendu indisponible pour ${updatedCount} classe(s).`,
+          [{ text: 'OK', onPress: () => refreshData() }]
+        );
+      } else {
+        Alert.alert('Information', 'Aucun cours correspondant trouvé dans les emplois du temps.');
+      }
+
+    } catch (error) {
+      console.error('Error making course unavailable:', error);
+      Alert.alert('Erreur', 'Impossible de rendre le cours indisponible. Veuillez réessayer.');
+    }
+  };
 
 
   
@@ -650,7 +786,7 @@ export default function HomeProfesseur({ navigation }: Props) {
         {todayCourses.length > 0 && (
           <View style={HomeStyles.courseGrid}>
             {todayCourses.map((item: any, index: number) => {
-              const emargerButtonStatus = getEmargerButtonStatus(item.matiere_id, item.end, item.start);
+              const emargerButtonStatus = getEmargerButtonStatus(item.matiere_id, item.end, item.start, item.indisponible || 0);
               const coursStatus = getCoursStatus(item.start, item.end);
               
               return (
@@ -712,14 +848,19 @@ export default function HomeProfesseur({ navigation }: Props) {
                         </Text>
                       </TouchableOpacity>
 
-                    {/* Status label */}
-                    <Text style={
-                      coursStatus.type == 'warning' ? HomeStyles.statusWarning :
-                      coursStatus.type == 'primary' ? HomeStyles.statusPrimary :
-                      HomeStyles.statusSuccess
-                    }>
-                      {coursStatus.label}
+                  <TouchableOpacity 
+                    style={[
+                      item.indisponible == 1 ? MatieresStyles.availableCourse : MatieresStyles.unavailableCourse
+                    ]}
+                    onPress={() =>
+                     item.indisponible == 1 ? confirmRendreDisponible(item) : 
+                     confirmRendreIndisponible(item)}
+                  >
+                    <Text style={MatieresStyles.viewCoursesText}>
+                      {item.indisponible == 1 ? 'Rendre Disponible' : 'Rendre Indisponible'}
                     </Text>
+                  </TouchableOpacity>
+
                   </View>
 
                   {/* Card Footer */}
@@ -749,8 +890,18 @@ export default function HomeProfesseur({ navigation }: Props) {
                       }}>
                         {item.class_ids.length} classes combinées
                       </Text>
+                      
                     </View>
                   )}
+                  
+                    {/* Status label */}
+                    <Text style={
+                      coursStatus.type == 'warning' ? HomeStyles.statusWarning :
+                      coursStatus.type == 'primary' ? HomeStyles.statusPrimary :
+                      HomeStyles.statusSuccess
+                    }>
+                      {coursStatus.label}
+                    </Text>
                   </View>
 
                   
