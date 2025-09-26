@@ -524,6 +524,7 @@ export default function Evaluations({ navigation }: Props) {
           </View>
         </View>
 
+      <View style={{marginBottom: 200}}>
         {evaluations.length > 0 ? (
           evaluations.map((evaluation) => (
             <EvaluationCard key={evaluation.id} evaluation={evaluation} />
@@ -539,8 +540,10 @@ export default function Evaluations({ navigation }: Props) {
                 style={{ width: 300, height: 300, marginVertical: 20 }}
             />
           </View>
+
           
         )}
+        </View>
       </ScrollView>
 
       {/* Class Selection Modal */}
