@@ -361,7 +361,8 @@ export const MatieresStyles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 20,
-    marginVertical: 20
+    marginVertical: 20,
+    marginHorizontal: 40,
   },
   refreshButtonText: {
     color: '#ffffff',

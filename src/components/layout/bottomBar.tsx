@@ -36,8 +36,10 @@ const BottomNavBar = ({ activeScreen }: Props) => {
   const profItems = [
     { name: 'HomeProfesseur', icon: 'home-outline', screen: 'HomeProfesseur', libelle: 'Accueil' },
     { name: 'AllCoursesProfesseur', icon: 'calendar-outline', screen: 'AllCoursesProfesseur', libelle: 'Cours' },
+    { name: 'Evaluations', icon: 'document-text-outline', screen: 'Evaluations', libelle: 'Évaluations' },
     { name: 'ProfileProfesseur', icon: 'person-outline', screen: 'ProfileProfesseur', libelle: 'Profil' },
   ];
+
 
   const navItems = role === "etudiant" ? studentItems : profItems;
 

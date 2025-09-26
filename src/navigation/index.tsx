@@ -3,7 +3,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Login from '../auth/login/page';
 import ChangePassword from '../auth/change-password/page';
-import Profile from '../professeur/pages/profile/general';
 import AllCoursesStudent from '../etudiant/pages/allCourses/page';
 import ShowProfileInfosStudent from '../etudiant/pages/profile/showProfileInfos';
 import ShowProfileInfosProfesseur from '../professeur/pages/profile/showProfileInfos';
@@ -20,6 +19,9 @@ import Notifications from '../notifications/page';
 import ProfileStudent from '../etudiant/pages/profile/general';
 import ProfileProfesseur from '../professeur/pages/profile/general';
 import Landing from '../landing/Landing';
+import UserProfile from '../Social/UserProfile/page';
+import Posts from '../Social/posts/page';
+import Evaluations from '../professeur/pages/evaluations/page';
 
 export type RootStackParamList = {
   Login: { userLogin: string; userRole: string; firstLogin: number };
@@ -63,9 +65,10 @@ export type RootStackParamList = {
   }
   QRCodeScreen: { matiereId: string, courseLibelle: string};
   Absences: undefined;
-
+  Posts: undefined;
+  UserProfile: { userId: string };
+  Evaluations: undefined;
 };
-
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -82,6 +85,13 @@ export default function AppNavigator() {
         <Stack.Screen name="Absences" component={Absences} />
         <Stack.Screen name="Notifications" component={Notifications} />
 
+        {/* Evaluations */}
+        <Stack.Screen name="Evaluations" component={Evaluations} />
+
+
+        {/* Posts Feature */}
+        <Stack.Screen name="Posts" component={Posts} />
+        <Stack.Screen name="UserProfile" component={UserProfile} />
 
         <Stack.Screen name="HomeStudent" component={HomeStudent} />
         <Stack.Screen name="AllCoursesStudent" component={AllCoursesStudent} />
@@ -89,15 +99,11 @@ export default function AppNavigator() {
         <Stack.Screen name="MatieresStudent" component={MatieresStudent} />
         <Stack.Screen name="ShowProfileInfosStudent" component={ShowProfileInfosStudent}/>
 
-
-
-
-         <Stack.Screen name="HomeProfesseur" component={HomeProfesseur} />
+        <Stack.Screen name="HomeProfesseur" component={HomeProfesseur} />
         <Stack.Screen name="AllCoursesProfesseur" component={AllCoursesProfesseur} />
         <Stack.Screen name="MatieresClassesProfesseur" component={MatieresClassesProfesseur} />
         <Stack.Screen name="ProfileProfesseur" component={ProfileProfesseur} />
         <Stack.Screen name="ShowProfileInfosProfesseur" component={ShowProfileInfosProfesseur}/>
-
 
       </Stack.Navigator>
     </NavigationContainer>
