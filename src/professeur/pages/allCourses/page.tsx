@@ -694,7 +694,7 @@ export default function AllCoursesProfesseur({ navigation }: Props) {
         matiereIndex={selectedMatiereIndex}
       />
 
-      <BottomNavBar activeScreen={'AllCoursesStudent'} />
+      <BottomNavBar activeScreen={'AllCoursesProfesseur'} />
     </View>
   );
 }

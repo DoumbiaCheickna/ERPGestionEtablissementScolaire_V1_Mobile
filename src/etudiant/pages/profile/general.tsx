@@ -375,7 +375,7 @@ export default function ProfileStudent({ navigation }: Props) {
         </View>
       </ScrollView>
 
-      <BottomNavBar activeScreen="Profile" />
+      <BottomNavBar activeScreen="ProfileStudent" />
     </View>
   );
 }

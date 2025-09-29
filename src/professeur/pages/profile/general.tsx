@@ -161,9 +161,10 @@ export default function ProfileProfesseur({ navigation }: Props) {
         email: userDoc.email || '',
         login: userDoc.login || '',
         role: userDoc.role || '',
-        avatar: userDoc.avatar 
+        avatar: userDoc.sexe[0] === 'M' 
+        ? require('../../../assets/man.png') 
+        : require('../../../assets/woman.png')
       });
-
     } catch (error) {
       setError('Erreur lors du chargement des informations');
     } finally {
@@ -340,18 +341,19 @@ export default function ProfileProfesseur({ navigation }: Props) {
         {/* Enhanced Profile Header */}
         <View style={generalStyles.profileHeader}>
           <View style={generalStyles.profileHeaderContent}>
-            <View style={generalStyles.avatarContainer}>
-              {user.avatar ? (
-                <Image source={{ uri: user.avatar }} style={generalStyles.avatarImage} />
-              ) : (
-                <View style={generalStyles.avatarPlaceholder}>
-                  <Text style={generalStyles.avatarPlaceholderText}>
-                    {getInitials(user.prenom, user.nom)}
-                  </Text>
-                </View>
-              )}
-              <View style={generalStyles.onlineIndicator} />
-            </View>
+           <View style={generalStyles.avatarContainer}>
+            {user.avatar ? (
+              <Image source={user.avatar as any} style={generalStyles.avatarImage} />
+            ) : (
+              <View style={generalStyles.avatarPlaceholder}>
+                <Text style={generalStyles.avatarPlaceholderText}>
+                  {getInitials(user.prenom, user.nom)}
+                </Text>
+              </View>
+            )}
+            <View style={generalStyles.onlineIndicator} />
+          </View>
+
             
             <View style={generalStyles.userInfo}>
               <Text style={generalStyles.userName}>
@@ -414,7 +416,7 @@ export default function ProfileProfesseur({ navigation }: Props) {
         </View>
       </ScrollView>
 
-      <BottomNavBar activeScreen="Profile" />
+      <BottomNavBar activeScreen="ProfileProfesseur" />
     </View>
   );
 }

@@ -92,7 +92,9 @@ export default function ProfileSettings({ navigation }: Props) {
           login: userData.login || '',
           telephone: userData.telephone || '',
           specialite: userData.specialite || '',
-          avatar: userData.avatar
+          avatar: userData.sexe[0] === 'M' 
+          ? require('../../../assets/man.png') 
+          : require('../../../assets/woman.png')
         });
 
       } catch (error) {
@@ -116,7 +118,7 @@ const pickImage = async () => {
   if (!result.canceled) {
     const uri = result.assets[0].uri;
     const fileName = uri.split("/").pop() || `avatar_${Date.now()}.jpg`;
-    const newPath = FileSystem.documentDirectory + fileName;
+    const newPath = FileSystem + fileName;
 
     try {
       await FileSystem.copyAsync({ from: uri, to: newPath });
@@ -302,7 +304,7 @@ const pickImage = async () => {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Profile Avatar */}
         <View style={styles.avatarContainer}>
-            <Image source={{ uri: userInfo.avatar }} style={styles.avatarImage} />
+              <Image source={userInfo.avatar as any} style={styles.avatarImage} />
 
           <TouchableOpacity onPress={pickImage} style={styles.changeAvatarButton}>
             <Text style={styles.changeAvatarText}>

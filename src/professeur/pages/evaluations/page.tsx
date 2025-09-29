@@ -31,7 +31,8 @@ import {
   getDocs,
   setDoc,
   arrayRemove,
-  getDoc
+  getDoc,
+  addDoc
 } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
@@ -193,7 +194,7 @@ export default function Evaluations({ navigation }: Props) {
     };
 
     
-    const handleAddNote = async (evaluationId: string, classe_id: string) => {
+    const handleAddNote = async (evaluation: any) => {
 
     }
 
@@ -218,38 +219,39 @@ export default function Evaluations({ navigation }: Props) {
   };
 
     const setupEvaluationsListener = () => {
-        const evaluationsRef = collection(db, 'evaluations');
+      const evaluationsRef = collection(db, "evaluations");
 
-        return onSnapshot(evaluationsRef, (querySnapshot) => {
-            let evaluationsData: Evaluation[] = [];
+      return onSnapshot(
+        evaluationsRef,
+        (querySnapshot) => {
+          let evaluationsData: any[] = [];
 
-            querySnapshot.docs.forEach(doc => {
-            const data = doc.data();
-            if (data.evaluations && Array.isArray(data.evaluations)) {
-                const filtered = data.evaluations.filter(
-                (evalItem: any) => evalItem.prof_id === currentUserId
-                );
-                evaluationsData.push(
-                ...filtered.map((evalItem: any) => ({
-                    id: evalItem.evaluationId,
-                    ...evalItem
-                }))
-                );
+          querySnapshot.docs.forEach((docSnap) => {
+            const data = docSnap.data();
+
+            if (data && data.prof_id === currentUserId) {
+              evaluationsData.push({
+                id: data.evaluationId || docSnap.id, 
+                ...data,
+              });
             }
-            });
+          });
 
-            evaluationsData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          evaluationsData.sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          );
 
-            setEvaluations(evaluationsData);
-            setLoading(false);
-            setRefreshing(false);
-
-        }, (error) => {
-            console.error('Error fetching evaluations:', error);
-            setLoading(false);
-            setRefreshing(false);
-        });
-        };
+          setEvaluations(evaluationsData);
+          setLoading(false);
+          setRefreshing(false);
+        },
+        (error) => {
+          console.error("Error fetching evaluations:", error);
+          setLoading(false);
+          setRefreshing(false);
+        }
+      );
+    };
 
 
 
@@ -263,6 +265,16 @@ export default function Evaluations({ navigation }: Props) {
         setShowClassModal(true);
     };
 
+  const getClassAcademicYear = async (classId: string) => {
+    const classRef = doc(db, "classes", classId);
+    const classSnap = await getDoc(classRef);
+
+    if (classSnap.exists()) {
+      return classSnap.data().academic_year_id; 
+    } else {
+      return null;
+    }
+  };
   const handleClassSelect = async (classe: Classe) => {
     setSelectedClasse(classe);
     setShowClassModal(false);
@@ -311,8 +323,10 @@ export default function Evaluations({ navigation }: Props) {
 
     setSubmitting(true);
 
+    const academic_year = await getClassAcademicYear(selectedClasse.classe_id)
     try {
       const newEvaluation = {
+        academic_year_id: academic_year,
         evaluationId: `${selectedClasse.classe_id}_${evaluationType}_${selectedMatiere.matiere_libelle}`,
         classe_id: selectedClasse.classe_id,
         classe_libelle: selectedClasse.classe_libelle,
@@ -322,40 +336,31 @@ export default function Evaluations({ navigation }: Props) {
         description: evaluationDescription.trim(),
         date: evaluationDate,
         notes: [],
+        max_points: 20,
+        notes_policy: "Meilleure note",
         heure_debut: evaluationStartTime,
         heure_fin: evaluationEndTime,
         prof_id: currentUserId,
         created_at: new Date()
       };
 
-      const evaluationsDocRef = doc(db, 'evaluations', selectedClasse.classe_id);
-      await updateDoc(evaluationsDocRef, {
-        evaluations: arrayUnion(newEvaluation)
-      }).catch(async (error) => {
-        if (error.code === 'not-found') {
-          // Create document if it doesn't exist
-          await setDoc(evaluationsDocRef, {
-            evaluations: [newEvaluation]
-          });
-        } else {
-          throw error;
-        }
-      });
+      const evaluationsCollectionRef = collection(db, "evaluations");
+      await addDoc(evaluationsCollectionRef, newEvaluation);
 
       // Reset form
-      setEvaluationTitle('');
-      setEvaluationDescription('');
-      setEvaluationDate('');
-      setEvaluationStartTime('');
-      setEvaluationEndTime('');
+      setEvaluationTitle("");
+      setEvaluationDescription("");
+      setEvaluationDate("");
+      setEvaluationStartTime("");
+      setEvaluationEndTime("");
       setSelectedClasse(null);
       setSelectedMatiere(null);
       setShowCreateModal(false);
 
-      Alert.alert('Succès', 'Évaluation créée avec succès !');
+      Alert.alert("Succès", "Évaluation créée avec succès !");
     } catch (error) {
-      console.error('Error creating evaluation:', error);
-      Alert.alert('Erreur', 'Impossible de créer l\'évaluation');
+      console.error("Error creating evaluation:", error);
+      Alert.alert("Erreur", "Impossible de créer l'évaluation");
     } finally {
       setSubmitting(false);
     }
@@ -445,7 +450,7 @@ export default function Evaluations({ navigation }: Props) {
                        
                         <TouchableOpacity
                             style={styles.addNoteButton}
-                            onPress={() => handleAddNote(evaluation.id, evaluation.classe_id)}
+                            onPress={() => navigation.navigate('AddNote', { evaluation } as any)}                            
                             activeOpacity={0.7}
                         >
                             <Text style={styles.addButtonText}>Ajouter de notes</Text>
