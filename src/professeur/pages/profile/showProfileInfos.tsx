@@ -82,7 +82,6 @@ export default function ProfileSettings({ navigation }: Props) {
         const userData = userSnapshot.docs[0].data();
         const userId = userSnapshot.docs[0].id;
 
-        const className = await FindUserClassName(userData.filiere_id, userData.niveau_id);
 
         setUserInfo({
           id: userId,
