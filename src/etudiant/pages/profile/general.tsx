@@ -119,7 +119,9 @@ export default function ProfileStudent({ navigation }: Props) {
         login: userDoc.login || '',
         classeId: userDoc.classe_id || '',
         role: userDoc.role || '',
-        avatar: userDoc.avatar
+        avatar: userDoc.sexe[0] === 'M' 
+        ? require('../../../assets/man.png') 
+        : require('../../../assets/woman.png')
       });
 
     } catch (error) {
@@ -303,7 +305,7 @@ export default function ProfileStudent({ navigation }: Props) {
           <View style={generalStyles.profileHeaderContent}>
             <View style={generalStyles.avatarContainer}>
               {user.avatar ? (
-                <Image source={{ uri: user.avatar }} style={generalStyles.avatarImage} />
+                <Image source={user.avatar as any} style={generalStyles.avatarImage} />
               ) : (
                 <View style={generalStyles.avatarPlaceholder}>
                   <Text style={generalStyles.avatarPlaceholderText}>

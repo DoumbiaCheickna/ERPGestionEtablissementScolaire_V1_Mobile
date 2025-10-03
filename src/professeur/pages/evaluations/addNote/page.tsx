@@ -54,6 +54,7 @@ interface Student {
   email?: string;
   classe: string;
   telephone?: string;
+  matricule: string;
 }
 
 interface Evaluation {
@@ -77,6 +78,7 @@ interface NoteEntry {
   student_id: string;
   student_name: string;
   note: number;
+  matricule: string;
 }
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddNote'>;
@@ -175,7 +177,8 @@ export default function AddNote({ navigation }: Props) {
           login: data.login || "",
           email: data.email || "",
           classe: data.classe || "",
-          telephone: data.telephone || ""
+          telephone: data.telephone || "",
+          matricule: data.matricule || ""
         });
       };
 
@@ -288,6 +291,7 @@ export default function AddNote({ navigation }: Props) {
       const newNoteEntry: NoteEntry = {
         student_id: selectedStudent.id,
         student_name: `${selectedStudent.prenom} ${selectedStudent.nom}`,
+        matricule: selectedStudent.matricule,
         note: note
       };
 

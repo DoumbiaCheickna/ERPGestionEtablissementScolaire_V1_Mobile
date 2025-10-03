@@ -278,7 +278,7 @@ export default function AllCoursesStudent({ navigation }: Props) {
   const getFilteredCoursesByDay = () => {
     if (!coursesByDay || coursesByDay.length === 0) return [];
     if (!selectedDay) return coursesByDay;
-    return coursesByDay.filter(section => section?.title == selectedDay);
+    return coursesByDay.filter(section => section?.title === selectedDay);
   };
 
   const filteredCoursesByDay = getFilteredCoursesByDay();
@@ -301,7 +301,7 @@ export default function AllCoursesStudent({ navigation }: Props) {
     let minTimeDifference = Infinity;
 
     // First check today's courses
-    const todayMatiereCourses = matiereCourses.filter((course: any) => course.day === todayDayName);
+    const todayMatiereCourses = matiereCourses.filter((d: any) => d.title === todayDayName);
     
     todayMatiereCourses.forEach((course: any) => {
       try {
@@ -562,7 +562,7 @@ export default function AllCoursesStudent({ navigation }: Props) {
           <TouchableOpacity 
             style={[
               styles.toggleButton, 
-              filterMode == 'dropdown' && styles.activeToggleButton
+              filterMode === 'dropdown' && styles.activeToggleButton
             ]}
             onPress={() => {
               setFilterMode('dropdown');

@@ -170,18 +170,14 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
     return absentCount.toString();
   };
 
-  // IMPROVED: Better menu item press handler with immediate feedback
   const handleMenuItemPress = (screen: string) => {
-    // Close menu immediately for better UX
     setMenuVisible(false);
     
-    // Add slight delay to ensure modal is closed before navigation
     setTimeout(() => {
       navigation.navigate(screen as never);
     }, 100);
   };
 
-  // IMPROVED: Menu option component with better touch handling
   const MenuOption = ({ icon, title, count, onPress, countColor = '#FF3B30' }: {
     icon: string;
     title: string;
@@ -195,7 +191,6 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
       activeOpacity={0.7}
       delayPressIn={0}
       delayPressOut={0}
-      // ADDED: Ensure the touch area is properly defined
       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
     >
       <View style={styles.menuOptionLeft}>
@@ -212,7 +207,6 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
 
   return (
     <>
-      {/* StatusBar Configuration */}
       <StatusBar 
         barStyle="dark-content"
         backgroundColor="white"
@@ -220,7 +214,6 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
       />
       
       <View style={styles.topNav} key={refreshKey}>
-        {/* IIBS Logo - Navigates to Home or Refreshes if on Home */}
         <TouchableOpacity onPress={handleLogoPress}>
           <Image
             source={require('../../assets/logo2.jpg')}
@@ -233,7 +226,6 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
            {getGreeting(userName as string)}
         </Text>
 
-        {/* Hamburger Menu Icon */}
         <TouchableOpacity 
           onPress={() => setMenuVisible(true)}
           style={styles.hamburgerContainer}
@@ -244,7 +236,6 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
             <View style={styles.hamburgerLine} />
           </View>
           
-          {/* Combined Badge for notifications and absences */}
           {(notificationCount > 0 || absentCount > 0) && (
             <View style={styles.combinedBadge}>
               <Text style={styles.combinedBadgeText}>
