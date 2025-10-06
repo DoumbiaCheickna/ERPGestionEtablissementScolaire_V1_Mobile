@@ -4,7 +4,6 @@ import {
   Text, 
   StyleSheet, 
   TouchableOpacity, 
-  SafeAreaView,
   StatusBar,
   Platform,
   Dimensions,
@@ -13,6 +12,7 @@ import {
   Animated,
   Alert
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { PanGestureHandler, State, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { getDoc, updateDoc } from 'firebase/firestore';
