@@ -24,6 +24,7 @@ import Posts from '../Social/posts/page';
 import Evaluations from '../professeur/pages/evaluations/page';
 import AddNote from '../professeur/pages/evaluations/addNote/page';
 import VoirNote from '../etudiant/pages/voirNote/page';
+import Comments from '../Social/comments/page';
 
 export type RootStackParamList = {
   Login: { userLogin: string; userRole: string; firstLogin: number };
@@ -72,7 +73,7 @@ export type RootStackParamList = {
   Evaluations: undefined;
   AddNote: undefined;
   VoirNote: undefined;
-
+  Comments: { postId: string; commentsCount: number};
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -98,6 +99,7 @@ export default function AppNavigator() {
 
         {/* Posts Feature */}
         <Stack.Screen name="Posts" component={Posts} />
+        <Stack.Screen name="Comments" component={Comments} />
         <Stack.Screen name="UserProfile" component={UserProfile} />
 
         <Stack.Screen name="HomeStudent" component={HomeStudent} />

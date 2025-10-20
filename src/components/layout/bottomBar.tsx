@@ -30,6 +30,7 @@ const BottomNavBar = ({ activeScreen }: Props) => {
   const studentItems = [
     { name: 'HomeStudent', icon: 'home-outline', screen: 'HomeStudent', libelle: 'Accueil' },
     { name: 'AllCoursesStudent', icon: 'calendar-outline', screen: 'AllCoursesStudent', libelle: 'Emploi du temps' },
+    { name: 'Posts', icon: 'create-outline', screen: 'Posts', libelle: 'Posts' },
     { name: 'VoirNote', icon: 'document-text-outline', screen: 'VoirNote', libelle: 'Notes' },
     { name: 'ProfileStudent', icon: 'person-outline', screen: 'ProfileStudent', libelle: 'Profil' }, 
   ];

@@ -8,11 +8,14 @@ import {
   Alert, 
   RefreshControl,
   Dimensions,
-  ActivityIndicator,
   TextInput,
   StyleSheet,
-  Modal
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TopNavBar from '../../components/layout/topBar';
 import BottomNavBar from '../../components/layout/bottomBar';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -31,8 +34,7 @@ import {
   addDoc,
   serverTimestamp,
   where,
-  getDocs,
-  setDoc
+  getDocs
 } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
@@ -40,7 +42,6 @@ import { MatieresStyles } from '../../etudiant/pages/matieres/styles';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-// Post interface
 interface Post {
   id: string;
   author_id: string;
@@ -55,21 +56,10 @@ interface Post {
   updated_at?: any;
 }
 
-// Comment interface
-interface Comment {
-  id: string;
-  post_id: string;
-  author_id: string;
-  author_name: string;
-  author_role: 'etudiant' | 'professeur';
-  content: string;
-  timestamp: any;
-  created_at: any;
-}
-
 type Props = NativeStackScreenProps<RootStackParamList, 'Posts'>;
 
 export default function Posts({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -79,8 +69,6 @@ export default function Posts({ navigation }: Props) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newPostContent, setNewPostContent] = useState('');
   const [submittingPost, setSubmittingPost] = useState(false);
-  const [expandedComments, setExpandedComments] = useState<Record<string, Comment[]>>({});
-  const [newComment, setNewComment] = useState<Record<string, string>>({});
 
   useEffect(() => {
     initializeUser();
@@ -106,11 +94,18 @@ export default function Posts({ navigation }: Props) {
         if (!querySnapshot.empty) {
           const userDoc = querySnapshot.docs[0];
           const userData = userDoc.data();
-          setCurrentUserId(userDoc.id);
-          setCurrentUserName(userData.nom && userData.prenom 
+          const userId = userDoc.id;
+          const userName = userData.nom && userData.prenom 
             ? `${userData.prenom} ${userData.nom}` 
-            : userData.nom || userData.prenom || 'Utilisateur');
+            : userData.nom || userData.prenom || 'Utilisateur';
+            
+          setCurrentUserId(userId);
+          setCurrentUserName(userName);
           setCurrentUserRole(userRole as 'etudiant' | 'professeur');
+          
+          // Store for Comments screen
+          await AsyncStorage.setItem('userId', userId);
+          await AsyncStorage.setItem('userName', userName);
         }
       }
     } catch (error) {
@@ -140,7 +135,6 @@ export default function Posts({ navigation }: Props) {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    // The listener will automatically update the posts
   };
 
   const handleLike = async (postId: string, currentLikes: string[]) => {
@@ -183,8 +177,6 @@ export default function Posts({ navigation }: Props) {
     );
   };
 
-
-
   const handleCreatePost = async () => {
     if (!newPostContent.trim()) {
       Alert.alert('Erreur', 'Veuillez saisir du contenu pour votre post');
@@ -194,50 +186,25 @@ export default function Posts({ navigation }: Props) {
     setSubmittingPost(true);
 
     try {
-      // 1. Get userLogin from AsyncStorage
-      const userLogin = await AsyncStorage.getItem("userLogin");
-      if (!userLogin) {
-        throw new Error("Impossible de trouver le login dans AsyncStorage");
+      if (!currentUserId) {
+        throw new Error("Utilisateur non authentifié");
       }
 
-      // 2. Query the users collection by login
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("login", "==", userLogin));
-      const querySnap = await getDocs(q);
-
-      if (querySnap.empty) {
-        throw new Error("Utilisateur introuvable");
-      }
-
-      // 3. Get user doc ID and data
-      const userDoc = querySnap.docs[0];
-      const userDocId = userDoc.id;
-      const userData = userDoc.data();
-
-      // 4. Build new post data
       const newPost = {
         content: newPostContent.trim(),
-        author_id: userDocId,
-        author_name: userData.nom + " " + userData.prenom, // adapt if needed
-        author_role: userData.role,
-        matricule: userData.matricule,
-        date: new Date().toDateString(),
+        author_id: currentUserId,
+        author_name: currentUserName,
+        author_role: currentUserRole,
+        timestamp: serverTimestamp(),
         likes: [],
         comments_count: 0,
-        created_at: serverTimestamp()
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp()
       };
 
-      // 5. Reference to that user’s doc
-      const userDocRef = doc(db, "users", userDocId);
+      const postsRef = collection(db, "posts");
+      await addDoc(postsRef, newPost);
 
-      // 6. If posts field doesn’t exist yet → create, else → update with arrayUnion
-      await setDoc(
-        userDocRef,
-        { posts: arrayUnion(newPost) },
-        { merge: true }
-      );
-
-      // Success
       setNewPostContent('');
       setShowCreateModal(false);
       Alert.alert('Succès', 'Post créé avec succès !');
@@ -250,75 +217,8 @@ export default function Posts({ navigation }: Props) {
     }
   };
 
-
-  const loadComments = async (postId: string) => {
-    if (expandedComments[postId]) {
-      // Hide comments
-      setExpandedComments(prev => {
-        const updated = { ...prev };
-        delete updated[postId];
-        return updated;
-      });
-      return;
-    }
-
-    try {
-      const commentsRef = collection(db, 'posts', postId, 'comments');
-      const q = query(commentsRef, orderBy('created_at', 'asc'));
-      const querySnapshot = await getDocs(q);
-      
-      const comments = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Comment[];
-
-      setExpandedComments(prev => ({
-        ...prev,
-        [postId]: comments
-      }));
-    } catch (error) {
-      console.error('Error loading comments:', error);
-      Alert.alert('Erreur', 'Impossible de charger les commentaires');
-    }
-  };
-
-  const handleAddComment = async (postId: string) => {
-    const content = newComment[postId]?.trim();
-    if (!content) return;
-
-    try {
-      const commentsRef = collection(db, 'posts', postId, 'comments');
-      await addDoc(commentsRef, {
-        post_id: postId,
-        author_id: currentUserId,
-        author_name: currentUserName,
-        author_role: currentUserRole,
-        content: content,
-        created_at: serverTimestamp(),
-        timestamp: serverTimestamp()
-      });
-
-      // Update post comment count
-      const postRef = doc(db, 'posts', postId);
-      await updateDoc(postRef, {
-        comments_count: (posts.find(p => p.id === postId)?.comments_count || 0) + 1,
-        updated_at: serverTimestamp()
-      });
-
-      // Clear comment input
-      setNewComment(prev => ({
-        ...prev,
-        [postId]: ''
-      }));
-
-      // Refresh comments
-      if (expandedComments[postId]) {
-        loadComments(postId);
-      }
-    } catch (error) {
-      console.error('Error adding comment:', error);
-      Alert.alert('Erreur', 'Impossible d\'ajouter le commentaire');
-    }
+  const navigateToComments = (postId: string, commentsCount: number) => {
+    navigation.navigate('Comments', { postId, commentsCount });
   };
 
   const navigateToUserProfile = (userId: string) => {
@@ -331,14 +231,19 @@ export default function Posts({ navigation }: Props) {
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 1) {
+    if (diffHours < 1) {
+      return "À l'instant";
+    } else if (diffHours < 24) {
+      return `${diffHours}h`;
+    } else if (diffDays === 1) {
       return "Aujourd'hui";
     } else if (diffDays === 2) {
       return "Hier";
     } else if (diffDays <= 7) {
-      return `Il y a ${diffDays - 1} jours`;
+      return `${diffDays - 1}d`;
     } else {
       return date.toLocaleDateString('fr-FR');
     }
@@ -347,11 +252,9 @@ export default function Posts({ navigation }: Props) {
   const PostCard = ({ post }: { post: Post }) => {
     const isLiked = post.likes.includes(currentUserId);
     const isOwnPost = post.author_id === currentUserId;
-    const comments = expandedComments[post.id] || [];
 
     return (
       <View style={styles.postCard}>
-        {/* Post Header */}
         <View style={styles.postHeader}>
           <TouchableOpacity 
             style={styles.userInfo}
@@ -370,85 +273,48 @@ export default function Posts({ navigation }: Props) {
             </View>
           </TouchableOpacity>
           
-          <View style={styles.postMeta}>
-            <Text style={styles.timestamp}>{formatTimestamp(post.timestamp)}</Text>
-            {isOwnPost && (
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => handleDeletePost(post.id)}
-              >
-                <Text style={styles.deleteButtonText}>🗑️</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          {isOwnPost && (
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleDeletePost(post.id)}
+            >
+              <Text style={styles.deleteButtonText}>⋯</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        {/* Post Content */}
         <Text style={styles.postContent}>{post.content}</Text>
 
-        {/* Post Actions */}
+        {post.image_url && (
+          <Image
+            source={{ uri: post.image_url }}
+            style={styles.postImage}
+          />
+        )}
+
+        <View style={styles.postStats}>
+          <Text style={styles.statsText}>{post.likes.length} likes · {post.comments_count} comments</Text>
+        </View>
+
         <View style={styles.postActions}>
           <TouchableOpacity
             style={[styles.actionButton, isLiked && styles.likedButton]}
             onPress={() => handleLike(post.id, post.likes)}
           >
             <Text style={[styles.actionText, isLiked && styles.likedText]}>
-              {isLiked ? '❤️' : '🤍'} {post.likes.length}
+              {isLiked ? '❤️' : '🤍'} Like
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => loadComments(post.id)}
+            onPress={() => navigateToComments(post.id, post.comments_count)}
           >
             <Text style={styles.actionText}>
-              💬 {post.comments_count} commentaires
+              💬 Comment
             </Text>
           </TouchableOpacity>
         </View>
-
-        {/* Comments Section */}
-        {expandedComments[post.id] && (
-          <View style={styles.commentsSection}>
-            {comments.map((comment) => (
-              <View key={comment.id} style={styles.commentItem}>
-                <TouchableOpacity
-                  onPress={() => navigateToUserProfile(comment.author_id)}
-                >
-                  <Text style={styles.commentAuthor}>{comment.author_name}</Text>
-                </TouchableOpacity>
-                <Text style={styles.commentContent}>{comment.content}</Text>
-                <Text style={styles.commentTime}>{formatTimestamp(comment.timestamp)}</Text>
-              </View>
-            ))}
-
-            {/* Add Comment Input */}
-            <View style={styles.addCommentContainer}>
-              <TextInput
-                style={styles.commentInput}
-                placeholder="Ajouter un commentaire..."
-                value={newComment[post.id] || ''}
-                onChangeText={(text) => setNewComment(prev => ({
-                  ...prev,
-                  [post.id]: text
-                }))}
-                multiline
-              />
-              <TouchableOpacity
-                style={styles.sendCommentButton}
-                onPress={() => handleAddComment(post.id)}
-                disabled={!newComment[post.id]?.trim()}
-              >
-                <Text style={[
-                  styles.sendCommentText,
-                  !newComment[post.id]?.trim() && styles.sendCommentTextDisabled
-                ]}>
-                  ➤
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
       </View>
     );
   };
@@ -483,22 +349,18 @@ export default function Posts({ navigation }: Props) {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Header Section */}
         <View style={styles.headerSection}>
-          <Text style={styles.headerTitle}>Posts de la Communauté</Text>
-          <Text style={styles.headerSubtitle}>Partagez et découvrez</Text>
+          <Text style={styles.headerTitle}>Recent Posts</Text>
         </View>
 
-        {/* Refresh Button */}
         <TouchableOpacity 
           style={MatieresStyles.refreshButton}
           onPress={handleRefresh}
           activeOpacity={0.7}
         >
-          <Text style={MatieresStyles.refreshButtonText}>🔄 Actualiser</Text>
+          <Text style={MatieresStyles.refreshButtonText}>🔄 Refresh</Text>
         </TouchableOpacity>
 
-        {/* Posts List */}
         {posts.length > 0 ? (
           posts.map((post) => (
             <PostCard key={post.id} post={post} />
@@ -512,7 +374,6 @@ export default function Posts({ navigation }: Props) {
         )}
       </ScrollView>
 
-      {/* Floating Action Button */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => setShowCreateModal(true)}
@@ -521,15 +382,20 @@ export default function Posts({ navigation }: Props) {
         <Text style={styles.fabIcon}>✏️</Text>
       </TouchableOpacity>
 
-      {/* Create Post Modal */}
       <Modal
         visible={showCreateModal}
         animationType="slide"
-        presentationStyle="pageSheet"
+        presentationStyle="fullScreen"
       >
-        <View style={styles.modalContainer}>
+        <KeyboardAvoidingView 
+          style={styles.modalContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowCreateModal(false)}>
+            <TouchableOpacity onPress={() => {
+              Keyboard.dismiss();
+              setShowCreateModal(false);
+            }}>
               <Text style={styles.modalCancelButton}>Annuler</Text>
             </TouchableOpacity>
             <Text style={styles.modalTitle}>Nouveau Post</Text>
@@ -555,19 +421,20 @@ export default function Posts({ navigation }: Props) {
               multiline
               textAlignVertical="top"
               maxLength={500}
+              blurOnSubmit={false}
+              returnKeyType="default"
             />
             <Text style={styles.characterCount}>
               {newPostContent.length}/500
             </Text>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       <BottomNavBar activeScreen="Posts" />
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -595,23 +462,18 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: '#1a1a1a',
-    marginBottom: 5,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: '#666',
   },
   postCard: {
     backgroundColor: '#fff',
     marginHorizontal: 15,
     marginVertical: 8,
-    borderRadius: 15,
+    borderRadius: 12,
     padding: 15,
-    elevation: 3,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
   },
   postHeader: {
     flexDirection: 'row',
@@ -640,51 +502,59 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#1a1a1a',
   },
   userRole: {
-    fontSize: 13,
-    color: '#666',
-  },
-  postMeta: {
-    alignItems: 'flex-end',
-  },
-  timestamp: {
     fontSize: 12,
     color: '#999',
+    marginTop: 2,
   },
   deleteButton: {
-    marginTop: 5,
     padding: 5,
   },
   deleteButtonText: {
-    fontSize: 16,
+    fontSize: 18,
+    color: '#999',
   },
   postContent: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 22,
     color: '#333',
-    marginBottom: 15,
+    marginBottom: 12,
+  },
+  postImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 12,
+  },
+  postStats: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    marginBottom: 8,
+  },
+  statsText: {
+    fontSize: 13,
+    color: '#999',
   },
   postActions: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    paddingTop: 8,
   },
   actionButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
   },
   likedButton: {
-    backgroundColor: '#ffe6e6',
+    backgroundColor: '#f5f5f5',
   },
   actionText: {
     fontSize: 14,
@@ -693,67 +563,6 @@ const styles = StyleSheet.create({
   },
   likedText: {
     color: '#e74c3c',
-  },
-  commentsSection: {
-    marginTop: 15,
-    paddingTop: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  commentItem: {
-    marginBottom: 10,
-    paddingLeft: 10,
-  },
-  commentAuthor: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2196F3',
-    marginBottom: 2,
-  },
-  commentContent: {
-    fontSize: 14,
-    color: '#333',
-    lineHeight: 20,
-  },
-  commentTime: {
-    fontSize: 11,
-    color: '#999',
-    marginTop: 2,
-  },
-  addCommentContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#f5f5f5',
-  },
-  commentInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    maxHeight: 80,
-    fontSize: 14,
-  },
-  sendCommentButton: {
-    marginLeft: 10,
-    width: 35,
-    height: 35,
-    borderRadius: 17.5,
-    backgroundColor: '#2196F3',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sendCommentText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  sendCommentTextDisabled: {
-    color: '#ccc',
   },
   emptyState: {
     alignItems: 'center',
@@ -792,6 +601,114 @@ const styles = StyleSheet.create({
   fabIcon: {
     fontSize: 24,
     color: '#fff',
+  },
+  commentsModalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  commentsModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  closeButton: {
+    fontSize: 24,
+    color: '#666',
+    fontWeight: '300',
+  },
+  commentsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  commentsList: {
+    flex: 1,
+    paddingHorizontal: 15,
+  },
+  commentItemNew: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f5f5f5',
+  },
+  commentAvatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    marginTop: 2,
+  },
+  commentAvatar: {
+    fontSize: 18,
+  },
+  commentDetailsContainer: {
+    flex: 1,
+  },
+  commentAuthorName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 2,
+  },
+  commentTimeNew: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 4,
+  },
+  commentContentNew: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 20,
+  },
+  newCommentContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    backgroundColor: '#fff',
+  },
+  newCommentAvatarContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  newCommentAvatar: {
+    fontSize: 16,
+  },
+  newCommentInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+  },
+  newCommentInput: {
+    flex: 1,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: '#333',
+  },
+  newCommentSendButton: {
+    paddingLeft: 8,
+    paddingVertical: 8,
+  },
+  newCommentSendIcon: {
+    fontSize: 16,
+    color: '#2196F3',
+    fontWeight: 'bold',
   },
   modalContainer: {
     flex: 1,
@@ -839,4 +756,4 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginTop: 10,
   },
-});
+})
