@@ -23,7 +23,8 @@ import {
   addDoc,
   serverTimestamp,
   doc,
-  updateDoc
+  updateDoc,
+  deleteDoc
 } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -78,6 +79,38 @@ export default function Comments({ navigation, route }: Props) {
       console.error('Error initializing user:', error);
     }
   };
+
+  const handleDeleteComment = (commentId: string) => {
+    Alert.alert(
+      'Supprimer le commentaire',
+      'Êtes-vous sûr de vouloir supprimer ce commentaire ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { 
+          text: 'Supprimer', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Delete the comment document
+              const commentRef = doc(db, 'posts', postId, 'comments', commentId);
+              await deleteDoc(commentRef);
+
+              // Optionally update the comments count
+              const postRef = doc(db, 'posts', postId);
+              await updateDoc(postRef, {
+                comments_count: comments.length - 1,
+                updated_at: serverTimestamp()
+              });
+            } catch (error) {
+              console.error('Erreur lors de la suppression:', error);
+              Alert.alert('Erreur', 'Impossible de supprimer le commentaire.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
 
   const setupCommentsListener = () => {
     const commentsRef = collection(db, 'posts', postId, 'comments');
@@ -183,29 +216,39 @@ export default function Comments({ navigation, route }: Props) {
           keyboardDismissMode="interactive"
         >
           {comments.length > 0 ? (
-            comments.map((comment) => (
-              <View key={comment.id} style={styles.commentItem}>
-                <View style={styles.commentAvatarContainer}>
-                  <Text style={styles.commentAvatar}>
-                    {comment.author_role === 'professeur' ? '👨‍🏫' : '🎓'}
-                  </Text>
-                </View>
-                <View style={styles.commentDetailsContainer}>
-                  <View style={styles.commentHeader}>
-                    <Text style={styles.commentAuthorName}>{comment.author_name}</Text>
-                    <Text style={styles.commentTime}>{formatTimestamp(comment.created_at)}</Text>
+              comments.map((comment) => (
+                <View key={comment.id} style={styles.commentItem}>
+                  <View style={styles.commentAvatarContainer}>
+                    <Text style={styles.commentAvatar}>
+                      {comment.author_role === 'professeur' ? '👨‍🏫' : '🎓'}
+                    </Text>
                   </View>
-                  <Text style={styles.commentContent}>{comment.content}</Text>
+                  <View style={styles.commentDetailsContainer}>
+                    <View style={styles.commentHeader}>
+                      <Text style={styles.commentAuthorName}>{comment.author_name}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Text style={styles.commentTime}>{formatTimestamp(comment.created_at)}</Text>
+                        {comment.author_id === currentUserId && (
+                          <TouchableOpacity 
+                            style={{ marginLeft: 10 }}
+                            onPress={() => handleDeleteComment(comment.id)}
+                          >
+                            <Text style={{ color: 'red', fontWeight: 'bold', top: -7, fontSize: 20}}>...</Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                    <Text style={styles.commentContent}>{comment.content}</Text>
+                  </View>
                 </View>
+              ))
+            ) : (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyIcon}>💬</Text>
+                <Text style={styles.emptyText}>Aucun commentaire</Text>
+                <Text style={styles.emptySubtext}>Soyez le premier à commenter !</Text>
               </View>
-            ))
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>💬</Text>
-              <Text style={styles.emptyText}>Aucun commentaire</Text>
-              <Text style={styles.emptySubtext}>Soyez le premier à commenter !</Text>
-            </View>
-          )}
+            )}
         </ScrollView>
       )}
 
@@ -327,6 +370,7 @@ const styles = StyleSheet.create({
   commentTime: {
     fontSize: 12,
     color: '#999',
+    marginRight: 25,
   },
   commentContent: {
     fontSize: 14,
