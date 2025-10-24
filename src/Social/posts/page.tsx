@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -13,7 +13,8 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
-  Keyboard
+  Keyboard,
+  Animated
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TopNavBar from '../../components/layout/topBar';
@@ -39,6 +40,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import { MatieresStyles } from '../../etudiant/pages/matieres/styles';
+import { styles } from '../posts/styles';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -69,6 +71,37 @@ export default function Posts({ navigation }: Props) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newPostContent, setNewPostContent] = useState('');
   const [submittingPost, setSubmittingPost] = useState(false);
+
+
+  const translateX = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(translateX, {
+          toValue: 100, // bouge 100px vers la droite
+          duration: 6000, // 6 seconds
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateX, {
+          toValue: 0, // return vers la gauche
+          duration: 5000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateX, {
+          toValue: -100, // bouge 100px vers la gauche
+          duration: 6000, // 6 seconds
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateX, {
+          toValue: 0, // return vers le miliey
+          duration: 5000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [translateX]);
 
   useEffect(() => {
     initializeUser();
@@ -255,10 +288,12 @@ export default function Posts({ navigation }: Props) {
 
     return (
       <View style={styles.postCard}>
+        {/* Header with user info */}
         <View style={styles.postHeader}>
           <TouchableOpacity 
             style={styles.userInfo}
             onPress={() => navigateToUserProfile(post.author_id)}
+            activeOpacity={0.7}
           >
             <View style={styles.avatarContainer}>
               <Text style={styles.avatarText}>
@@ -277,47 +312,86 @@ export default function Posts({ navigation }: Props) {
             <TouchableOpacity
               style={styles.deleteButton}
               onPress={() => handleDeletePost(post.id)}
+              activeOpacity={0.6}
             >
               <Text style={styles.deleteButtonText}>⋯</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        <Text style={styles.postContent}>{post.content}</Text>
+        {/* Post content */}
+        {post.content && (
+          <Text style={styles.postContent}>{post.content}</Text>
+        )}
 
+        {/* Post image */}
         {post.image_url && (
           <Image
             source={{ uri: post.image_url }}
             style={styles.postImage}
+            resizeMode="cover"
           />
         )}
 
-        <View style={styles.postStats}>
-          <Text style={styles.statsText}>{post.likes.length} likes · {post.comments_count} comments</Text>
-        </View>
-
+        {/* Action buttons */}
         <View style={styles.postActions}>
           <TouchableOpacity
-            style={[styles.actionButton, isLiked && styles.likedButton]}
+            style={styles.actionButton}
             onPress={() => handleLike(post.id, post.likes)}
+            activeOpacity={0.6}
           >
             <Text style={[styles.actionText, isLiked && styles.likedText]}>
-              {isLiked ? '❤️' : '🤍'} Like
+              {isLiked ? '❤️' : '🤍'}
+              {'\n'}Like
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => navigateToComments(post.id, post.comments_count)}
+            activeOpacity={0.6}
           >
-            <Text style={styles.actionText}>
-              💬 Comment
-            </Text>
+            <Text style={styles.actionText}>💬{'\n'}Comment</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.actionText}>📤{'\n'}Share</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Like and comment counts */}
+        <View style={styles.postStats}>
+          {post.likes.length > 0 && (
+            <Text style={styles.statsText}>
+              {post.likes.length} {post.likes.length === 1 ? 'like' : 'likes'}
+            </Text>
+          )}
+        </View>
+
+        {/* Comments preview */}
+        {post.comments_count > 0 && (
+          <TouchableOpacity 
+            style={{ paddingHorizontal: 15, paddingBottom: 4 }}
+            onPress={() => navigateToComments(post.id, post.comments_count)}
+            activeOpacity={0.7}
+          >
+            <Text style={{ fontSize: 13, color: '#8e8e8e' }}>
+              Voir {post.comments_count > 1 ? `les ${post.comments_count} commentaires` : 'le commentaire'}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Timestamp */}
+        <Text style={styles.postTimestamp}>
+          {formatTimestamp(post.timestamp || post.created_at)}
+        </Text>
       </View>
     );
   };
+
 
   if (loading) {
     return (
@@ -350,16 +424,16 @@ export default function Posts({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerSection}>
-          <Text style={styles.headerTitle}>Recent Posts</Text>
+            <Text style={styles.headerTitle}>IIBS Social World!</Text>
+            <Animated.View style={{ transform: [{ translateX }] }}>
+          <LottieView
+            source={require('../../assets/post.json')}
+            autoPlay
+            loop
+            style={{ width: 300, height: 150 }}
+          />
+        </Animated.View>
         </View>
-
-        <TouchableOpacity 
-          style={MatieresStyles.refreshButton}
-          onPress={handleRefresh}
-          activeOpacity={0.7}
-        >
-          <Text style={MatieresStyles.refreshButtonText}>🔄 Refresh</Text>
-        </TouchableOpacity>
 
         {posts.length > 0 ? (
           posts.map((post) => (
@@ -435,325 +509,4 @@ export default function Posts({ navigation }: Props) {
     </View>
   );
 }
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 10,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  headerSection: {
-    padding: 20,
-    paddingBottom: 10,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-  },
-  postCard: {
-    backgroundColor: '#fff',
-    marginHorizontal: 15,
-    marginVertical: 8,
-    borderRadius: 12,
-    padding: 15,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-  },
-  postHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  avatarContainer: {
-    width: 45,
-    height: 45,
-    borderRadius: 22.5,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  avatarText: {
-    fontSize: 20,
-  },
-  userDetails: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  userRole: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 2,
-  },
-  deleteButton: {
-    padding: 5,
-  },
-  deleteButtonText: {
-    fontSize: 18,
-    color: '#999',
-  },
-  postContent: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: '#333',
-    marginBottom: 12,
-  },
-  postImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 12,
-  },
-  postStats: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    marginBottom: 8,
-  },
-  statsText: {
-    fontSize: 13,
-    color: '#999',
-  },
-  postActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: 8,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  likedButton: {
-    backgroundColor: '#f5f5f5',
-  },
-  actionText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
-  },
-  likedText: {
-    color: '#e74c3c',
-  },
-  emptyState: {
-    alignItems: 'center',
-    padding: 40,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 15,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 5,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#666',
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 120,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#2196F3',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  fabIcon: {
-    fontSize: 24,
-    color: '#fff',
-  },
-  commentsModalContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  commentsModalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  closeButton: {
-    fontSize: 24,
-    color: '#666',
-    fontWeight: '300',
-  },
-  commentsTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  commentsList: {
-    flex: 1,
-    paddingHorizontal: 15,
-  },
-  commentItemNew: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f5f5f5',
-  },
-  commentAvatarContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    marginTop: 2,
-  },
-  commentAvatar: {
-    fontSize: 18,
-  },
-  commentDetailsContainer: {
-    flex: 1,
-  },
-  commentAuthorName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 2,
-  },
-  commentTimeNew: {
-    fontSize: 12,
-    color: '#999',
-    marginBottom: 4,
-  },
-  commentContentNew: {
-    fontSize: 14,
-    color: '#333',
-    lineHeight: 20,
-  },
-  newCommentContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    backgroundColor: '#fff',
-  },
-  newCommentAvatarContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  newCommentAvatar: {
-    fontSize: 16,
-  },
-  newCommentInputContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-  },
-  newCommentInput: {
-    flex: 1,
-    paddingVertical: 8,
-    fontSize: 14,
-    color: '#333',
-  },
-  newCommentSendButton: {
-    paddingLeft: 8,
-    paddingVertical: 8,
-  },
-  newCommentSendIcon: {
-    fontSize: 16,
-    color: '#2196F3',
-    fontWeight: 'bold',
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 60,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  modalCancelButton: {
-    fontSize: 16,
-    color: '#666',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  modalSubmitButton: {
-    fontSize: 16,
-    color: '#2196F3',
-    fontWeight: '600',
-  },
-  modalSubmitButtonDisabled: {
-    color: '#ccc',
-  },
-  modalContent: {
-    flex: 1,
-    padding: 20,
-  },
-  postInput: {
-    flex: 1,
-    fontSize: 16,
-    lineHeight: 24,
-    color: '#333',
-  },
-  characterCount: {
-    fontSize: 12,
-    color: '#999',
-    textAlign: 'right',
-    marginTop: 10,
-  },
-})
+

@@ -48,6 +48,9 @@ export default function MatieresStudent({ navigation }: Props) {
   const [selectedMatiere, setSelectedMatiere] = useState<Matiere | null>(null);
   const [selectedMatiereIndex, setSelectedMatiereIndex] = useState(0);
 
+  useEffect(() => {
+    refreshData();
+  }, []);
   const refreshData = () => {
     refreshCourses();
     refreshUserMatieres()

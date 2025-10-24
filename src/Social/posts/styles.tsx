@@ -24,126 +24,20 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   headerSection: {
+    backgroundColor: '#ffffff',
+    marginVertical: 10,
+    borderRadius: 20,
     padding: 20,
     paddingBottom: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 5,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: '#666',
-  },
-  postCard: {
-    backgroundColor: '#f8f9fa',
-    marginHorizontal: 15,
-    marginVertical: 8,
-    padding: 0,
-    elevation: 2,
+    fontWeight: '700',
+    color: '#2196F3',
+    fontFamily: 'Sansation-Regular',
 
-  },
-  postHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 15,
-    paddingBottom: 10,
-  },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  avatarContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  avatarText: {
-    fontSize: 18,
-  },
-  userDetails: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 2,
-  },
-  userSubtitle: {
-    fontSize: 13,
-    color: '#666',
-  },
-  deleteButton: {
-    padding: 8,
-  },
-  deleteButtonText: {
-    fontSize: 20,
-    color: '#666',
-  },
-  postContent: {
-    fontSize: 15,
-    lineHeight: 20,
-    color: '#1a1a1a',
-    paddingHorizontal: 15,
-    marginBottom: 12,
-  },
-  postImagePlaceholder: {
-    paddingHorizontal: 15,
-    marginBottom: 12,
-  },
-  imagePlaceholder: {
-    height: 200,
-    backgroundColor: '#e8f5e8',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imagePlaceholderText: {
-    fontSize: 48,
-    opacity: 0.3,
-  },
-  postActions: {
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  postStats: {
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-  },
-  statsText: {
-    fontSize: 13,
-    color: '#666',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  likedButton: {
-    backgroundColor: '#e3f2fd',
-  },
-  actionText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
-  },
-  likedText: {
-    color: '#1976d2',
   },
   emptyState: {
     alignItems: 'center',
@@ -182,6 +76,114 @@ export const styles = StyleSheet.create({
   fabIcon: {
     fontSize: 24,
     color: '#fff',
+  },
+  commentsModalContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  commentsModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  closeButton: {
+    fontSize: 24,
+    color: '#666',
+    fontWeight: '300',
+  },
+  commentsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  commentsList: {
+    flex: 1,
+    paddingHorizontal: 15,
+  },
+  commentItemNew: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f5f5f5',
+  },
+  commentAvatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    marginTop: 2,
+  },
+  commentAvatar: {
+    fontSize: 18,
+  },
+  commentDetailsContainer: {
+    flex: 1,
+  },
+  commentAuthorName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 2,
+  },
+  commentTimeNew: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 4,
+  },
+  commentContentNew: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 20,
+  },
+  newCommentContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    backgroundColor: '#fff',
+  },
+  newCommentAvatarContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  newCommentAvatar: {
+    fontSize: 16,
+  },
+  newCommentInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+  },
+  newCommentInput: {
+    flex: 1,
+    paddingVertical: 8,
+    fontSize: 14,
+    color: '#333',
+  },
+  newCommentSendButton: {
+    paddingLeft: 8,
+    paddingVertical: 8,
+  },
+  newCommentSendIcon: {
+    fontSize: 16,
+    color: '#2196F3',
+    fontWeight: 'bold',
   },
   modalContainer: {
     flex: 1,
@@ -229,84 +231,154 @@ export const styles = StyleSheet.create({
     textAlign: 'right',
     marginTop: 10,
   },
-   instagramActions: {
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+
+   postCard: {
+    backgroundColor: '#ffffff',
+    marginVertical: 6,
+    marginHorizontal: 0,
+    paddingVertical: 15,
+    borderRadius: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  actionButtonsRow: {
+  
+  postHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0ff',
+    marginBottom: 20
+  },
+  
+  userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    flex: 1,
   },
-  instagramActionButton: {
-    marginRight: 15,
-    padding: 5,
+  
+  avatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+    borderWidth: 1.5,
+    borderColor: '#e0e0e0',
   },
-  heartIcon: {
-    fontSize: 24,
+  
+  avatarText: {
+    fontSize: 18,
   },
-  actionIcon: {
-    fontSize: 24,
+  
+  userDetails: {
+    flex: 1,
+    justifyContent: 'center',
   },
-  likesCount: {
-    marginBottom: 5,
-  },
-  likesText: {
+  
+  userName: {
     fontSize: 14,
     fontWeight: '600',
     color: '#262626',
+    marginBottom: 2,
   },
-  commentsCount: {
-    marginBottom: 5,
-  },
-  commentsText: {
-    fontSize: 14,
+  
+  userRole: {
+    fontSize: 11,
     color: '#8e8e8e',
   },
-  commentsSection: {
-    paddingHorizontal: 15,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#efefef',
+  
+  deleteButton: {
+    padding: 8,
+    marginRight: -8,
   },
-  commentItem: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  commentAuthor: {
-    fontSize: 14,
+  
+  deleteButtonText: {
+    fontSize: 20,
+    color: '#262626',
     fontWeight: '600',
-    color: '#262626',
-    marginRight: 8,
   },
-  commentContent: {
-    fontSize: 14,
+  
+  postContent: {
+    fontSize: 20,
+    lineHeight: 20,
     color: '#262626',
+    paddingHorizontal: 15,
+    marginBottom: 8,
+    padding: 10,
+  },
+  
+  postImage: {
+    width: '100%',
+    height: 400,
+    backgroundColor: '#f0f0f0',
+    marginVertical: 8,
+  },
+  
+  postStats: {
+    paddingHorizontal: 15,
+    paddingVertical: 4,
+  },
+  
+  statsText: {
+    fontSize: 13,
+    color: '#262626',
+    fontWeight: '600',
+  },
+  
+  postActions: {
+    flexDirection: 'row',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    gap: 4,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0ff', 
+    marginTop: 10,
+  },
+  
+  actionButton: {
     flex: 1,
-  },
-  addCommentContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#efefef',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 15,
+    backgroundColor: 'transparent',
+    borderColor: '#ccc',
+    borderWidth: 0.25,
+    marginHorizontal: 2,
+    
+    marginVertical: 10,
   },
-  commentInput: {
-    flex: 1,
-    fontSize: 14,
+  
+  likedButton: {
+    backgroundColor: 'transparent',
+  },
+  
+  actionText: {
+    fontSize: 13,
     color: '#262626',
-    paddingVertical: 8,
-  },
-  sendCommentButton: {
-    paddingHorizontal: 10,
-  },
-  sendCommentText: {
-    fontSize: 14,
-    color: '#0095f6',
     fontWeight: '600',
+    marginLeft: 4,
+    textAlign: 'center',
   },
-  sendCommentTextDisabled: {
-    color: '#c7c7c7',
+  
+  likedText: {
+    color: '#ed4956', // Instagram red
   },
-});
+  
+  // Modern timestamp style
+  postTimestamp: {
+    fontSize: 10,
+    color: '#8e8e8e',
+    paddingHorizontal: 15,
+    paddingBottom: 12,
+  },
+})

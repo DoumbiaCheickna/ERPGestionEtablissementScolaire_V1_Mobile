@@ -19,7 +19,6 @@ import { db } from '../../firebaseConfig';
 import { 
   collection, 
   query, 
-  orderBy, 
   where,
   onSnapshot, 
   doc, 
@@ -33,6 +32,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import { MatieresStyles } from '../../etudiant/pages/matieres/styles';
+import { styles } from './styles';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -130,13 +130,12 @@ export default function UserProfile({ navigation, route }: Props) {
     }
   };
 
+  // FIXED: Removed orderBy to avoid Firestore index requirement
+  // Sorting is done client-side instead
   const setupUserPostsListener = () => {
     const postsRef = collection(db, 'posts');
-    const q = query(
-      postsRef, 
-      where('author_id', '==', userId),
-      orderBy('created_at', 'desc')
-    );
+    // Only filter by author_id, no orderBy
+    const q = query(postsRef, where('author_id', '==', userId));
 
     return onSnapshot(q, (querySnapshot) => {
       const posts = querySnapshot.docs.map(doc => ({
@@ -144,17 +143,26 @@ export default function UserProfile({ navigation, route }: Props) {
         ...doc.data()
       })) as Post[];
 
-      setUserPosts(posts);
-      setPostsCount(posts.length);
+      // Sort client-side by created_at
+      const sortedPosts = posts.sort((a, b) => {
+        if (!a.created_at || !b.created_at) return 0;
+        const dateA = a.created_at.toDate ? a.created_at.toDate() : new Date(a.created_at);
+        const dateB = b.created_at.toDate ? b.created_at.toDate() : new Date(b.created_at);
+        return dateB.getTime() - dateA.getTime();
+      });
+
+      setUserPosts(sortedPosts);
+      setPostsCount(sortedPosts.length);
       
       // Calculate total likes received
-      const totalLikes = posts.reduce((sum, post) => sum + post.likes.length, 0);
+      const totalLikes = sortedPosts.reduce((sum, post) => sum + post.likes.length, 0);
       setLikesCount(totalLikes);
       
       setLoading(false);
       setRefreshing(false);
     }, (error) => {
       console.error('Error fetching user posts:', error);
+      Alert.alert('Erreur', 'Impossible de charger les posts');
       setLoading(false);
       setRefreshing(false);
     });
@@ -212,25 +220,33 @@ export default function UserProfile({ navigation, route }: Props) {
     navigation.navigate('Posts');
   };
 
+  const navigateToComments = (postId: string, commentsCount: number) => {
+    navigation.navigate('Comments', { postId, commentsCount });
+  };
+
   const formatTimestamp = (timestamp: any) => {
     if (!timestamp) return '';
     
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 1) {
-      return "Aujourd'hui";
-    } else if (diffDays === 2) {
+    if (diffHours < 1) {
+      return "À l'instant";
+    } else if (diffHours < 24) {
+      return `il y a ${diffHours}h`;
+    } else if (diffDays === 1) {
       return "Hier";
     } else if (diffDays <= 7) {
-      return `Il y a ${diffDays - 1} jours`;
+      return `il y a ${diffDays - 1}j`;
     } else {
-      return date.toLocaleDateString('fr-FR');
+      return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
     }
   };
 
+  // Modern Instagram-style PostCard
   const PostCard = ({ post }: { post: Post }) => {
     const isLiked = post.likes.includes(currentUserId);
     const isOwnPost = userId === currentUserId;
@@ -239,40 +255,96 @@ export default function UserProfile({ navigation, route }: Props) {
       <View style={styles.postCard}>
         {/* Post Header */}
         <View style={styles.postHeader}>
-          <Text style={styles.timestamp}>{formatTimestamp(post.timestamp)}</Text>
+          <View style={styles.postHeaderLeft}>
+            <View style={styles.avatarSmall}>
+              <Text style={styles.avatarSmallText}>
+                {post.author_role === 'professeur' ? '👨‍🏫' : '🎓'}
+              </Text>
+            </View>
+            <View>
+              <Text style={styles.postAuthorName}>{post.author_name}</Text>
+              <Text style={styles.postTimestamp}>
+                {formatTimestamp(post.timestamp || post.created_at)}
+              </Text>
+            </View>
+          </View>
+          
           {isOwnPost && (
             <TouchableOpacity
               style={styles.deleteButton}
               onPress={() => handleDeletePost(post.id)}
+              activeOpacity={0.6}
             >
-              <Text style={styles.deleteButtonText}>🗑️</Text>
+              <Text style={styles.deleteButtonText}>⋯</Text>
             </TouchableOpacity>
           )}
         </View>
 
         {/* Post Content */}
-        <Text style={styles.postContent}>{post.content}</Text>
+        {post.content && (
+          <Text style={styles.postContent}>{post.content}</Text>
+        )}
 
-        {/* Post Actions */}
+        {/* Post Image */}
+        {post.image_url && (
+          <Image
+            source={{ uri: post.image_url }}
+            style={styles.postImage}
+            resizeMode="cover"
+          />
+        )}
+
+        {/* Action Buttons */}
         <View style={styles.postActions}>
           <TouchableOpacity
-            style={[styles.actionButton, isLiked && styles.likedButton]}
+            style={styles.actionButton}
             onPress={() => handleLike(post.id, post.likes)}
+            activeOpacity={0.6}
           >
-            <Text style={[styles.actionText, isLiked && styles.likedText]}>
-              {isLiked ? '❤️' : '🤍'} {post.likes.length}
+            <Text style={[styles.actionIcon, isLiked && styles.likedIcon]}>
+              {isLiked ? '❤️' : '🤍'}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={navigateToPostsFeed}
+            onPress={() => navigateToComments(post.id, post.comments_count)}
+            activeOpacity={0.6}
           >
-            <Text style={styles.actionText}>
-              💬 {post.comments_count}
-            </Text>
+            <Text style={styles.actionIcon}>💬</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            activeOpacity={0.6}
+          >
+            <Text style={styles.actionIcon}>📤</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Stats */}
+        <View style={styles.postStats}>
+          {post.likes.length > 0 && (
+            <Text style={styles.likesText}>
+              {post.likes.length} {post.likes.length === 1 ? 'like' : 'likes'}
+            </Text>
+          )}
+        </View>
+
+        {/* Comments Preview */}
+        {post.comments_count > 0 && (
+          <TouchableOpacity 
+            style={styles.commentsPreview}
+            onPress={() => navigateToComments(post.id, post.comments_count)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.commentsPreviewText}>
+              Voir {post.comments_count > 1 
+                ? `les ${post.comments_count} commentaires` 
+                : 'le commentaire'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -309,7 +381,7 @@ export default function UserProfile({ navigation, route }: Props) {
             <Text style={styles.backButtonText}>Retour</Text>
           </TouchableOpacity>
         </View>
-        <BottomNavBar activeScreen="PostsFeed" />
+        <BottomNavBar activeScreen="Posts" />
       </View>
     );
   }
@@ -328,17 +400,24 @@ export default function UserProfile({ navigation, route }: Props) {
         }
         showsVerticalScrollIndicator={false}
       >
+        
         {/* Profile Header */}
         <View style={styles.profileHeader}>
+          <TouchableOpacity 
+            style={{position: 'absolute', left: 20, top: 20}}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={{color: 'black', fontSize: 30}}>←</Text>
+          </TouchableOpacity>
           <View style={styles.avatarLarge}>
             <Text style={styles.avatarLargeText}>
-              {user.role.toLocaleLowerCase() == 'professeur' ? '👨‍🏫' : '🎓'}
+              {user.role.toLowerCase() === 'professeur' ? '👨‍🏫' : '🎓'}
             </Text>
           </View>
           
           <Text style={styles.userName}>{fullName}</Text>
           <Text style={styles.userRole}>
-            {user.role.toLocaleLowerCase() === 'professeur' ? 'Professeur' : 'Etudiant'}
+            {user.role.toLowerCase() === 'professeur' ? 'Professeur' : 'Étudiant'}
           </Text>
 
           {user.role === 'student' && (
@@ -371,32 +450,21 @@ export default function UserProfile({ navigation, route }: Props) {
             <TouchableOpacity 
               style={styles.messageButton}
               onPress={() => Alert.alert('Info', 'Fonctionnalité de message à venir')}
+              activeOpacity={0.8}
             >
               <Text style={styles.messageButtonText}>💬 Message</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        {/* Refresh Button */}
-        <TouchableOpacity 
-          style={MatieresStyles.refreshButton}
-          onPress={handleRefresh}
-          activeOpacity={0.7}
-        >
-          <Text style={MatieresStyles.refreshButtonText}>🔄 Actualiser</Text>
-        </TouchableOpacity>
-
-        {/* Posts Section */}
-        <View style={styles.sectionHeader}>
-          <View style={MatieresStyles.badgeContainer}>
-            <View style={MatieresStyles.badgeIcon}>
-              <Text style={MatieresStyles.badgeIconText}>📝</Text>
-            </View>
-            <Text style={MatieresStyles.badgeText}>
+        {/* Posts Section Header */}
+        <View style={styles.postsSection}>
+          <View style={styles.postsSectionHeader}>
+            <Text style={styles.postsSectionTitle}>
               {isOwnProfile ? 'Mes Posts' : 'Ses Posts'}
             </Text>
-            <View style={MatieresStyles.badgeCount}>
-              <Text style={MatieresStyles.badgeCountText}>{postsCount}</Text>
+            <View style={styles.postCountBadge}>
+              <Text style={styles.postCountText}>{postsCount}</Text>
             </View>
           </View>
         </View>
@@ -410,238 +478,28 @@ export default function UserProfile({ navigation, route }: Props) {
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>📝</Text>
             <Text style={styles.emptyText}>
-              {isOwnProfile ? 'Vous n\'avez pas encore de posts' : 'Aucun post pour le moment'}
+              {isOwnProfile ? 'Aucun post pour le moment' : 'Aucun post'}
             </Text>
             <Text style={styles.emptySubtext}>
-              {isOwnProfile ? 'Commencez à partager vos idées !' : 'Revenez plus tard pour voir du contenu'}
+              {isOwnProfile 
+                ? 'Commencez à partager vos idées !' 
+                : 'Cet utilisateur n\'a pas encore publié'}
             </Text>
             {isOwnProfile && (
               <TouchableOpacity 
                 style={styles.createPostButton}
                 onPress={navigateToPostsFeed}
+                activeOpacity={0.8}
               >
-                <Text style={styles.createPostButtonText}>Créer un post</Text>
+                <Text style={styles.createPostButtonText}>✏️ Créer un post</Text>
               </TouchableOpacity>
             )}
           </View>
         )}
       </ScrollView>
 
-      <BottomNavBar activeScreen="PostsFeed" />
+      <BottomNavBar activeScreen="Posts" />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 10,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    fontSize: 18,
-    color: '#666',
-    marginBottom: 20,
-  },
-  backButton: {
-    backgroundColor: '#2196F3',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  profileHeader: {
-    backgroundColor: '#fff',
-    paddingVertical: 30,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    marginBottom: 10,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  avatarLarge: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  avatarLargeText: {
-    fontSize: 40,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 5,
-    textAlign: 'center',
-  },
-  userRole: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 15,
-  },
-  studentInfo: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  studentInfoText: {
-    fontSize: 14,
-    color: '#666',
-    marginVertical: 2,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginBottom: 20,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2196F3',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 2,
-  },
-  messageButton: {
-    backgroundColor: '#2196F3',
-    paddingHorizontal: 30,
-    paddingVertical: 12,
-    borderRadius: 25,
-  },
-  messageButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  sectionHeader: {
-    marginVertical: 10,
-    paddingHorizontal: 15,
-  },
-  postCard: {
-    backgroundColor: '#fff',
-    marginHorizontal: 15,
-    marginVertical: 6,
-    borderRadius: 12,
-    padding: 15,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  postHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  timestamp: {
-    fontSize: 12,
-    color: '#999',
-  },
-  deleteButton: {
-    padding: 5,
-  },
-  deleteButtonText: {
-    fontSize: 16,
-  },
-  postContent: {
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#333',
-    marginBottom: 12,
-  },
-  postActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 15,
-    backgroundColor: '#f8f9fa',
-  },
-  likedButton: {
-    backgroundColor: '#ffe6e6',
-  },
-  actionText: {
-    fontSize: 13,
-    color: '#666',
-    fontWeight: '500',
-  },
-  likedText: {
-    color: '#e74c3c',
-  },
-  emptyState: {
-    alignItems: 'center',
-    padding: 40,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: 15,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 5,
-    textAlign: 'center',
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  createPostButton: {
-    backgroundColor: '#2196F3',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  createPostButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
