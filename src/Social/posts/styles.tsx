@@ -22,6 +22,7 @@ export const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    marginBottom: 160,
   },
   headerSection: {
     backgroundColor: '#ffffff',
@@ -33,11 +34,12 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 20,
+    margin: 10,
     fontWeight: '700',
-    color: '#2196F3',
+    color: 'black',
     fontFamily: 'Sansation-Regular',
-
+    textAlign: 'center',
   },
   emptyState: {
     alignItems: 'center',
@@ -64,7 +66,7 @@ export const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#2196F3',
+    backgroundColor: 'black',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
@@ -251,8 +253,6 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 15,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0ff',
     marginBottom: 20
   },
   
@@ -338,8 +338,6 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 6,
     gap: 4,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0ff', 
     marginTop: 10,
   },
   
@@ -380,5 +378,102 @@ export const styles = StyleSheet.create({
     color: '#8e8e8e',
     paddingHorizontal: 15,
     paddingBottom: 12,
+  },
+  postTextBackground: {
+    width: '100%',
+    minHeight: screenWidth, // Square like image posts
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 30,
+    backgroundColor: '#000000',
+  },
+
+  postContentCentered: {
+    fontSize: 32,
+    lineHeight: 42,
+    fontWeight: '700',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+
+  colorPickerSection: {
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 0.5,
+    borderTopColor: '#262626',
+  },
+
+  colorPickerTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 12,
+  },
+
+  colorPickerScroll: {
+    flexGrow: 0,
+  },
+
+  colorOption: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+
+  colorOptionNone: {
+    borderWidth: 2,
+    borderColor: '#444',
+    borderStyle: 'dashed',
+  },
+
+  colorOptionSelected: {
+    borderColor: '#0095f6',
+    borderWidth: 3,
+  },
+
+  colorCheckmark: {
+    fontSize: 24,
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+
+  colorNoneText: {
+    fontSize: 28,
+    color: '#999',
+  },
+
+  previewSection: {
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 0.5,
+    borderTopColor: '#262626',
+  },
+
+  previewTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 12,
+  },
+
+  previewBox: {
+    width: '100%',
+    minHeight: 200,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+
+  previewText: {
+    fontSize: 24,
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 32,
   },
 })

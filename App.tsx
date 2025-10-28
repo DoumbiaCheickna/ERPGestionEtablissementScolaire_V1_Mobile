@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { AppState, Alert } from 'react-native';
 import AppNavigator from './src/navigation';
 import { startAutomaticAbsenceService, stopAutomaticAbsenceService } from './src/utils/emargement';
+import 'react-native-gesture-handler';
 
 export default function App() {
   const absenceServiceRef = useRef<NodeJS.Timeout | null>(null);

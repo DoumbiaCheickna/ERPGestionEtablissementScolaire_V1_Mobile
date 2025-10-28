@@ -56,8 +56,8 @@ interface Post {
   comments_count: number;
   created_at: any;
   updated_at?: any;
+  background_color?: string;
 }
-
 type Props = NativeStackScreenProps<RootStackParamList, 'Posts'>;
 
 export default function Posts({ navigation }: Props) {
@@ -71,8 +71,22 @@ export default function Posts({ navigation }: Props) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newPostContent, setNewPostContent] = useState('');
   const [submittingPost, setSubmittingPost] = useState(false);
+  const [selectedBgColor, setSelectedBgColor] = useState('none');
 
 
+  const BACKGROUND_COLORS = [
+    { id: 'none', name: 'None', color: 'transparent' },
+    { id: 'white', name: 'White', color: '#FFFFFF' },
+    { id: 'lightblue', name: 'Light Blue', color: '#4FC3F7' },
+    { id: 'pink', name: 'Pink', color: '#F48FB1' },
+    { id: 'darkblue', name: 'Dark Blue', color: '#1565C0' },
+    { id: 'black', name: 'Black', color: '#000000' },
+    { id: 'green', name: 'Green', color: '#66BB6A' },
+    { id: 'red', name: 'Red', color: '#EF5350' },
+    { id: 'yellow', name: 'Yellow', color: '#FFEE58' },
+    { id: 'beige', name: 'Beige', color: '#D7CCC8' },
+    { id: 'purple', name: 'Purple', color: '#AB47BC' },
+  ];
   const translateX = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(0)).current;
 
@@ -187,6 +201,7 @@ export default function Posts({ navigation }: Props) {
     }
   };
 
+
   const handleDeletePost = async (postId: string) => {
     Alert.alert(
       'Supprimer le post',
@@ -232,13 +247,15 @@ export default function Posts({ navigation }: Props) {
         likes: [],
         comments_count: 0,
         created_at: serverTimestamp(),
-        updated_at: serverTimestamp()
+        updated_at: serverTimestamp(),
+        background_color: selectedBgColor, 
       };
 
       const postsRef = collection(db, "posts");
       await addDoc(postsRef, newPost);
 
       setNewPostContent('');
+      setSelectedBgColor('none'); // RESET BACKGROUND COLOR
       setShowCreateModal(false);
       Alert.alert('Succès', 'Post créé avec succès !');
 
@@ -249,6 +266,7 @@ export default function Posts({ navigation }: Props) {
       setSubmittingPost(false);
     }
   };
+
 
   const navigateToComments = (postId: string, commentsCount: number) => {
     navigation.navigate('Comments', { postId, commentsCount });
@@ -285,6 +303,15 @@ export default function Posts({ navigation }: Props) {
   const PostCard = ({ post }: { post: Post }) => {
     const isLiked = post.likes.includes(currentUserId);
     const isOwnPost = post.author_id === currentUserId;
+    
+    // Get background color
+    const bgColorObj = BACKGROUND_COLORS.find(bg => bg.id === post.background_color);
+    const hasBackground = post.background_color && post.background_color !== 'none';
+    const backgroundColor = bgColorObj?.color || 'transparent';
+    
+    // Determine text color based on background
+    const isDarkBg = ['black', 'darkblue', 'purple', 'red', 'lightblue', 'red', 'purple', 'green', 'pink'].includes(post.background_color || '');
+    const textColor = hasBackground ? (isDarkBg ? '#ffffff' : '#000000') : '#ffffff';
 
     return (
       <View style={styles.postCard}>
@@ -319,10 +346,22 @@ export default function Posts({ navigation }: Props) {
           )}
         </View>
 
-        {/* Post content */}
-        {post.content && (
+        {/* Post content - WITH BACKGROUND COLOR */}
+        {post.content && !post.image_url && hasBackground ? (
+          <View style={[styles.postTextBackground, { backgroundColor }]}>
+            <Text style={[styles.postContentCentered, { color: textColor }]}>
+              {post.content}
+            </Text>
+          </View>
+        ) : post.content && !post.image_url ? (
+          <View style={styles.postTextBackground}>
+            <Text style={[styles.postContentCentered, { color: '#ffffff' }]}>
+              {post.content}
+            </Text>
+          </View>
+        ) : post.content ? (
           <Text style={styles.postContent}>{post.content}</Text>
-        )}
+        ) : null}
 
         {/* Post image */}
         {post.image_url && (
@@ -342,7 +381,6 @@ export default function Posts({ navigation }: Props) {
           >
             <Text style={[styles.actionText, isLiked && styles.likedText]}>
               {isLiked ? '❤️' : '🤍'}
-              {'\n'}Like
             </Text>
           </TouchableOpacity>
 
@@ -351,14 +389,14 @@ export default function Posts({ navigation }: Props) {
             onPress={() => navigateToComments(post.id, post.comments_count)}
             activeOpacity={0.6}
           >
-            <Text style={styles.actionText}>💬{'\n'}Comment</Text>
+            <Text style={styles.actionText}>💬</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.actionButton}
             activeOpacity={0.6}
           >
-            <Text style={styles.actionText}>📤{'\n'}Share</Text>
+            <Text style={styles.actionText}>📤</Text>
           </TouchableOpacity>
         </View>
 
@@ -374,11 +412,11 @@ export default function Posts({ navigation }: Props) {
         {/* Comments preview */}
         {post.comments_count > 0 && (
           <TouchableOpacity 
-            style={{ paddingHorizontal: 15, paddingBottom: 4 }}
+            style={{ paddingHorizontal: 12, paddingBottom: 4 }}
             onPress={() => navigateToComments(post.id, post.comments_count)}
             activeOpacity={0.7}
           >
-            <Text style={{ fontSize: 13, color: '#8e8e8e' }}>
+            <Text style={{ fontSize: 13, color: '#999' }}>
               Voir {post.comments_count > 1 ? `les ${post.comments_count} commentaires` : 'le commentaire'}
             </Text>
           </TouchableOpacity>
@@ -391,6 +429,7 @@ export default function Posts({ navigation }: Props) {
       </View>
     );
   };
+
 
 
   if (loading) {
@@ -424,13 +463,13 @@ export default function Posts({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerSection}>
-            <Text style={styles.headerTitle}>IIBS Social World!</Text>
+            <Text style={styles.headerTitle}>Hello, Welcome to IIBS Social World!</Text>
             <Animated.View style={{ transform: [{ translateX }] }}>
           <LottieView
             source={require('../../assets/post.json')}
             autoPlay
             loop
-            style={{ width: 300, height: 150 }}
+            style={{ width: 300, height: 200 }}
           />
         </Animated.View>
         </View>
@@ -469,6 +508,7 @@ export default function Posts({ navigation }: Props) {
             <TouchableOpacity onPress={() => {
               Keyboard.dismiss();
               setShowCreateModal(false);
+              setSelectedBgColor('none');
             }}>
               <Text style={styles.modalCancelButton}>Annuler</Text>
             </TouchableOpacity>
@@ -490,6 +530,7 @@ export default function Posts({ navigation }: Props) {
             <TextInput
               style={styles.postInput}
               placeholder="Que voulez-vous partager ?"
+              placeholderTextColor="#999"
               value={newPostContent}
               onChangeText={setNewPostContent}
               multiline
@@ -501,10 +542,58 @@ export default function Posts({ navigation }: Props) {
             <Text style={styles.characterCount}>
               {newPostContent.length}/500
             </Text>
+
+            {/* Background Color Picker */}
+            <View style={styles.colorPickerSection}>
+              <Text style={styles.colorPickerTitle}>Couleur de fond:</Text>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                style={styles.colorPickerScroll}
+              >
+                {BACKGROUND_COLORS.map((bg) => (
+                  <TouchableOpacity
+                    key={bg.id}
+                    style={[
+                      styles.colorOption,
+                      { backgroundColor: bg.color === 'transparent' ? '#1a1a1a' : bg.color },
+                      bg.color === 'transparent' && styles.colorOptionNone,
+                      selectedBgColor === bg.id && styles.colorOptionSelected
+                    ]}
+                    onPress={() => setSelectedBgColor(bg.id)}
+                    activeOpacity={0.7}
+                  >
+                    {selectedBgColor === bg.id && (
+                      <Text style={styles.colorCheckmark}>✓</Text>
+                    )}
+                    {bg.id === 'none' && (
+                      <Text style={styles.colorNoneText}>∅</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Preview */}
+            {newPostContent.trim() && selectedBgColor !== 'none' && (
+              <View style={styles.previewSection}>
+                <Text style={styles.previewTitle}>Aperçu:</Text>
+                <View style={[
+                  styles.previewBox,
+                  { backgroundColor: BACKGROUND_COLORS.find(bg => bg.id === selectedBgColor)?.color }
+                ]}>
+                  <Text style={[
+                    styles.previewText,
+                    { color: ['black', 'darkblue', 'purple', 'red', 'lightblue', 'green', 'red', 'purple', 'pink'].includes(selectedBgColor) ? '#ffffff' : '#000000' }
+                  ]}>
+                    {newPostContent}
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
         </KeyboardAvoidingView>
       </Modal>
-
       <BottomNavBar activeScreen="Posts" />
     </View>
   );
