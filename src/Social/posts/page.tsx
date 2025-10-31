@@ -407,7 +407,7 @@ export default function Posts({ navigation }: Props) {
               {post.likes.length} {post.likes.length === 1 ? 'like' : 'likes'}
             </Text>
           )}
-        </View>
+        </View>z
 
         {/* Comments preview */}
         {post.comments_count > 0 && (
