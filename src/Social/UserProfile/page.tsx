@@ -349,7 +349,7 @@ export default function UserProfile({ navigation, route }: Props) {
     );
   };
 
-  if (loading) {
+  if (loading || !user) {
     return (
       <View style={styles.loadingContainer}>
         <LottieView
@@ -367,25 +367,6 @@ export default function UserProfile({ navigation, route }: Props) {
       </View>
     );
   }
-
-  if (!user) {
-    return (
-      <View style={styles.container}>
-        <TopNavBar />
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Utilisateur introuvable</Text>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backButtonText}>Retour</Text>
-          </TouchableOpacity>
-        </View>
-        <BottomNavBar activeScreen="Posts" />
-      </View>
-    );
-  }
-
   const isOwnProfile = userId === currentUserId;
   const fullName = user.prenom && user.nom ? `${user.prenom} ${user.nom}` : user.nom || user.prenom || 'Utilisateur';
 

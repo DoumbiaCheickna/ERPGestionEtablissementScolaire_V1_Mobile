@@ -3,11 +3,12 @@ import React, { useEffect, useRef } from 'react';
 import { AppState, Alert } from 'react-native';
 import AppNavigator from './src/navigation';
 import { startAutomaticAbsenceService, stopAutomaticAbsenceService } from './src/utils/emargement';
+import 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function App() {
   const absenceServiceRef = useRef<NodeJS.Timeout | null>(null);
-
-
+  
 
   // 🔹 Absence service (your existing code)
   useEffect(() => {
