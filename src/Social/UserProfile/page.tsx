@@ -112,29 +112,30 @@ export default function UserProfile({ navigation, route }: Props) {
       if (userDoc.exists()) {
         const userData = userDoc.data();
         setUser({
-          id: userDoc.id,
-          nom: userData.nom || '',
-          prenom: userData.prenom || '',
-          login: userData.login || '',
-          role: userData.role || 'student',
-          email: userData.email || '',
-          matricule: userData.matricule || '',
-          classe_libelle: userData.classe_libelle || '',
-          filiere_libelle: userData.filiere_libelle || '',
-          niveau_libelle: userData.niveau_libelle || ''
-        });
+            id: userDoc.id,
+            nom: userData.nom || '',
+            prenom: userData.prenom || '',
+            login: userData.login || '',
+            role: userData.role || 'student',
+            email: userData.email || '',
+            matricule: userData.matricule || '',
+            classe_libelle: userData.classe_libelle || '',
+            filiere_libelle: userData.filiere_libelle || '',
+            niveau_libelle: userData.niveau_libelle || ''
+          });
+      } else {
+        setUser(null); 
       }
+      setLoading(false);
     } catch (error) {
       console.error('Error loading user profile:', error);
       Alert.alert('Erreur', 'Impossible de charger le profil utilisateur');
+      setLoading(false);
     }
   };
 
-  // FIXED: Removed orderBy to avoid Firestore index requirement
-  // Sorting is done client-side instead
   const setupUserPostsListener = () => {
     const postsRef = collection(db, 'posts');
-    // Only filter by author_id, no orderBy
     const q = query(postsRef, where('author_id', '==', userId));
 
     return onSnapshot(q, (querySnapshot) => {
@@ -158,12 +159,10 @@ export default function UserProfile({ navigation, route }: Props) {
       const totalLikes = sortedPosts.reduce((sum, post) => sum + post.likes.length, 0);
       setLikesCount(totalLikes);
       
-      setLoading(false);
       setRefreshing(false);
     }, (error) => {
       console.error('Error fetching user posts:', error);
       Alert.alert('Erreur', 'Impossible de charger les posts');
-      setLoading(false);
       setRefreshing(false);
     });
   };

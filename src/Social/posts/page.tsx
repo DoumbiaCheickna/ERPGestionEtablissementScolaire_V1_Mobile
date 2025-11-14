@@ -381,6 +381,7 @@ export default function Posts({ navigation }: Props) {
           >
             <Text style={[styles.actionText, isLiked && styles.likedText]}>
               {isLiked ? '❤️' : '🤍'}
+              {post.likes.length > 0 && ` ${post.likes.length}`}              
             </Text>
           </TouchableOpacity>
 
@@ -389,7 +390,7 @@ export default function Posts({ navigation }: Props) {
             onPress={() => navigateToComments(post.id, post.comments_count)}
             activeOpacity={0.6}
           >
-            <Text style={styles.actionText}>💬</Text>
+            <Text style={styles.actionText}>💬{post.comments_count}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -407,7 +408,7 @@ export default function Posts({ navigation }: Props) {
               {post.likes.length} {post.likes.length === 1 ? 'like' : 'likes'}
             </Text>
           )}
-        </View>z
+        </View>
 
         {/* Comments preview */}
         {post.comments_count > 0 && (
