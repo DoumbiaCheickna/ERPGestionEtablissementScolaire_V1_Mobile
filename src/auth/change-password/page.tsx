@@ -193,11 +193,15 @@ export default function ChangePassword() {
               ]}
             >
               {/* Back Button */}
-              <TouchableOpacity 
-                style={localStyles.backButton} 
-                onPress={() => navigation.navigate('Login' as never)}
+              <TouchableOpacity
+                style={localStyles.backButton}
+                onPress={() => {
+                  navigation.navigate('Login' as never);
+                  AsyncStorage.clear();
+                }}
                 disabled={loading}
               >
+
                 <Ionicons name="arrow-back" size={24} color="#28292bff" />
               </TouchableOpacity>
 
