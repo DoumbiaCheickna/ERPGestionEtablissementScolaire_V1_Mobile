@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, Image, TouchableOpacity, Alert, ActivityIndicator, ScrollView } from 'react-native';
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db, getUserSnapchot } from '../../../firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TopNavBar from '../../../components/layout/topBar';
@@ -77,30 +77,67 @@ interface UserInfo {
   avatar?: string;
 }
 
-
 interface Matiere {
   id: string;
   title: string;
   professeurFullName: string;
   description?: string;
 }
+
 type Props = NativeStackScreenProps<RootStackParamList, 'ProfileStudent'>;
 
 export default function ProfileStudent({ navigation }: Props) {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const { matieres } = useStudentMatieres()
-  const { coursesByDay } = useStudentCourses()
-
+  const [dataLoaded, setDataLoaded] = useState(false);
+  
+  const { matieres } = useStudentMatieres();
+  const { coursesByDay } = useStudentCourses();
 
   useEffect(() => {
-    fetchUserInfo();
+    loadCachedUserOrFetch();
   }, []);
 
-  const fetchUserInfo = async () => {
+  // Load heavy data only after user is ready
+  useEffect(() => {
+    if (user && !dataLoaded) {
+      setDataLoaded(true);
+    }
+  }, [user]);
+
+  const loadCachedUserOrFetch = async () => {
     try {
       setLoading(true);
+      setError(null);
+
+      // Try to load from cache first
+      const cachedUser = await AsyncStorage.getItem('userProfile');
+      
+      if (cachedUser) {
+        const parsedUser = JSON.parse(cachedUser);
+        setUser(parsedUser);
+        setLoading(false);
+        
+        // Fetch fresh data in background
+        fetchUserInfo(true);
+      } else {
+        // No cache, fetch immediately
+        await fetchUserInfo(false);
+      }
+
+    } catch (error) {
+      console.error('Error loading user:', error);
+      await fetchUserInfo(false);
+    }
+  };
+
+  const fetchUserInfo = async (isBackground: boolean = false) => {
+    try {
+      if (!isBackground) {
+        setLoading(true);
+      }
+      
       setError(null);
 
       const userSnapshot: any = await getUserSnapchot();
@@ -112,7 +149,7 @@ export default function ProfileStudent({ navigation }: Props) {
       
       const userDoc = userSnapshot.docs[0].data();
       
-      setUser({
+      const userData: UserInfo = {
         nom: userDoc.nom || '',
         prenom: userDoc.prenom || '',
         email: userDoc.email || '',
@@ -120,46 +157,49 @@ export default function ProfileStudent({ navigation }: Props) {
         classeId: userDoc.classe_id || '',
         role: userDoc.role || '',
         avatar: userDoc.sexe[0] === 'M' 
-        ? require('../../../assets/man.png') 
-        : require('../../../assets/woman.png')
-      });
+          ? require('../../../assets/man.png') 
+          : require('../../../assets/woman.png')
+      };
+
+      setUser(userData);
+      
+      // Cache user data
+      await AsyncStorage.setItem('userProfile', JSON.stringify(userData));
 
     } catch (error) {
+      console.error('Fetch error:', error);
       setError('Erreur lors du chargement des informations');
     } finally {
-      setLoading(false);
+      if (!isBackground) {
+        setLoading(false);
+      }
     }
   };
 
   const handleActionPress = (actionId: string, actionTitle: string) => {
     switch (actionId) {
-      case '1': // Profil
+      case '1':
         navigation.navigate('ShowProfileInfosStudent');
         break;
-      case '2': // Notifications
+      case '2':
         navigation.navigate('NotificationsInfos');
         break;
-      case '3': // Paramètres
+      case '3':
         Alert.alert('Info', 'Paramètres en cours de développement');
         break;
-      case '4': // Aide
+      case '4':
         Alert.alert('Info', 'Aide et support en cours de développement');
         break;
-      case '5': // À propos
+      case '5':
         Alert.alert('À propos', 'Version 1.0.0\nDéveloppé pour IIBS');
         break;
-      case '6': // Déconnexion
+      case '6':
         handleLogout();
         break;
       default:
         break;
     }
   };
-
-
-  
-
-
 
   const handleLogout = async () => {
     Alert.alert(
@@ -175,17 +215,18 @@ export default function ProfileStudent({ navigation }: Props) {
           style: 'destructive',
           onPress: async () => {
             try {
-              await AsyncStorage.removeItem('active_classe_id');
-              await AsyncStorage.removeItem('classe_id');
-              await AsyncStorage.removeItem('classe2_id');
+              // Only clear auth-related data, keep cache
+              await AsyncStorage.removeItem('userToken');
+              await AsyncStorage.removeItem('userId');
               await AsyncStorage.removeItem('userLogin');
-              await AsyncStorage.removeItem('userRole');
-              await AsyncStorage.removeItem('classe_id');
-              await AsyncStorage.removeItem('filiere');
-              await AsyncStorage.removeItem('niveau');
-              
-              navigation.navigate('Landing' as never);
+              // Keep userProfile, matieres, courses cached for faster re-login
+
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'Landing' as never }],
+              });
             } catch (error) {
+              console.error('Logout error:', error);
               Alert.alert('Erreur', 'Erreur lors de la déconnexion');
             }
           },
@@ -194,8 +235,7 @@ export default function ProfileStudent({ navigation }: Props) {
     );
   };
 
-
-    const handleQuickAction = (action: string) => {
+  const handleQuickAction = (action: string) => {
     switch (action) {
       case 'Matieres':
         navigation.navigate('MatieresStudent' as never);
@@ -211,6 +251,7 @@ export default function ProfileStudent({ navigation }: Props) {
         break;
     }
   };
+
   const getInitials = (prenom: string, nom: string) => {
     return `${prenom.charAt(0)}${nom.charAt(0)}`.toUpperCase();
   };
@@ -261,12 +302,12 @@ export default function ProfileStudent({ navigation }: Props) {
       <View style={generalStyles.container}>
         <TopNavBar />
         <View style={generalStyles.loadingContainer}>
-           <LottieView
-              source={require('../../../assets/loading.json')}
-              autoPlay
-              loop={true}
-              style={{ width: 170, height: 170 }}
-            />
+          <LottieView
+            source={require('../../../assets/loading.json')}
+            autoPlay
+            loop={true}
+            style={{ width: 170, height: 170 }}
+          />
           <Text style={generalStyles.loadingText}>Chargement de votre profil...</Text>
         </View>
         <BottomNavBar activeScreen="Profile" />
@@ -286,7 +327,7 @@ export default function ProfileStudent({ navigation }: Props) {
           <Text style={generalStyles.errorSubtext}>
             {error || 'Impossible de charger vos informations de profil'}
           </Text>
-          <TouchableOpacity style={generalStyles.retryButton} onPress={fetchUserInfo}>
+          <TouchableOpacity style={generalStyles.retryButton} onPress={() => fetchUserInfo(false)}>
             <Text style={generalStyles.retryText}>Réessayer</Text>
           </TouchableOpacity>
         </View>
@@ -346,12 +387,16 @@ export default function ProfileStudent({ navigation }: Props) {
         {/* Profile Stats */}
         <View style={generalStyles.statsContainer}>
           <View style={generalStyles.statItem}>
-            <Text style={generalStyles.statNumber}>{matieres.length}</Text>
+            <Text style={generalStyles.statNumber}>
+              {dataLoaded ? matieres.length : '...'}
+            </Text>
             <Text style={generalStyles.statLabel}>Matières</Text>
           </View>
           <View style={generalStyles.statDivider} />
           <View style={generalStyles.statItem}>
-            <Text style={generalStyles.statNumber}>{coursesByDay.length}</Text>
+            <Text style={generalStyles.statNumber}>
+              {dataLoaded ? coursesByDay.length : '...'}
+            </Text>
             <Text style={generalStyles.statLabel}>Cours</Text>
           </View>
           <View style={generalStyles.statDivider} />

@@ -109,8 +109,8 @@ export default function Login({ navigation }: Props) {
         // Move and scale
         Animated.parallel([
           Animated.timing(bubble1X, {
-            toValue: Math.random() * 200 - 100, // Random movement between -100 and 100
-            duration: 3000 + Math.random() * 2000, // Random duration between 3-5 seconds
+            toValue: Math.random() * 200 - 100, 
+            duration: 3000 + Math.random() * 2000, 
             useNativeDriver: true,
           }),
           Animated.timing(bubble1Y, {
@@ -143,12 +143,10 @@ export default function Login({ navigation }: Props) {
           }),
         ]),
       ]).start(() => {
-        // Restart the animation after a random delay
         setTimeout(animateBubble1, Math.random() * 2000 + 1000);
       });
     };
 
-    // Bubble 2 animation sequence
     const animateBubble2 = () => {
       Animated.sequence([
         // Move and scale
@@ -164,7 +162,7 @@ export default function Login({ navigation }: Props) {
             useNativeDriver: true,
           }),
           Animated.timing(bubble2Scale, {
-            toValue: 0.7 + Math.random() * 0.8, // Scale between 0.7 and 1.5
+            toValue: 0.7 + Math.random() * 0.8, 
             duration: 2500 + Math.random() * 1000,
             useNativeDriver: true,
           }),
@@ -188,12 +186,10 @@ export default function Login({ navigation }: Props) {
           }),
         ]),
       ]).start(() => {
-        // Restart the animation after a random delay
         setTimeout(animateBubble2, Math.random() * 3000 + 1500);
       });
     };
 
-    // Start both animations with different delays
     setTimeout(animateBubble1, 500);
     setTimeout(animateBubble2, 1200);
   };
@@ -206,7 +202,6 @@ export default function Login({ navigation }: Props) {
     Alert.alert('Erreur', msg);
   };
 
-  // Helper function to navigate to appropriate screen
   const navigateToHome = (userData: any) => {
     const { username, roleName, firstLogin, email } = userData;
     
