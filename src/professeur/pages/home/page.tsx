@@ -917,7 +917,8 @@ export default function HomeProfesseur({ navigation }: Props) {
                         color: '#d29819ff',
                         fontWeight: '500'
                       }}>
-                        {item.class_ids.length} classes combinées
+                        {item.class_ids.length} 
+                        classes combinées
                       </Text>
                       
                     </View>
