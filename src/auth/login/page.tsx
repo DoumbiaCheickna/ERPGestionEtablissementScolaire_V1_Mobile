@@ -53,10 +53,23 @@ export default function Login({ navigation }: Props) {
       const loggedIn = await AsyncStorage.getItem("userLogin");
       if (loggedIn) {
         const roleName = await AsyncStorage.getItem("userRole") || '';
+        const otherRoleName = await AsyncStorage.getItem("otherRoleLibelle") || '';
         const email = await AsyncStorage.getItem("userEmail") || '';
+        const classeId = await AsyncStorage.getItem("classe_id") || '';
+
+        // only ChooseScreen if otherRoleLibelle exists (donc si user a role_id1)
+        if (otherRoleName) {
+          navigation.replace('ChooseScreen', {
+            userLogin: loggedIn,
+            userRole: roleName,
+            email: email,
+            classeId: classeId,
+          });
+          return;
+        }
         
+        // sinon naviguer selon role de base
         if (roleName === 'etudiant') {
-          const classeId = await AsyncStorage.getItem("classe_id") || '';
           navigation.replace('HomeStudent', {
             userLogin: loggedIn,
             userRole: roleName,
@@ -203,8 +216,8 @@ export default function Login({ navigation }: Props) {
   };
 
   const navigateToHome = (userData: any) => {
-    const { username, roleName, firstLogin, email } = userData;
-    
+    const { username, roleName, firstLogin, email, otherRoleName, hasSecondRole } = userData;
+
     if (firstLogin == 1) {
       navigation.navigate('ChangePassword', {
         userLogin: username,
@@ -212,13 +225,20 @@ export default function Login({ navigation }: Props) {
         firstLogin,
       });
     } else {
-      if(roleName == 'etudiant') {
+      if (hasSecondRole && otherRoleName) {
+        navigation.navigate('ChooseScreen', {
+          userLogin: username,
+          userRole: roleName,
+          email: email,
+          classeId: userData.classeId,
+        });
+      } else if (roleName == 'etudiant') {
         navigation.navigate('HomeStudent', {
           userLogin: username,
           userRole: roleName,
           firstLogin,
           email: email,
-          classeId: userData.classeId, // Only for students
+          classeId: userData.classeId,
         });
       } else if (roleName == 'professeur') {
         navigation.navigate('HomeProfesseur', {
@@ -256,9 +276,19 @@ export default function Login({ navigation }: Props) {
         const email = userDoc.email;
         const firstLogin = userDoc.first_login;
         const roleId = userDoc.role_id;
+        const otherRoleId = userDoc.role_id1; 
 
         const roleDoc = await getDoc(doc(db, "roles", roleId as string));
         let roleData = roleDoc.data();
+
+        let OtherRoleData = null;
+        let otherRoleName = '';
+        
+        if(otherRoleId){
+          const OtherRoleDoc = await getDoc(doc(db, "roles", otherRoleId as string));
+          OtherRoleData = OtherRoleDoc.data();
+          otherRoleName = OtherRoleData?.libelle?.toLowerCase() || '';
+        }
 
         // If document not found by ID, search in collection
         if (!roleData) {          
@@ -298,14 +328,21 @@ export default function Login({ navigation }: Props) {
 
         const roleName = roleData.libelle?.toLowerCase() || '';
 
-        // Store common user data
+        // store données communs
         await AsyncStorage.setItem('userLogin', username.trim());
         await AsyncStorage.setItem('userRole', roleName);
         await AsyncStorage.setItem('userEmail', email);
 
-        // Store role-specific data
+        //   store otherRoleLibelle si role_id1 existe
+        if (otherRoleId && otherRoleName) {
+          await AsyncStorage.setItem('otherRoleLibelle', otherRoleName);
+        } else {
+          await AsyncStorage.removeItem('otherRoleLibelle'); // clear si pas de role
+        }
+
+        // Store role specific data
         if (roleName === 'etudiant') {
-          // Student-specific data
+          // Student pecific data
           await AsyncStorage.setItem('classe_id', userDoc.classe_id || '');
 
           if (userDoc.classe2_id && userDoc.classe2_id.trim() !== '') {
@@ -314,12 +351,13 @@ export default function Login({ navigation }: Props) {
 
           await AsyncStorage.setItem('filiere', userDoc.filiere_id || '');
           await AsyncStorage.setItem('niveau', userDoc.niveau_id || '');
+
         } else if (roleName === 'professeur') {
-          // Professor-specific data
+          // professor specific data
           await AsyncStorage.setItem('specialite', userDoc.specialite || '');
           await AsyncStorage.setItem('statut', userDoc.statut || '');
           await AsyncStorage.setItem('auth_uid', userDoc.auth_uid || '');
-          // Clear student-specific data in case of role switching
+          // clear student specific data in case of role switching
           await AsyncStorage.removeItem('classe_id');
           await AsyncStorage.removeItem('filiere');
           await AsyncStorage.removeItem('niveau');
@@ -345,12 +383,13 @@ export default function Login({ navigation }: Props) {
           }
 
           setLoading(false);
-          
           const userData = {
             username,
             roleName,
             firstLogin,
             email,
+            otherRoleName, 
+            hasSecondRole: !!otherRoleId, // ✅ Flag to indicate dual role
             // Include role-specific data
             ...(roleName === 'etudiant' && { classeId: userDoc.classe_id }),
             ...(roleName === 'professeur' && { 
@@ -358,7 +397,7 @@ export default function Login({ navigation }: Props) {
               statut: userDoc.statut 
             })
           };
-          
+
           navigateToHome(userData);
 
         } else {

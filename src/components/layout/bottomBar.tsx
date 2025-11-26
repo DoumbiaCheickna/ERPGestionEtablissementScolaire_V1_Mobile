@@ -39,6 +39,7 @@ const BottomNavBar = ({ activeScreen }: Props) => {
     { name: 'HomeProfesseur', icon: 'home-outline', screen: 'HomeProfesseur', libelle: 'Accueil' },
     { name: 'AllCoursesProfesseur', icon: 'calendar-outline', screen: 'AllCoursesProfesseur', libelle: 'Cours' },
     { name: 'Evaluations', icon: 'document-text-outline', screen: 'Evaluations', libelle: 'Évaluations' },
+    { name: 'Posts', icon: 'create-outline', screen: 'Posts', libelle: 'Posts' },
     { name: 'ProfileProfesseur', icon: 'person-outline', screen: 'ProfileProfesseur', libelle: 'Profil' },
   ];
 

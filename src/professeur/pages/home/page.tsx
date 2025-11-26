@@ -16,6 +16,7 @@ import { db } from '../../../firebaseConfig';
 import { MatieresStyles } from '../enseignments/styles';
 import { collection, getDocs, query, where, doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import LottieView from 'lottie-react-native';
+import CahierTexteModal from '../../../components/modals/CahierTexteModal';
 
 export const getCoursStatus = (startTime: string, endTime: string) => {
   const now = new Date();
@@ -49,6 +50,8 @@ export default function HomeProfesseur({ navigation }: Props) {
   const [nextCourse, setNextCourse] = useState<Slot | null>(null);
   const [professorName, setProfessorName] = useState('');
   const [courseEmargedStatus, setCourseEmargedStatus] = useState<Record<string, boolean>>({});
+  const [cahierTexteModalVisible, setCahierTexteModalVisible] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
 
   const refreshData = () => {
     refreshCourses();
@@ -61,6 +64,18 @@ export default function HomeProfesseur({ navigation }: Props) {
     radius: 40
   };
 
+  const isCourseTimePassed = (endTime: string): boolean => {
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+    const coursEndTime = endHour * 60 + endMinute;
+    return currentTime > coursEndTime;
+  };
+
+  const handleOpenCahierTexte = (course: any) => {
+    setSelectedCourse(course);
+    setCahierTexteModalVisible(true);
+  };
   useEffect(() => {
     const initApp = async () => {
       await getProfessorInfo();
@@ -861,6 +876,20 @@ export default function HomeProfesseur({ navigation }: Props) {
                     </Text>
                   </TouchableOpacity>
 
+                  {/* Cahier de Texte Button */}
+                  <TouchableOpacity 
+                    style={[
+                      HomeStyles.cahierTexteButton,
+                      isCourseTimePassed(item.end) && HomeStyles.cahierTexteButtonDisabled
+                    ]}
+                    onPress={() => handleOpenCahierTexte(item)}
+                    disabled={isCourseTimePassed(item.end)}
+                  >
+                    <Text style={HomeStyles.cahierTexteButtonText}>
+                       Cahier de Texte
+                    </Text>
+                  </TouchableOpacity>
+
                   </View>
 
                   {/* Card Footer */}
@@ -881,7 +910,7 @@ export default function HomeProfesseur({ navigation }: Props) {
                       marginVertical: 5,
                       borderRadius: 12,
                       alignSelf: 'flex-start',
-                      marginTop: 5
+                      marginTop: 8
                     }}>
                       <Text style={{
                         fontSize: 12,
@@ -922,6 +951,17 @@ export default function HomeProfesseur({ navigation }: Props) {
           </View>
         )}
       </ScrollView>
+
+      {selectedCourse && (
+        <CahierTexteModal
+          visible={cahierTexteModalVisible}
+          onClose={() => {
+            setCahierTexteModalVisible(false);
+            setSelectedCourse(null);
+          }}
+          course={selectedCourse}
+        />
+      )}
       <BottomNavBar activeScreen="HomeProfesseur"/>
     </View>
   );

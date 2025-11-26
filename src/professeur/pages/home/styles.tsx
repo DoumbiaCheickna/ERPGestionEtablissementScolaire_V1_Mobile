@@ -515,4 +515,27 @@ container: {
     fontWeight: '500',
   },
 
+   cahierTexteButton: {
+    backgroundColor: '#1a1a1a',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginTop: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  cahierTexteButtonDisabled: {
+    backgroundColor: '#cccccc',
+    opacity: 0.5,
+  },
+  cahierTexteButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+
 });

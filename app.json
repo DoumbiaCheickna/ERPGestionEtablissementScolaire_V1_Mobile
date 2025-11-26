@@ -3,12 +3,12 @@
     "name": "IIBS School Management",
     "slug": "iibs-school-management",
     "scheme": "iibsapp",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "orientation": "portrait",
-    "icon": "./src/assets/iibs_logo.png",
+    "icon": "./src/assets/logo8.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./src/assets/iibs-logo.png",
+      "image": "./src/assets/logo8.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },

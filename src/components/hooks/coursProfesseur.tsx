@@ -208,13 +208,9 @@ export const useProfesseurCourses = () => {
             const professorSlots = slots.filter(slot => {
               // Check if this slot belongs to professor's subjects
               const belongsToProf = matiereIds.includes(slot.matiere_id);
+            
               
-              // Additional check: if prof_doc_id exists in slot, use it for exact matching
-              const profMatches = slot.prof_doc_id 
-                ? slot.prof_doc_id == profDocId 
-                : slot.enseignant == professorName; // Fallback to name matching
-              
-              return belongsToProf && profMatches;
+              return belongsToProf;
             });
 
             professorSlots.forEach(slot => {

@@ -25,6 +25,7 @@ import Evaluations from '../professeur/pages/evaluations/page';
 import AddNote from '../professeur/pages/evaluations/addNote/page';
 import VoirNote from '../etudiant/pages/voirNote/page';
 import Comments from '../Social/comments/page';
+import ChooseScreen from '../ChooseScreen/page';
 
 export type RootStackParamList = {
   Login: { userLogin: string; userRole: string; firstLogin: number };
@@ -74,6 +75,12 @@ export type RootStackParamList = {
   AddNote: undefined;
   VoirNote: undefined;
   Comments: { postId: string; commentsCount: number};
+  ChooseScreen: { 
+    userLogin: string;
+    userRole: string;
+    email: string;
+    classeId?: string;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -90,6 +97,8 @@ export default function AppNavigator() {
         <Stack.Screen name="ChangePassword" component={ChangePassword} />
         <Stack.Screen name="Absences" component={Absences} />
         <Stack.Screen name="Notifications" component={Notifications} />
+
+        <Stack.Screen name="ChooseScreen" component={ChooseScreen} />
 
         {/* Evaluations */}
         <Stack.Screen name="Evaluations" component={Evaluations} />

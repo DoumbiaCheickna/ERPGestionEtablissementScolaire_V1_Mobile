@@ -137,17 +137,28 @@ export default function ChangePassword() {
 
         await AsyncStorage.setItem("userLogin", login);
         showSuccessToast("Mot de passe changé avec succès !");
-
+        
         // Get role info like in Login screen
         const roleId = userData.role_id;
+        const otherRoleId = userData.role_libelle1;
+
         const roleDoc = await getDoc(doc(db, "roles", roleId));
         const roleData = roleDoc.data();
-        const roleName = roleData?.libelle || '';
+        const roleName = roleData?.libelle?.toLowerCase() || '';
+
+        let otherRoleName = '';
+        if (otherRoleId) {
+          const otherRoleDoc = await getDoc(doc(db, "roles", otherRoleId));
+          const otherRoleData = otherRoleDoc.data();
+          otherRoleName = otherRoleData?.libelle?.toLowerCase() || '';
+        }
 
         setTimeout(() => {
-          if (roleName.toLowerCase() == 'etudiant') {
+          if (otherRoleName === 'professeur') {
+            navigation.navigate('ChooseScreen' as never);
+          } else if (roleName == 'etudiant') {
             navigation.navigate('HomeStudent' as never);
-          } else if (roleName.toLowerCase() == 'professeur') {
+          } else if (roleName == 'professeur') {
             navigation.navigate('HomeProfesseur' as never);
           } else {
             navigation.navigate('Login' as never);
