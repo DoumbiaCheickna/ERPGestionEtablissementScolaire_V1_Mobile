@@ -117,7 +117,6 @@ export default function ChangePassword() {
         const login = userData.login;
         const currentPassword = userData.password;
 
-        // Update password and first_login flag in Firestore
         await updateDoc(doc(db, "users", userDocRef.id), {
           first_login: 0,
         });
