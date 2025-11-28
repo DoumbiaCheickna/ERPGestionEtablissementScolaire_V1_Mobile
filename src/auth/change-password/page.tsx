@@ -120,6 +120,7 @@ export default function ChangePassword() {
         await updateDoc(doc(db, "users", userDocRef.id), {
           first_login: 0,
         });
+        
 
         if (auth.currentUser && currentPassword) {
           const credential = EmailAuthProvider.credential(auth.currentUser.email!, currentPassword);
