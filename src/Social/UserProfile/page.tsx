@@ -111,18 +111,21 @@ export default function UserProfile({ navigation, route }: Props) {
       const userDoc = await getDoc(doc(db, 'users', userId));
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        setUser({
-            id: userDoc.id,
-            nom: userData.nom || '',
-            prenom: userData.prenom || '',
-            login: userData.login || '',
-            role: userData.role || 'student',
-            email: userData.email || '',
-            matricule: userData.matricule || '',
-            classe_libelle: userData.classe_libelle || '',
-            filiere_libelle: userData.filiere_libelle || '',
-            niveau_libelle: userData.niveau_libelle || ''
-          });
+       setUser({
+  id: userDoc.id,
+  nom: userData.nom || '',
+  prenom: userData.prenom || '',
+  login: userData.login || '',
+  role: userData.role_libelle,
+  email: userData.email || '',
+  ...(userData.role_libelle === 'student' && {
+    matricule: userData.matricule || '',
+    classe_libelle: userData.classe_libelle || '',
+    filiere_libelle: userData.filiere_libelle || '',
+    niveau_libelle: userData.niveau_libelle || ''
+  })
+});
+
       } else {
         setUser(null); 
       }
