@@ -188,44 +188,32 @@ export const useStudentMatieres = () => {
   // Fetch all matieres for user's classes
   const fetchUserMatieres = async (userData: UserData) => {
     try {
-      // If already loaded, use cache
       if (matieresLoaded) {
         setMatieres(matieresCache);
         return;
       }
 
-      const activeClass: any = await AsyncStorage.getItem('active_classe_id');
       const allMatieres: Matiere[] = [];
-      
 
-      // Fetch matieres for classe_id if it exists
-      if (activeClass) {
-        const classeMatieres = await fetchMatieresForClass(activeClass);
-        allMatieres.push(...classeMatieres);
+      // Fetch for all user classes
+      const classesToFetch = [userData.classe_id, userData.classe2_id].filter(Boolean);
+      for (const classeId of classesToFetch) {
+        const matieresForClass = await fetchMatieresForClass(classeId!);
+        allMatieres.push(...matieresForClass);
       }
 
-
-
-      // FIXED: Remove duplicates based on matiere id ONLY and merge class information
+      // Deduplicate
       const matieresMap = new Map<string, Matiere>();
-      
       allMatieres.forEach((matiere) => {
         if (matieresMap.has(matiere.id)) {
-          // If matiere already exists, merge the classeIds
-          const existingMatiere = matieresMap.get(matiere.id)!;
-          existingMatiere.classeIds = [...new Set([...existingMatiere.classeIds, ...matiere.classeIds])];
+          const existing = matieresMap.get(matiere.id)!;
+          existing.classeIds = [...new Set([...existing.classeIds, ...matiere.classeIds])];
         } else {
-          // Create a new matiere with classeIds as array
-          matieresMap.set(matiere.id, { 
-            ...matiere, 
-            classeIds: [...matiere.classeIds] // Ensure it's a copy
-          });
+          matieresMap.set(matiere.id, { ...matiere, classeIds: [...matiere.classeIds] });
         }
       });
-      
-      const uniqueMatieres = Array.from(matieresMap.values());
 
-      // Cache the results
+      const uniqueMatieres = Array.from(matieresMap.values());
       matieresCache = uniqueMatieres;
       matieresLoaded = true;
       setMatieres(uniqueMatieres);
@@ -234,6 +222,7 @@ export const useStudentMatieres = () => {
       setMatieres([]);
     }
   };
+
 
   // Initialize data
   const initializeData = async () => {
