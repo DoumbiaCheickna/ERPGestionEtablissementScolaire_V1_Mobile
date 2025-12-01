@@ -399,11 +399,6 @@ export default function ProfileStudent({ navigation }: Props) {
             </Text>
             <Text style={generalStyles.statLabel}>Cours</Text>
           </View>
-          <View style={generalStyles.statDivider} />
-          <View style={generalStyles.statItem}>
-            <Text style={generalStyles.statNumber}>17</Text>
-            <Text style={generalStyles.statLabel}>Moyenne</Text>
-          </View>
         </View>
 
         {/* Section Header */}

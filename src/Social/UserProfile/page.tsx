@@ -84,7 +84,7 @@ export default function UserProfile({ navigation, route }: Props) {
 
   useEffect(() => {
     if (userId) {
-      loadUserProfile();
+      loadUserProfile(userId);
       const unsubscribe = setupUserPostsListener();
       return unsubscribe;
     }
@@ -106,7 +106,7 @@ export default function UserProfile({ navigation, route }: Props) {
     }
   };
 
-  const loadUserProfile = async () => {
+  const loadUserProfile = async (userId: string) => {
     try {
       const userDoc = await getDoc(doc(db, 'users', userId));
       if (userDoc.exists()) {
@@ -169,7 +169,7 @@ export default function UserProfile({ navigation, route }: Props) {
 
   const handleRefresh = () => {
     setRefreshing(true);
-    loadUserProfile();
+    loadUserProfile(userId);
   };
 
   const handleLike = async (postId: string, currentLikes: string[]) => {
@@ -263,7 +263,7 @@ export default function UserProfile({ navigation, route }: Props) {
             <View>
               <Text style={styles.postAuthorName}>{post.author_name}</Text>
               <Text style={styles.postTimestamp}>
-                {formatTimestamp(post.timestamp || post.created_at)}
+                {post.created_at}
               </Text>
             </View>
           </View>
