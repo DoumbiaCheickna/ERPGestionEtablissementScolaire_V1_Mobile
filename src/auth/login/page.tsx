@@ -15,14 +15,14 @@ import {
   Dimensions,
   StatusBar,
 } from 'react-native';
-import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, getDoc, updateDoc } from "firebase/firestore";
 import { db, auth } from '../../firebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { localStyles } from './styles';
 import { RootStackParamList } from '../../navigation';
-
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -33,6 +33,8 @@ export default function Login({ navigation }: Props) {
   const [password, setPassword] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [biometricAvailable, setBiometricAvailable] = useState<boolean>(false);
+  const [biometricType, setBiometricType] = useState<string>('');
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -49,50 +51,72 @@ export default function Login({ navigation }: Props) {
   const bubble2Scale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    const checkLoggedIn = async () => {
-      const loggedIn = await AsyncStorage.getItem("userLogin");
-      if (loggedIn) {
-        const roleName = await AsyncStorage.getItem("userRole") || '';
-        const otherRoleName = await AsyncStorage.getItem("otherRoleLibelle") || '';
-        const email = await AsyncStorage.getItem("userEmail") || '';
-        const classeId = await AsyncStorage.getItem("classe_id") || '';
-
-        // only ChooseScreen if otherRoleLibelle exists (donc si user a role_id1)
-        if (otherRoleName) {
-          navigation.replace('ChooseScreen', {
-            userLogin: loggedIn,
-            userRole: roleName,
-            email: email,
-            classeId: classeId,
-          });
-          return;
-        }
-        
-        // sinon naviguer selon role de base
-        if (roleName === 'etudiant') {
-          navigation.replace('HomeStudent', {
-            userLogin: loggedIn,
-            userRole: roleName,
-            firstLogin: 0,
-            email,
-            classeId,
-          });
-        } else if (roleName === 'professeur') {
-          navigation.replace('HomeProfesseur', {
-            userLogin: loggedIn,
-            userRole: roleName,
-            firstLogin: 0,
-            email,
-          });
-        }
-      }
-    };
-
+    checkBiometricAvailability();
     checkLoggedIn();
   }, []);
 
+  const checkBiometricAvailability = async () => {
+    try {
+      const compatible = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      
+      if (compatible && enrolled) {
+        setBiometricAvailable(true);
+        const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
+        
+        if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
+          setBiometricType('Face ID');
+        } else if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
+          setBiometricType('Empreinte digitale');
+        } else if (types.includes(LocalAuthentication.AuthenticationType.IRIS)) {
+          setBiometricType('Iris');
+        } else {
+          setBiometricType('Code de l\'appareil');
+        }
+      }
+    } catch (error) {
+      console.log('Erreur vérification biométrique:', error);
+    }
+  };
+
+  const checkLoggedIn = async () => {
+    const loggedIn = await AsyncStorage.getItem("userLogin");
+    if (loggedIn) {
+      const roleName = await AsyncStorage.getItem("userRole") || '';
+      const otherRoleName = await AsyncStorage.getItem("otherRoleLibelle") || '';
+      const email = await AsyncStorage.getItem("userEmail") || '';
+      const classeId = await AsyncStorage.getItem("classe_id") || '';
+
+      if (otherRoleName) {
+        navigation.replace('ChooseScreen', {
+          userLogin: loggedIn,
+          userRole: roleName,
+          email: email,
+          classeId: classeId,
+        });
+        return;
+      }
+      
+      if (roleName === 'etudiant') {
+        navigation.replace('HomeStudent', {
+          userLogin: loggedIn,
+          userRole: roleName,
+          firstLogin: 0,
+          email,
+          classeId,
+        });
+      } else if (roleName === 'professeur') {
+        navigation.replace('HomeProfesseur', {
+          userLogin: loggedIn,
+          userRole: roleName,
+          firstLogin: 0,
+          email,
+        });
+      }
+    }
+  };
+
   useEffect(() => {
-    // Animation Fade In and Slide up
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -116,10 +140,8 @@ export default function Login({ navigation }: Props) {
   }, []);
 
   const startBubbleAnimations = () => {
-    // Bubble 1 animation sequence
     const animateBubble1 = () => {
       Animated.sequence([
-        // Move and scale
         Animated.parallel([
           Animated.timing(bubble1X, {
             toValue: Math.random() * 200 - 100, 
@@ -132,12 +154,11 @@ export default function Login({ navigation }: Props) {
             useNativeDriver: true,
           }),
           Animated.timing(bubble1Scale, {
-            toValue: 0.8 + Math.random() * 0.8, // Scale between 0.8 and 1.6
+            toValue: 0.8 + Math.random() * 0.8,
             duration: 2000 + Math.random() * 1000,
             useNativeDriver: true,
           }),
         ]),
-        // Return to original position
         Animated.parallel([
           Animated.timing(bubble1X, {
             toValue: 0,
@@ -162,7 +183,6 @@ export default function Login({ navigation }: Props) {
 
     const animateBubble2 = () => {
       Animated.sequence([
-        // Move and scale
         Animated.parallel([
           Animated.timing(bubble2X, {
             toValue: Math.random() * 80 - 40,
@@ -180,7 +200,6 @@ export default function Login({ navigation }: Props) {
             useNativeDriver: true,
           }),
         ]),
-        // Return to original position
         Animated.parallel([
           Animated.timing(bubble2X, {
             toValue: 0,
@@ -213,6 +232,68 @@ export default function Login({ navigation }: Props) {
 
   const showErrorToast = (msg: string) => {
     Alert.alert('Erreur', msg);
+  };
+
+  const authenticateWithBiometric = async (): Promise<boolean> => {
+    try {
+      // Check again if biometric is still available
+      const compatible = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      
+      if (!compatible || !enrolled) {
+        // Biometric not available anymore (damaged, disabled, etc.)
+        Alert.alert(
+          "Biométrie non disponible",
+          "L'authentification biométrique n'est plus disponible sur cet appareil. Veuillez contacter l'administration pour désactiver cette exigence.",
+          [{ text: "OK" }]
+        );
+        return false;
+      }
+
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: `Authentifiez-vous avec ${biometricType}`,
+        cancelLabel: 'Annuler',
+        disableDeviceFallback: false,
+        fallbackLabel: 'Utiliser le code',
+      });
+
+      return result.success;
+    } catch (error) {
+      console.log('Erreur authentification biométrique:', error);
+      Alert.alert(
+        "Erreur biométrique",
+        "Impossible d'utiliser l'authentification biométrique. Veuillez contacter l'administration.",
+        [{ text: "OK" }]
+      );
+      return false;
+    }
+  };
+
+  const saveBiometricData = async (userDocId: string, deviceId: string) => {
+    try {
+      const userRef = doc(db, 'users', userDocId);
+      await updateDoc(userRef, {
+        biometric_device_id: deviceId,
+        biometric_enabled: true,
+        biometric_registered_at: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.log('Erreur sauvegarde données biométriques:', error);
+    }
+  };
+
+  const getDeviceId = async (): Promise<string> => {
+    try {
+      let deviceId = await AsyncStorage.getItem('device_id');
+      if (!deviceId) {
+        deviceId = `${Platform.OS}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        await AsyncStorage.setItem('device_id', deviceId);
+      }
+      return deviceId;
+    } catch (error) {
+      console.log('Erreur génération device ID:', error);
+      return `${Platform.OS}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
   };
 
   const navigateToHome = (userData: any) => {
@@ -249,6 +330,13 @@ export default function Login({ navigation }: Props) {
           specialite: userData.specialite,
           statut: userData.statut,
         });
+      } else if (roleName == 'admin') {
+        navigation.navigate('AdminPanel', {
+          userLogin: username,
+          userRole: roleName,
+          email: email,
+          firstLogin,
+        });
       } else {
         Alert.alert("Rôle utilisateur non pris en charge.");
       }
@@ -272,12 +360,69 @@ export default function Login({ navigation }: Props) {
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
-        const userDoc = querySnapshot.docs[0].data();
+        const userDocSnapshot = querySnapshot.docs[0];
+        const userDoc = userDocSnapshot.data();
+        const userDocId = userDocSnapshot.id;
         const email = userDoc.email;
         const firstLogin = userDoc.first_login;
         const roleId = userDoc.role_id;
-        const otherRoleId = userDoc.role_id1; 
+        const otherRoleId = userDoc.role_id1;
+        const biometricEnabled = userDoc.biometric_enabled || false;
+        const savedDeviceId = userDoc.biometric_device_id || null;
 
+        // Get current device ID
+        const currentDeviceId = await getDeviceId();
+
+        // STEP 1: Verify Firebase Authentication (password check)
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+        } catch (authError: any) {
+          if (authError.code === 'auth/user-not-found') {
+            // Try creating the account
+            try {
+              await createUserWithEmailAndPassword(auth, email, password);
+            } catch (createError: any) {
+              showErrorToast("Erreur de connexion, veuillez vérifier vos identifiants.");
+              setLoading(false);
+              return;
+            }
+          } else if (authError.code === 'auth/wrong-password') {
+            showErrorToast("Mot de passe incorrect.");
+            setLoading(false);
+            return;
+          } else {
+            showErrorToast("Erreur de connexion, veuillez vérifier vos identifiants.");
+            setLoading(false);
+            return;
+          }
+        }
+
+        // STEP 2: Password verified! Now check biometric requirements
+        if (biometricEnabled && biometricAvailable) {
+          // Check if this is the registered device
+          if (savedDeviceId && savedDeviceId !== currentDeviceId) {
+            Alert.alert(
+              "Nouvel appareil détecté",
+              "Ce compte est lié à un autre appareil. Si vous avez changé de téléphone, veuillez contacter l'administration pour réinitialiser votre appareil.",
+              [
+                { text: "OK", onPress: () => {} }
+              ]
+            );
+            setLoading(false);
+            return;
+          }
+
+          // Perform biometric authentication
+          const biometricSuccess = await authenticateWithBiometric();
+          
+          if (!biometricSuccess) {
+            showErrorToast("Authentification biométrique échouée.");
+            setLoading(false);
+            return;
+          }
+        }
+
+        // STEP 3: Get role data
         const roleDoc = await getDoc(doc(db, "roles", roleId as string));
         let roleData = roleDoc.data();
 
@@ -290,7 +435,6 @@ export default function Login({ navigation }: Props) {
           otherRoleName = OtherRoleData?.libelle?.toLowerCase() || '';
         }
 
-        // If document not found by ID, search in collection
         if (!roleData) {          
           const roleQuery = query(
             collection(db, "roles"),
@@ -302,7 +446,6 @@ export default function Login({ navigation }: Props) {
           if (!roleQuerySnapshot.empty) {
             roleData = roleQuerySnapshot.docs[0].data();
           } else {
-            // Try with numeric conversion if roleId is string
             const numericRoleId = parseInt(roleId);
             if (!isNaN(numericRoleId)) {
               const numericQuery = query(
@@ -319,7 +462,6 @@ export default function Login({ navigation }: Props) {
           }
         }
 
-        // Handle case where no role is found
         if (!roleData) {
           showErrorToast("Erreur: Rôle utilisateur non trouvé.");
           setLoading(false);
@@ -328,21 +470,18 @@ export default function Login({ navigation }: Props) {
 
         const roleName = roleData.libelle?.toLowerCase() || '';
 
-        // store données communs
+        // STEP 4: Store user data in AsyncStorage
         await AsyncStorage.setItem('userLogin', username.trim());
         await AsyncStorage.setItem('userRole', roleName);
         await AsyncStorage.setItem('userEmail', email);
 
-        //   store otherRoleLibelle si role_id1 existe
         if (otherRoleId && otherRoleName) {
           await AsyncStorage.setItem('otherRoleLibelle', otherRoleName);
         } else {
-          await AsyncStorage.removeItem('otherRoleLibelle'); // clear si pas de role
+          await AsyncStorage.removeItem('otherRoleLibelle');
         }
 
-        // Store role specific data
         if (roleName === 'etudiant') {
-          // Student pecific data
           await AsyncStorage.setItem('classe_id', userDoc.classe_id || '');
 
           if (userDoc.classe2_id && userDoc.classe2_id.trim() !== '') {
@@ -353,35 +492,90 @@ export default function Login({ navigation }: Props) {
           await AsyncStorage.setItem('niveau', userDoc.niveau_id || '');
 
         } else if (roleName === 'professeur') {
-          // professor specific data
           await AsyncStorage.setItem('specialite', userDoc.specialite || '');
           await AsyncStorage.setItem('statut', userDoc.statut || '');
           await AsyncStorage.setItem('auth_uid', userDoc.auth_uid || '');
-          // clear student specific data in case of role switching
           await AsyncStorage.removeItem('classe_id');
           await AsyncStorage.removeItem('filiere');
           await AsyncStorage.removeItem('niveau');
         }
 
+        // STEP 5: Offer to enable biometric if not already enabled
+                // STEP 5: Handle different roles
         if (roleName == 'etudiant' || roleName == 'professeur') {
-          try {
-            await createUserWithEmailAndPassword(auth, email, password);
-          } catch (error: any) {
-            if (error.code === 'auth/email-already-in-use') {
-              try {
-                await signInWithEmailAndPassword(auth, email, password);
-              } catch (signInError: any) {
-                showErrorToast("Erreur de connexion, veuillez vérifier vos identifiants.");
-                setLoading(false);
-                return;
-              }
-            } else {
-              showErrorToast("Erreur lors de la création du compte.");
-              setLoading(false);
-              return;
-            }
+          // Offer biometric for students and professors only
+          if (biometricAvailable && !biometricEnabled) {
+            Alert.alert(
+              "Sécurité renforcée",
+              `Voulez-vous activer l'authentification par ${biometricType} pour sécuriser votre compte et éviter le partage?`,
+              [
+                {
+                  text: "Plus tard",
+                  style: "cancel",
+                  onPress: () => {
+                    setLoading(false);
+                    const userData = {
+                      username,
+                      roleName,
+                      firstLogin,
+                      email,
+                      otherRoleName, 
+                      hasSecondRole: !!otherRoleId,
+                      ...(roleName === 'etudiant' && { classeId: userDoc.classe_id }),
+                      ...(roleName === 'professeur' && { 
+                        specialite: userDoc.specialite,
+                        statut: userDoc.statut 
+                      })
+                    };
+                    navigateToHome(userData);
+                  }
+                },
+                {
+                  text: "Activer",
+                  onPress: async () => {
+                    const biometricSuccess = await authenticateWithBiometric();
+                    if (biometricSuccess) {
+                      await saveBiometricData(userDocId, currentDeviceId);
+                      showSuccessToast(`${biometricType} activé avec succès!`);
+                    }
+                    setLoading(false);
+                    const userData = {
+                      username,
+                      roleName,
+                      firstLogin,
+                      email,
+                      otherRoleName, 
+                      hasSecondRole: !!otherRoleId,
+                      ...(roleName === 'etudiant' && { classeId: userDoc.classe_id }),
+                      ...(roleName === 'professeur' && { 
+                        specialite: userDoc.specialite,
+                        statut: userDoc.statut 
+                      })
+                    };
+                    navigateToHome(userData);
+                  }
+                }
+              ]
+            );
+          } else {
+            setLoading(false);
+            const userData = {
+              username,
+              roleName,
+              firstLogin,
+              email,
+              otherRoleName, 
+              hasSecondRole: !!otherRoleId,
+              ...(roleName === 'etudiant' && { classeId: userDoc.classe_id }),
+              ...(roleName === 'professeur' && { 
+                specialite: userDoc.specialite,
+                statut: userDoc.statut 
+              })
+            };
+            navigateToHome(userData);
           }
-
+        } else if (roleName == 'admin') {
+          // Admin login - no biometric required
           setLoading(false);
           const userData = {
             username,
@@ -389,19 +583,12 @@ export default function Login({ navigation }: Props) {
             firstLogin,
             email,
             otherRoleName, 
-            hasSecondRole: !!otherRoleId, // ✅ Flag to indicate dual role
-            // Include role-specific data
-            ...(roleName === 'etudiant' && { classeId: userDoc.classe_id }),
-            ...(roleName === 'professeur' && { 
-              specialite: userDoc.specialite,
-              statut: userDoc.statut 
-            })
+            hasSecondRole: !!otherRoleId,
           };
-
           navigateToHome(userData);
-
         } else {
-          showErrorToast("Identifiants invalides, veuillez réessayer.");
+          // Unknown role
+          showErrorToast("Rôle utilisateur non pris en charge.");
           setLoading(false);
         }
 
@@ -411,6 +598,7 @@ export default function Login({ navigation }: Props) {
       }
 
     } catch (error) {
+      console.log('Login error:', error);
       showErrorToast("Erreur serveur, veuillez réessayer plus tard.");
       setLoading(false);
     }
@@ -420,10 +608,8 @@ export default function Login({ navigation }: Props) {
     <>
       <StatusBar barStyle="dark-content" backgroundColor="white"/>
       <View style={localStyles.container}>
-        {/* Background Gradient */}
         <View />
         
-        {/* Animated decorative bubbles */}
         <Animated.View 
           style={[
             localStyles.circle1,
@@ -466,7 +652,6 @@ export default function Login({ navigation }: Props) {
                 }
               ]}
             >
-              {/* Header */}
               <View style={localStyles.headerSection}>
                 <Animated.View 
                   style={[
@@ -487,11 +672,14 @@ export default function Login({ navigation }: Props) {
                 <Text style={localStyles.welcomeText}>
                   Connectez-vous à votre espace étudiant
                 </Text>
+                {biometricAvailable && (
+                  <Text style={styles.biometricInfo}>
+                    🔒 {biometricType} disponible
+                  </Text>
+                )}
               </View>
 
-              {/* Form */}
               <View style={localStyles.loginForm}>
-                {/* Username */}
                 <View style={localStyles.inputGroup}>
                   <Text style={localStyles.inputLabel}>Nom d'utilisateur</Text>
                   <View style={localStyles.inputWrapper}>
@@ -511,7 +699,6 @@ export default function Login({ navigation }: Props) {
                   </View>
                 </View>
 
-                {/* Password */}
                 <View style={localStyles.inputGroup}>
                   <Text style={localStyles.inputLabel}>Mot de passe</Text>
                   <View style={localStyles.inputWrapper}>
@@ -541,7 +728,6 @@ export default function Login({ navigation }: Props) {
                   </View>
                 </View>
 
-                {/* Login Button */}
                 <TouchableOpacity
                   style={[
                     localStyles.loginButton,
@@ -564,7 +750,6 @@ export default function Login({ navigation }: Props) {
                   )}
                 </TouchableOpacity>
 
-                {/* Forgot Password */}
                 <TouchableOpacity style={localStyles.forgotPassword}>
                   <Text 
                     style={localStyles.forgotPasswordText} 
@@ -581,3 +766,12 @@ export default function Login({ navigation }: Props) {
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  biometricInfo: {
+    fontSize: 14,
+    color: '#059669',
+    marginTop: 8,
+    fontWeight: '600',
+  },
+});

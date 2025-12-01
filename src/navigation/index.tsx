@@ -26,6 +26,7 @@ import AddNote from '../professeur/pages/evaluations/addNote/page';
 import VoirNote from '../etudiant/pages/voirNote/page';
 import Comments from '../Social/comments/page';
 import ChooseScreen from '../ChooseScreen/page';
+import AdminPanel from '../adminPanel/page';
 
 export type RootStackParamList = {
   Login: { userLogin: string; userRole: string; firstLogin: number };
@@ -81,6 +82,12 @@ export type RootStackParamList = {
     email: string;
     classeId?: string;
   };
+  AdminPanel: {
+    userLogin: string;
+    userRole: string;
+    email: string;
+    firstLogin: number;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -123,6 +130,8 @@ export default function AppNavigator() {
         <Stack.Screen name="ProfileProfesseur" component={ProfileProfesseur} />
         <Stack.Screen name="ShowProfileInfosProfesseur" component={ShowProfileInfosProfesseur}/>
 
+
+        <Stack.Screen name="AdminPanel" component={AdminPanel}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
