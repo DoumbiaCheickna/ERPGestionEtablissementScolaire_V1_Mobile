@@ -241,7 +241,7 @@ export default function ProfileStudent({ navigation }: Props) {
         navigation.navigate('MatieresStudent' as never);
         break;
       case 'grades':
-        Alert.alert('Info', 'Notes à implémenter');
+        navigation.navigate('VoirNote' as never);
         break;
       case 'Planning':
         navigation.navigate('AllCoursesStudent' as never);
