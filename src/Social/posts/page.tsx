@@ -35,7 +35,8 @@ import {
   addDoc,
   serverTimestamp,
   where,
-  getDocs
+  getDocs,
+  getDoc
 } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
@@ -72,6 +73,7 @@ export default function Posts({ navigation }: Props) {
   const [newPostContent, setNewPostContent] = useState('');
   const [submittingPost, setSubmittingPost] = useState(false);
   const [selectedBgColor, setSelectedBgColor] = useState('none');
+
 
 
   const BACKGROUND_COLORS = [
@@ -301,6 +303,30 @@ export default function Posts({ navigation }: Props) {
   };
 
   const PostCard = ({ post }: { post: Post }) => {
+    const [authorPhoto, setAuthorPhoto] = useState<string | null>(null)
+
+    useEffect(() => {
+      const getAuthorPhoto = async () => {
+        if (!post.author_id) return
+
+        try {
+          const userRef = doc(db, "users", post.author_id)
+          const userSnap = await getDoc(userRef)
+
+          if (userSnap.exists()) {
+            const data = userSnap.data()
+            if (data?.profilePhotoUrl) {
+              setAuthorPhoto(data.profilePhotoUrl)
+            }
+          }
+        } catch (error) {
+          console.log("Error getting author photo:", error)
+        }
+      }
+
+    getAuthorPhoto()
+    }, [post.author_id])
+
     const isLiked = post.likes.includes(currentUserId);
     const isOwnPost = post.author_id === currentUserId;
     
@@ -322,11 +348,19 @@ export default function Posts({ navigation }: Props) {
             onPress={() => navigateToUserProfile(post.author_id)}
             activeOpacity={0.7}
           >
-            <View style={styles.avatarContainer}>
-              <Text style={styles.avatarText}>
-                {post.author_role === 'professeur' ? '👨‍🏫' : '🎓'}
-              </Text>
+            <View style={styles.avatarSmall}>
+              {authorPhoto ? (
+                <Image
+                  source={{ uri: authorPhoto }}
+                  style={{ width: 36, height: 36, borderRadius: 18 }}
+                />
+              ) : (
+                <Text style={styles.avatarSmallText}>
+                  {post.author_role === 'professeur' ? '👨‍🏫' : '🎓'}
+                </Text>
+              )}
             </View>
+
             <View style={styles.userDetails}>
               <Text style={styles.userName}>{post.author_name}</Text>
               <Text style={styles.userRole}>

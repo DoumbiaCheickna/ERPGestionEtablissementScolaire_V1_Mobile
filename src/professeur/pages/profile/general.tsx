@@ -75,6 +75,7 @@ interface UserInfo {
   email: string;
   login: string;
   role: string;
+  profilePhotoUrl?: string;
   avatar?: string;
 }
 
@@ -161,6 +162,7 @@ export default function ProfileProfesseur({ navigation }: Props) {
         email: userDoc.email || '',
         login: userDoc.login || '',
         role: userDoc.role || '',
+        profilePhotoUrl: userDoc.profilePhotoUrl || '',
         avatar: userDoc.sexe[0] === 'M' 
         ? require('../../../assets/man.png') 
         : require('../../../assets/woman.png')
@@ -342,15 +344,14 @@ export default function ProfileProfesseur({ navigation }: Props) {
         <View style={generalStyles.profileHeader}>
           <View style={generalStyles.profileHeaderContent}>
            <View style={generalStyles.avatarContainer}>
-            {user.avatar ? (
-              <Image source={user.avatar as any} style={generalStyles.avatarImage} />
-            ) : (
-              <View style={generalStyles.avatarPlaceholder}>
-                <Text style={generalStyles.avatarPlaceholderText}>
-                  {getInitials(user.prenom, user.nom)}
-                </Text>
-              </View>
-            )}
+             {user.profilePhotoUrl ? (
+                <Image 
+                  source={{ uri: user.profilePhotoUrl }} 
+                  style={generalStyles.avatarImage} 
+                />
+              ) : (
+                <Image source={user.avatar as any} style={generalStyles.avatarImage} />
+              )}
             <View style={generalStyles.onlineIndicator} />
           </View>
 

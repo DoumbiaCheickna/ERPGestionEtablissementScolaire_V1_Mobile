@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, Text } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +16,8 @@ type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 const BottomNavBar = ({ activeScreen }: Props) => {
   const navigation = useNavigation();
   const [role, setRole] = useState<string | null>(null);
+  const [userPhoto, setUserPhoto] = useState<string | null>(null);
+
 
   // Load userRole from storage
   useEffect(() => {
@@ -23,9 +25,26 @@ const BottomNavBar = ({ activeScreen }: Props) => {
       const savedRole = await AsyncStorage.getItem("userRole");
       setRole(savedRole);
     })();
+
   }, []);
 
-  if (!role) return null; // avoid flashing until role is loaded
+  useEffect(() => {
+    (async () => {
+      const photo = await getUserPhoto();
+      setUserPhoto(photo);
+    })();
+  }, []);
+
+  const getUserPhoto = async () => {
+    const storedProfile = await AsyncStorage.getItem('userProfile');
+
+    if (storedProfile) {
+      const user = JSON.parse(storedProfile);
+      return user.profilePhotoUrl || 'person-outline';
+    }
+  }
+
+  if (!role) return null; 
 
   const studentItems = [
     { name: 'HomeStudent', icon: 'home-outline', screen: 'HomeStudent', libelle: 'Accueil' },
@@ -47,28 +66,40 @@ const BottomNavBar = ({ activeScreen }: Props) => {
   const navItems = role === "etudiant" ? studentItems : profItems;
 
   return (
-    <SafeAreaView style={styles.wrapper} edges={['bottom']}>
-      <View style={styles.container}>
-        {navItems.map((item) => {
-          const isActive = activeScreen == item.screen;
-          return (
-            <TouchableOpacity
-              key={item.name}
-              style={styles.button}
-              onPress={() => navigation.navigate(item.screen as never)}
-            >
+   <SafeAreaView style={styles.wrapper} edges={['bottom']}>
+    <View style={styles.container}>
+      {navItems.map((item) => {
+        const isActive = activeScreen == item.screen;
+
+        // Check if this is the profile item and has a URL
+        const isProfile = item.name === 'ProfileStudent' && userPhoto;
+
+        return (
+          <TouchableOpacity
+            key={item.name}
+            style={styles.button}
+            onPress={() => navigation.navigate(item.screen as never)}
+          >
+            {isProfile ? (
+              <Image
+                source={{ uri: userPhoto }}
+                style={{ width: 28, height: 28, borderRadius: 14 }}
+              />
+            ) : (
               <Ionicons
                 size={28}
                 color={isActive ? theme.colors.primary : '#888'}
                 name={item.icon as IoniconName}
               />
-              {isActive && <View style={styles.activeIndicator} />}
-              <Text style={Cstyles.courseText}>{item.libelle}</Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </SafeAreaView>
+            )}
+            {isActive && <View style={styles.activeIndicator} />}
+            <Text style={Cstyles.courseText}>{item.libelle}</Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  </SafeAreaView>
+
   );
 };
 

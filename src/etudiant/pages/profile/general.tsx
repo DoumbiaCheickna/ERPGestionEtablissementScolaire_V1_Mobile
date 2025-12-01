@@ -13,6 +13,8 @@ import { generalStyles } from './styles';
 import LottieView from 'lottie-react-native';
 import { useStudentMatieres } from '../../../components/hooks/matieresStudent';
 import { useStudentCourses } from '../../../components/hooks/coursStudent';
+import { usersWallpapers } from '../../../components/hooks/usersWallpapers';
+import UserProfile from '../../../Social/UserProfile/page';
 
 const profileActions = [
   { 
@@ -74,6 +76,7 @@ interface UserInfo {
   login: string;
   classeId: string;
   role: string;
+  profilePhotoUrl?: string;
   avatar?: string;
 }
 
@@ -91,6 +94,9 @@ export default function ProfileStudent({ navigation }: Props) {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
+
+  const { uploadProfilePhoto, loading: uploadLoading } = usersWallpapers();
+  
   
   const { matieres } = useStudentMatieres();
   const { coursesByDay } = useStudentCourses();
@@ -156,6 +162,7 @@ export default function ProfileStudent({ navigation }: Props) {
         login: userDoc.login || '',
         classeId: userDoc.classe_id || '',
         role: userDoc.role || '',
+        profilePhotoUrl: userDoc.profilePhotoUrl || '',
         avatar: userDoc.sexe[0] === 'M' 
           ? require('../../../assets/man.png') 
           : require('../../../assets/woman.png')
@@ -345,15 +352,14 @@ export default function ProfileStudent({ navigation }: Props) {
         <View style={generalStyles.profileHeader}>
           <View style={generalStyles.profileHeaderContent}>
             <View style={generalStyles.avatarContainer}>
-              {user.avatar ? (
-                <Image source={user.avatar as any} style={generalStyles.avatarImage} />
-              ) : (
-                <View style={generalStyles.avatarPlaceholder}>
-                  <Text style={generalStyles.avatarPlaceholderText}>
-                    {getInitials(user.prenom, user.nom)}
-                  </Text>
-                </View>
-              )}
+               {user.profilePhotoUrl ? (
+                  <Image 
+                    source={{ uri: user.profilePhotoUrl }} 
+                    style={generalStyles.avatarImage} 
+                  />
+                ) : (
+                  <Image source={user.avatar as any} style={generalStyles.avatarImage} />
+                )}
               <View style={generalStyles.onlineIndicator} />
             </View>
             

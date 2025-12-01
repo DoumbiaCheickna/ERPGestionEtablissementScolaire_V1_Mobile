@@ -476,4 +476,17 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 32,
   },
+  avatarSmall: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#f0f2ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+
+  avatarSmallText: {
+    fontSize: 20,
+  },
 })

@@ -27,6 +27,7 @@ import { styles } from './styles'
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import LottieView from 'lottie-react-native';
+import { usersWallpapers } from '../../../components/hooks/usersWallpapers';
 
 
 interface UserProfileInfo {
@@ -37,6 +38,7 @@ interface UserProfileInfo {
   login: string;
   telephone: string;
   specialite?: string;
+  profilePhotoUrl?: string;
   avatar?: string;
 }
 
@@ -49,6 +51,8 @@ export default function ProfileSettings({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type?: "success" | "error" | "info" } | null>(null);
 
+  const { uploadProfilePhoto, loading: uploadLoading } = usersWallpapers();
+  
   
   // Modal states
   const [passwordModalVisible, setPasswordModalVisible] = useState<boolean>(false);
@@ -91,6 +95,7 @@ export default function ProfileSettings({ navigation }: Props) {
           login: userData.login || '',
           telephone: userData.telephone || '',
           specialite: userData.specialite || '',
+          profilePhotoUrl: userData.profilePhotoUrl || '',
           avatar: userData.sexe[0] === 'M' 
           ? require('../../../assets/man.png') 
           : require('../../../assets/woman.png')
@@ -106,38 +111,7 @@ export default function ProfileSettings({ navigation }: Props) {
 
 
 
-const pickImage = async () => {
-  let result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    aspect: [1, 1],
-    quality: 1,
-  });
 
-  if (!result.canceled) {
-    const uri = result.assets[0].uri;
-    const fileName = uri.split("/").pop() || `avatar_${Date.now()}.jpg`;
-    const newPath = FileSystem + fileName;
-
-    try {
-      await FileSystem.copyAsync({ from: uri, to: newPath });
-
-      // Update local state
-      setProfilePic(newPath);
-
-      // Update userInfo state too
-      setUserInfo(prev => prev ? { ...prev, avatar: newPath } : prev);
-
-      if (userInfo?.id) {
-        const userDocRef = doc(db, "users", userInfo.id);
-        await updateDoc(userDocRef, { avatar: newPath });
-      }
-
-    } catch (e) {
-      console.error("Error saving image:", e);
-    }
-  }
-};
 
 
 
@@ -192,6 +166,60 @@ const pickImage = async () => {
   }
 };
 
+  const pickImage = async () => {
+    try {
+      // Request permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission refusée', 'Nous avons besoin de votre permission pour accéder à vos photos');
+        return;
+      }
+
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        
+        const downloadURL = await uploadProfilePhoto(imageUri, userInfo!.login);
+        
+        if (downloadURL) {
+
+          if (userInfo?.id) {
+            const userDocRef = doc(db, "users", userInfo.id);
+            await updateDoc(userDocRef, {
+              profilePhotoUrl: downloadURL
+            });
+          }
+
+          // Update local state
+          setProfilePic(downloadURL);
+          
+          // Update userInfo state
+          setUserInfo(prev => prev ? { ...prev, profilePhotoUrl: downloadURL } : prev);
+
+          // Update cached user data
+          await AsyncStorage.setItem('userProfile', JSON.stringify({
+            ...userInfo,
+            profilePhotoUrl: downloadURL
+          }));
+
+          setToast({ message: 'Photo de profil mise à jour avec succès', type: 'success' });
+        } else {
+          Alert.alert('Erreur', 'Échec du téléchargement de la photo');
+        }
+      }
+    } catch (error) {
+      console.error('Error changing profile photo:', error);
+      Alert.alert('Erreur', 'Une erreur est survenue lors du changement de photo');
+    }
+  };
 
   const handleUpdateLogin = async () => {
     if (!newLogin) {
@@ -302,18 +330,45 @@ const pickImage = async () => {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Profile Avatar */}
-        <View style={styles.avatarContainer}>
-              <Image source={userInfo.avatar as any} style={styles.avatarImage} />
-
-          <TouchableOpacity onPress={pickImage} style={styles.changeAvatarButton}>
-            <Text style={styles.changeAvatarText}>
-              <Ionicons name='image' style={{color:  '#ffff'}}>
-              </Ionicons>
-              Changer la photo</Text>
+        <View style={{ position: 'relative' }}>
+          {profilePic || userInfo.profilePhotoUrl ? (
+            <Image 
+              source={{ uri: profilePic || userInfo.profilePhotoUrl }} 
+              style={styles.avatarImage} 
+            />
+          ) : (
+            <Image source={userInfo.avatar as any} style={styles.avatarImage} />
+          )}
+          
+          {/* Camera Button Overlay */}
+          <TouchableOpacity 
+            onPress={pickImage}
+            disabled={uploadLoading}
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              right: 0,
+              backgroundColor: '#3b82f6',
+              borderRadius: 20,
+              width: 40,
+              height: 40,
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderWidth: 3,
+              borderColor: '#fff',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+              elevation: 5,
+            }}
+          >
+            {uploadLoading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Ionicons name="camera" size={20} color="#fff" />
+            )}
           </TouchableOpacity>
-
-          <Text style={styles.fullName}>{userInfo.prenom} {userInfo.nom}</Text>
-          <Text style={styles.email}>{userInfo.email}</Text>
         </View>
 
         {/* Settings Options */}

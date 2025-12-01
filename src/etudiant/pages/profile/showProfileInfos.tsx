@@ -27,6 +27,7 @@ import { styles } from './styles'
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import LottieView from 'lottie-react-native';
+import { usersWallpapers } from '../../../components/hooks/usersWallpapers';
 
 
 interface StudentProfileInfo {
@@ -40,6 +41,7 @@ interface StudentProfileInfo {
   niveauId: string;
   className: string;
   avatar?: string;
+  profilePhotoUrl?: string;
 }
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ShowProfileInfosStudent'>;
@@ -51,6 +53,7 @@ export default function ProfileSettings({ navigation }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type?: "success" | "error" | "info" } | null>(null);
 
+  const { uploadProfilePhoto, loading: uploadLoading } = usersWallpapers();
   
   // Modal states
   const [passwordModalVisible, setPasswordModalVisible] = useState<boolean>(false);
@@ -69,134 +72,153 @@ export default function ProfileSettings({ navigation }: Props) {
     fetchUserProfileInfo();
   }, []);
 
-    const fetchUserProfileInfo = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+  const fetchUserProfileInfo = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        const userSnapshot = await getUserSnapchot(); // <-- await here
+      const userSnapshot = await getUserSnapchot();
 
-        if (!userSnapshot || userSnapshot.empty) {
-          setError('Utilisateur non trouvé');
-          return;
-        }
-
-        const userData = userSnapshot.docs[0].data();
-        const userId = userSnapshot.docs[0].id;
-
-        const className2 = userData.classe2
-
-        setUserInfo({
-          id: userId,
-          nom: userData.nom || '',
-          prenom: userData.prenom || '',
-          email: userData.email || '',
-          login: userData.login || '',
-          filiereId: userData.filiere_id || '',
-          telephone: userData.telephone || '',
-          niveauId: userData.niveau_id || '',
-          className: className2 ? `${userData.classe},  ${className2}` : userData.classe,
-          avatar: userData.sexe[0] === 'M' 
-          ? require('../../../assets/man.png') 
-          : require('../../../assets/woman.png')
-        });
-
-      } catch (error) {
-        setError('Erreur lors du chargement des informations');
-        Alert.alert('Erreur', 'Impossible de charger les informations du profil');
-      } finally {
-        setLoading(false);
+      if (!userSnapshot || userSnapshot.empty) {
+        setError('Utilisateur non trouvé');
+        return;
       }
+
+      const userData = userSnapshot.docs[0].data();
+      const userId = userSnapshot.docs[0].id;
+
+      const className2 = userData.classe2
+
+      setUserInfo({
+        id: userId,
+        nom: userData.nom || '',
+        prenom: userData.prenom || '',
+        email: userData.email || '',
+        login: userData.login || '',
+        filiereId: userData.filiere_id || '',
+        telephone: userData.telephone || '',
+        niveauId: userData.niveau_id || '',
+        className: className2 ? `${userData.classe},  ${className2}` : userData.classe,
+        avatar: userData.sexe[0] === 'M' 
+          ? require('../../../assets/man.png') 
+          : require('../../../assets/woman.png'),
+        profilePhotoUrl: userData.profilePhotoUrl || null,
+      });
+
+      setProfilePic(userData.profilePhotoUrl || null);
+
+    } catch (error) {
+      setError('Erreur lors du chargement des informations');
+      Alert.alert('Erreur', 'Impossible de charger les informations du profil');
+    } finally {
+      setLoading(false);
+    }
   };
 
-
-
-const pickImage = async () => {
-  let result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    aspect: [1, 1],
-    quality: 1,
-  });
-
-  if (!result.canceled) {
-    const uri = result.assets[0].uri;
-    const fileName = uri.split("/").pop() || `avatar_${Date.now()}.jpg`;
-    const newPath = FileSystem + fileName;
-
+  const pickImage = async () => {
     try {
-      await FileSystem.copyAsync({ from: uri, to: newPath });
-
-      // Update local state
-      setProfilePic(newPath);
-
-      // Update userInfo state too
-      setUserInfo(prev => prev ? { ...prev, avatar: newPath } : prev);
-
-      if (userInfo?.id) {
-        const userDocRef = doc(db, "users", userInfo.id);
-        await updateDoc(userDocRef, { avatar: newPath });
+      // Request permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (status !== 'granted') {
+        Alert.alert('Permission refusée', 'Nous avons besoin de votre permission pour accéder à vos photos');
+        return;
       }
 
-    } catch (e) {
-      console.error("Error saving image:", e);
+      // Launch image picker
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const imageUri = result.assets[0].uri;
+        
+        const downloadURL = await uploadProfilePhoto(imageUri, userInfo!.login);
+        
+        if (downloadURL) {
+
+          if (userInfo?.id) {
+            const userDocRef = doc(db, "users", userInfo.id);
+            await updateDoc(userDocRef, {
+              profilePhotoUrl: downloadURL
+            });
+          }
+
+          // Update local state
+          setProfilePic(downloadURL);
+          
+          // Update userInfo state
+          setUserInfo(prev => prev ? { ...prev, profilePhotoUrl: downloadURL } : prev);
+
+          // Update cached user data
+          await AsyncStorage.setItem('userProfile', JSON.stringify({
+            ...userInfo,
+            profilePhotoUrl: downloadURL
+          }));
+
+          setToast({ message: 'Photo de profil mise à jour avec succès', type: 'success' });
+        } else {
+          Alert.alert('Erreur', 'Échec du téléchargement de la photo');
+        }
+      }
+    } catch (error) {
+      console.error('Error changing profile photo:', error);
+      Alert.alert('Erreur', 'Une erreur est survenue lors du changement de photo');
     }
-  }
-};
+  };
 
-
-
-
- const handleUpdatePassword = async () => {
-  if (!newPassword || !confirmPassword) {
-    Alert.alert('Erreur', 'Veuillez remplir tous les champs');
-    return;
-  }
-
-  if (newPassword !== confirmPassword) {
-    Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
-    return;
-  }
-
-  if (newPassword.length < 6) {
-    Alert.alert('Erreur', 'Le mot de passe doit contenir au moins 6 caractères');
-    return;
-  }
-
-  try {
-    setUpdatingPassword(true);
-
-    if (!userInfo?.id || !auth.currentUser) {
-      Alert.alert('Erreur', 'Utilisateur non connecté ou données manquantes');
+  const handleUpdatePassword = async () => {
+    if (!newPassword || !confirmPassword) {
+      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
       return;
     }
 
-    const userDocRef = doc(db, "users", userInfo.id);
-    await updateDoc(userDocRef, {
-      password: newPassword
-    });
-
-    await updatePassword(auth.currentUser, newPassword);
-
-    setToast({message: 'Mot de passe mis à jour avec succès', type: 'success'});
-    setPasswordModalVisible(false);
-    setNewPassword('');
-    setConfirmPassword('');
-
-  } catch (error: any) {
-    if (error.code === "auth/requires-recent-login") {
-      Alert.alert(
-        "Erreur",
-        "Vous devez vous reconnecter avant de changer le mot de passe."
-      );
-    } else {
-      Alert.alert('Erreur', 'Impossible de mettre à jour le mot de passe');
+    if (newPassword !== confirmPassword) {
+      Alert.alert('Erreur', 'Les mots de passe ne correspondent pas');
+      return;
     }
-  } finally {
-    setUpdatingPassword(false);
-  }
-};
 
+    if (newPassword.length < 6) {
+      Alert.alert('Erreur', 'Le mot de passe doit contenir au moins 6 caractères');
+      return;
+    }
+
+    try {
+      setUpdatingPassword(true);
+
+      if (!userInfo?.id || !auth.currentUser) {
+        Alert.alert('Erreur', 'Utilisateur non connecté ou données manquantes');
+        return;
+      }
+
+      const userDocRef = doc(db, "users", userInfo.id);
+      await updateDoc(userDocRef, {
+        password: newPassword
+      });
+
+      await updatePassword(auth.currentUser, newPassword);
+
+      setToast({message: 'Mot de passe mis à jour avec succès', type: 'success'});
+      setPasswordModalVisible(false);
+      setNewPassword('');
+      setConfirmPassword('');
+
+    } catch (error: any) {
+      if (error.code === "auth/requires-recent-login") {
+        Alert.alert(
+          "Erreur",
+          "Vous devez vous reconnecter avant de changer le mot de passe."
+        );
+      } else {
+        Alert.alert('Erreur', 'Impossible de mettre à jour le mot de passe');
+      }
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
 
   const handleUpdateLogin = async () => {
     if (!newLogin) {
@@ -242,7 +264,6 @@ const pickImage = async () => {
     setLoginModalVisible(true);
   };
 
-
   if (loading) {
     return (
       <View style={styles.container}>
@@ -253,7 +274,7 @@ const pickImage = async () => {
           <Text style={styles.headerTitle}>Paramètres du profil</Text>
           <View style={styles.placeholder} />
         </View>
-           <View style={styles.loadingContainer}>
+        <View style={styles.loadingContainer}>
           <LottieView
             source={require('../../../assets/loading.json')}
             autoPlay
@@ -266,8 +287,6 @@ const pickImage = async () => {
           />
           <Text style={styles.loadingText}>Chargement du profil...</Text>
         </View>
-        
-     
       </View>
     );
   }
@@ -308,13 +327,53 @@ const pickImage = async () => {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Profile Avatar */}
         <View style={styles.avatarContainer}>
-            <Image source={userInfo.avatar as any} style={styles.avatarImage} />
+          <View style={{ position: 'relative' }}>
+            {profilePic || userInfo.profilePhotoUrl ? (
+              <Image 
+                source={{ uri: profilePic || userInfo.profilePhotoUrl }} 
+                style={styles.avatarImage} 
+              />
+            ) : (
+              <Image source={userInfo.avatar as any} style={styles.avatarImage} />
+            )}
+            
+            {/* Camera Button Overlay */}
+            <TouchableOpacity 
+              onPress={pickImage}
+              disabled={uploadLoading}
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                right: 0,
+                backgroundColor: '#3b82f6',
+                borderRadius: 20,
+                width: 40,
+                height: 40,
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderWidth: 3,
+                borderColor: '#fff',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 3.84,
+                elevation: 5,
+              }}
+            >
+              {uploadLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Ionicons name="camera" size={20} color="#fff" />
+              )}
+            </TouchableOpacity>
+          </View>
 
-          <TouchableOpacity onPress={pickImage} style={styles.changeAvatarButton}>
+          <TouchableOpacity onPress={pickImage} style={styles.changeAvatarButton} disabled={uploadLoading}>
             <Text style={styles.changeAvatarText}>
-              <Ionicons name='image' style={{color:  '#ffff'}}>
+              <Ionicons name='image' style={{color: '#ffff'}}>
               </Ionicons>
-              Changer la photo</Text>
+              {uploadLoading ? 'Téléchargement...' : 'Changer la photo'}
+            </Text>
           </TouchableOpacity>
 
           <Text style={styles.fullName}>{userInfo.prenom} {userInfo.nom}</Text>
@@ -350,7 +409,7 @@ const pickImage = async () => {
           
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>
-               <Ionicons name='person-outline' style={{color:  '#3b82f6'}}>
+               <Ionicons name='person-outline' style={{color: '#3b82f6'}}>
               </Ionicons>Nom d'utilisateur actuel
             </Text>
             <View style={styles.infoValueContainer}>
@@ -360,7 +419,7 @@ const pickImage = async () => {
 
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>
-               <Ionicons name='send-outline' style={{color:  '#3b82f6'}}>
+               <Ionicons name='send-outline' style={{color: '#3b82f6'}}>
               </Ionicons>
               Email
             </Text>
@@ -370,9 +429,8 @@ const pickImage = async () => {
           </View>
 
           <View style={styles.infoItem}>
-              
             <Text style={styles.infoLabel}>
-              <Ionicons name='phone-portrait-outline' style={{color:  '#f59e63ff'}}>
+              <Ionicons name='phone-portrait-outline' style={{color: '#f59e63ff'}}>
               </Ionicons>
               Téléphone
             </Text>
@@ -383,7 +441,7 @@ const pickImage = async () => {
 
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>
-               <Ionicons name='home-outline' style={{color:  '#54c985ff'}}>
+               <Ionicons name='home-outline' style={{color: '#54c985ff'}}>
               </Ionicons>Classe(s)</Text>
             <View style={styles.infoValueContainer}>
               <Text style={styles.infoValue}>{userInfo.className}</Text>
@@ -522,6 +580,5 @@ const pickImage = async () => {
       </Modal>
       {toast && <Toast message={toast.message} type={toast.type} />}
     </View>
-    
   );
 }

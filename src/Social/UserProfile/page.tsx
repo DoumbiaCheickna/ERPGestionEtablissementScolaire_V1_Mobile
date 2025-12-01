@@ -59,6 +59,7 @@ interface User {
   login: string;
   role: 'student' | 'professeur';
   email?: string;
+  photo?: string;
   matricule?: string;
   classe_libelle?: string;
   filiere_libelle?: string;
@@ -111,20 +112,21 @@ export default function UserProfile({ navigation, route }: Props) {
       const userDoc = await getDoc(doc(db, 'users', userId));
       if (userDoc.exists()) {
         const userData = userDoc.data();
-       setUser({
-  id: userDoc.id,
-  nom: userData.nom || '',
-  prenom: userData.prenom || '',
-  login: userData.login || '',
-  role: userData.role_libelle,
-  email: userData.email || '',
-  ...(userData.role_libelle === 'student' && {
-    matricule: userData.matricule || '',
-    classe_libelle: userData.classe_libelle || '',
-    filiere_libelle: userData.filiere_libelle || '',
-    niveau_libelle: userData.niveau_libelle || ''
-  })
-});
+        setUser({
+              id: userDoc.id,
+              nom: userData.nom || '',
+              prenom: userData.prenom || '',
+              login: userData.login || '',
+              role: userData.role_libelle,
+              email: userData.email || '',
+              photo: userData.profilePhotoUrl || '',
+              ...(userData.role_libelle === 'student' && {
+                matricule: userData.matricule || '',
+                classe_libelle: userData.classe_libelle || '',
+                filiere_libelle: userData.filiere_libelle || '',
+                niveau_libelle: userData.niveau_libelle || ''
+              })
+        });
 
       } else {
         setUser(null); 
@@ -250,8 +252,34 @@ export default function UserProfile({ navigation, route }: Props) {
 
   // Modern Instagram-style PostCard
   const PostCard = ({ post }: { post: Post }) => {
+    const [authorPhoto, setAuthorPhoto] = useState<string | null>(null)
+
+
     const isLiked = post.likes.includes(currentUserId);
     const isOwnPost = userId === currentUserId;
+
+
+    useEffect(() => {
+      const getAuthorPhoto = async () => {
+        if (!post.author_id) return
+
+        try {
+          const userRef = doc(db, "users", post.author_id)
+          const userSnap = await getDoc(userRef)
+
+          if (userSnap.exists()) {
+            const data = userSnap.data()
+            if (data?.profilePhotoUrl) {
+              setAuthorPhoto(data.profilePhotoUrl)
+            }
+          }
+        } catch (error) {
+          console.log("Error getting author photo:", error)
+        }
+      }
+
+    getAuthorPhoto()
+    }, [post.author_id]);
 
     return (
       <View style={styles.postCard}>
@@ -259,14 +287,21 @@ export default function UserProfile({ navigation, route }: Props) {
         <View style={styles.postHeader}>
           <View style={styles.postHeaderLeft}>
             <View style={styles.avatarSmall}>
-              <Text style={styles.avatarSmallText}>
-                {post.author_role === 'professeur' ? '👨‍🏫' : '🎓'}
-              </Text>
+               {authorPhoto ? (
+                  <Image
+                    source={{ uri: authorPhoto }}
+                    style={{ width: 36, height: 36, borderRadius: 18 }}
+                  />
+                ) : (
+                  <Text style={styles.avatarSmallText}>
+                    {post.author_role === 'professeur' ? '👨‍🏫' : '🎓'}
+                  </Text>
+                )}
             </View>
             <View>
               <Text style={styles.postAuthorName}>{post.author_name}</Text>
               <Text style={styles.postTimestamp}>
-                {post.created_at}
+                {formatTimestamp(post.created_at)}
               </Text>
             </View>
           </View>
@@ -412,10 +447,19 @@ export default function UserProfile({ navigation, route }: Props) {
             <Text style={{color: 'black', fontSize: 30}}>←</Text>
           </TouchableOpacity>
           <View style={styles.avatarLarge}>
-            <Text style={styles.avatarLargeText}>
-              {user.role.toLowerCase() === 'professeur' ? '👨‍🏫' : '🎓'}
-            </Text>
+            {user.photo ? (
+              <Image
+                source={{ uri: user.photo }}
+                style={{ width: 90, height: 90, borderRadius: 45 }}
+                resizeMode="cover"
+              />
+            ) : (
+              <Text style={styles.avatarLargeText}>
+                {user.role === 'professeur' ? '👨‍🏫' : '🎓'}
+              </Text>
+            )}
           </View>
+
           
           <Text style={styles.userName}>{fullName}</Text>
           <Text style={styles.userRole}>
