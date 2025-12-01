@@ -224,16 +224,16 @@ export const useStudentMatieres = () => {
   };
 
 
-  // Initialize data
+  // Initialize données
   const initializeData = async () => {
     try {
       setLoading(true);
       
-      // First get user data
+      // UserData d'abord
       const user = await fetchUserData();
       
       if (user && (user.classe_id || user.classe2_id)) {
-        // Then get matieres for user's classes
+        // puis chercher les matieres pour les classes de l'utilisateur
         await fetchUserMatieres(user);
       }
     } catch (error) {
@@ -243,9 +243,9 @@ export const useStudentMatieres = () => {
     }
   };
 
-  // Refresh function to clear cache and reload
+  // Refresh pour recharger les données
   const refreshUserMatieres = () => {
-    // Clear all caches
+    // Clear tout
     userDataLoaded = false;
     matieresLoaded = false;
     userDataCache = null;
@@ -269,8 +269,8 @@ export const useStudentMatieres = () => {
     matieres,
     loading,
     refreshUserMatieres,
-    getMatieresForClass, // Helper function to get matieres by class
-    // Additional helpers
+    getMatieresForClass, // Une fonction Aide pour obtenir les matières d'une classe spécifique
+    //Autres Helper
     classe1Matieres: userData?.classe_id ? getMatieresForClass(userData.classe_id) : [],
     classe2Matieres: userData?.classe2_id ? getMatieresForClass(userData.classe2_id) : [],
   };

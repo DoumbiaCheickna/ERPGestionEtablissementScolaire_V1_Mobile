@@ -113,6 +113,7 @@ export default function VoirNote({ navigation }: Props) {
       );
 
       const querySnapshot = await getDocs(q);
+
       
       const evaluationsWithMyNotes: EvaluationWithNote[] = [];
 

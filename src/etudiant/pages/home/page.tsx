@@ -869,7 +869,7 @@ export default function HomeStudent({ navigation }: Props) {
                     {todayCourses.length}
                   </Text>
                   <Text style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
-                    Cours
+                    Cours d'aujourd'hui
                   </Text>
                 </View>
                 <View style={{ alignItems: 'center' }}>
