@@ -156,12 +156,17 @@ export const styles = StyleSheet.create({
   },
   
   // Modern Post Card Styles
-  postCard: {
+   postCard: {
     backgroundColor: '#ffffff',
-    marginBottom: 10,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#dbdbdb',
+    marginVertical: 6,
+    marginHorizontal: 0,
+    paddingVertical: 15,
+    borderRadius: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   postHeader: {
     flexDirection: 'row',
@@ -169,6 +174,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 15,
     paddingVertical: 12,
+    marginBottom: 20
   },
   postHeaderLeft: {
     flexDirection: 'row',
@@ -208,12 +214,13 @@ export const styles = StyleSheet.create({
     color: '#262626',
     fontWeight: '600',
   },
-  postContent: {
-    fontSize: 14,
+   postContent: {
+    fontSize: 20,
     lineHeight: 20,
     color: '#262626',
     paddingHorizontal: 15,
     marginBottom: 8,
+    padding: 10,
   },
   postImage: {
     width: '100%',
@@ -223,13 +230,23 @@ export const styles = StyleSheet.create({
   },
   postActions: {
     flexDirection: 'row',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 6,
-    gap: 12,
+    gap: 4,
+    marginTop: 10,
   },
   actionButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 4,
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 15,
+    backgroundColor: 'transparent',
+    borderColor: '#ccc',
+    borderWidth: 0.25,
+    marginHorizontal: 2,
+    marginVertical: 10,
   },
   actionIcon: {
     fontSize: 24,
