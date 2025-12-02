@@ -489,4 +489,74 @@ export const styles = StyleSheet.create({
   avatarSmallText: {
     fontSize: 20,
   },
+
+    imagePickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginTop: 15,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderStyle: 'dashed',
+  },
+  
+  imagePickerIcon: {
+    fontSize: 24,
+    marginRight: 10,
+  },
+  
+  imagePickerText: {
+    fontSize: 15,
+    color: '#262626',
+    fontWeight: '600',
+  },
+  
+  selectedImageContainer: {
+    marginTop: 20,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  
+  selectedImagePreview: {
+    width: '100%',
+    height: 300,
+    backgroundColor: '#f0f0f0',
+  },
+  
+  removeImageButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  
+  removeImageText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  
+  uploadingContainer: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  
+  uploadingText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
 })

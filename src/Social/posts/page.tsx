@@ -42,6 +42,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import { MatieresStyles } from '../../etudiant/pages/matieres/styles';
 import { styles } from '../posts/styles';
+import * as ImagePicker from 'expo-image-picker';
+import { useUploadPostImage } from '../../components/hooks/useUploadPostImage';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -73,6 +75,11 @@ export default function Posts({ navigation }: Props) {
   const [newPostContent, setNewPostContent] = useState('');
   const [submittingPost, setSubmittingPost] = useState(false);
   const [selectedBgColor, setSelectedBgColor] = useState('none');
+
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const { uploadPostImage, loading: uploadingImage } = useUploadPostImage();
+  
+
 
 
 
@@ -182,6 +189,25 @@ export default function Posts({ navigation }: Props) {
     });
   };
 
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Erreur', 'Impossible de sélectionner l\'image');
+    }
+  };
+
+
   const handleRefresh = () => {
     setRefreshing(true);
   };
@@ -228,8 +254,8 @@ export default function Posts({ navigation }: Props) {
   };
 
   const handleCreatePost = async () => {
-    if (!newPostContent.trim()) {
-      Alert.alert('Erreur', 'Veuillez saisir du contenu pour votre post');
+    if (!newPostContent.trim() && !selectedImage) {
+      Alert.alert('Erreur', 'Veuillez ajouter du contenu ou une image');
       return;
     }
 
@@ -238,6 +264,16 @@ export default function Posts({ navigation }: Props) {
     try {
       if (!currentUserId) {
         throw new Error("Utilisateur non authentifié");
+      }
+
+      let imageUrl = null;
+      
+      // Upload image si une image est sélectionnée
+      if (selectedImage) {
+        imageUrl = await uploadPostImage(selectedImage, currentUserId);
+        if (!imageUrl) {
+          throw new Error("Échec du téléchargement de l'image");
+        }
       }
 
       const newPost = {
@@ -250,14 +286,17 @@ export default function Posts({ navigation }: Props) {
         comments_count: 0,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
-        background_color: selectedBgColor, 
+        background_color: selectedImage ? 'none' : selectedBgColor, 
+        ...(imageUrl && { image_url: imageUrl }), // Ajouter image_url seulement si disponible
       };
 
       const postsRef = collection(db, "posts");
       await addDoc(postsRef, newPost);
 
+      // Reset tout les states
       setNewPostContent('');
-      setSelectedBgColor('none'); // RESET BACKGROUND COLOR
+      setSelectedBgColor('none');
+      setSelectedImage(null);
       setShowCreateModal(false);
       Alert.alert('Succès', 'Post créé avec succès !');
 
@@ -578,39 +617,71 @@ export default function Posts({ navigation }: Props) {
               {newPostContent.length}/500
             </Text>
 
-            {/* Background Color Picker */}
-            <View style={styles.colorPickerSection}>
-              <Text style={styles.colorPickerTitle}>Couleur de fond:</Text>
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                style={styles.colorPickerScroll}
-              >
-                {BACKGROUND_COLORS.map((bg) => (
-                  <TouchableOpacity
-                    key={bg.id}
-                    style={[
-                      styles.colorOption,
-                      { backgroundColor: bg.color === 'transparent' ? '#1a1a1a' : bg.color },
-                      bg.color === 'transparent' && styles.colorOptionNone,
-                      selectedBgColor === bg.id && styles.colorOptionSelected
-                    ]}
-                    onPress={() => setSelectedBgColor(bg.id)}
-                    activeOpacity={0.7}
-                  >
-                    {selectedBgColor === bg.id && (
-                      <Text style={styles.colorCheckmark}>✓</Text>
-                    )}
-                    {bg.id === 'none' && (
-                      <Text style={styles.colorNoneText}>∅</Text>
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
+            {/* Image Picker Button */}
+            <TouchableOpacity
+              style={styles.imagePickerButton}
+              onPress={pickImage}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.imagePickerIcon}>🖼️</Text>
+              <Text style={styles.imagePickerText}>
+                {selectedImage ? 'Changer l\'image' : 'Ajouter une image'}
+              </Text>
+            </TouchableOpacity>
 
-            {/* Preview */}
-            {newPostContent.trim() && selectedBgColor !== 'none' && (
+            {/* Selected Image Preview */}
+            {selectedImage && (
+              <View style={styles.selectedImageContainer}>
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={styles.selectedImagePreview}
+                  resizeMode="cover"
+                />
+                <TouchableOpacity
+                  style={styles.removeImageButton}
+                  onPress={() => setSelectedImage(null)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.removeImageText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Background Color Picker - Only show if no image */}
+            {!selectedImage && (
+              <View style={styles.colorPickerSection}>
+                <Text style={styles.colorPickerTitle}>Couleur de fond:</Text>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.colorPickerScroll}
+                >
+                  {BACKGROUND_COLORS.map((bg) => (
+                    <TouchableOpacity
+                      key={bg.id}
+                      style={[
+                        styles.colorOption,
+                        { backgroundColor: bg.color === 'transparent' ? '#1a1a1a' : bg.color },
+                        bg.color === 'transparent' && styles.colorOptionNone,
+                        selectedBgColor === bg.id && styles.colorOptionSelected
+                      ]}
+                      onPress={() => setSelectedBgColor(bg.id)}
+                      activeOpacity={0.7}
+                    >
+                      {selectedBgColor === bg.id && (
+                        <Text style={styles.colorCheckmark}>✓</Text>
+                      )}
+                      {bg.id === 'none' && (
+                        <Text style={styles.colorNoneText}>∅</Text>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Preview seulement si sans image*/}
+            {!selectedImage && newPostContent.trim() && selectedBgColor !== 'none' && (
               <View style={styles.previewSection}>
                 <Text style={styles.previewTitle}>Aperçu:</Text>
                 <View style={[
@@ -624,6 +695,13 @@ export default function Posts({ navigation }: Props) {
                     {newPostContent}
                   </Text>
                 </View>
+              </View>
+            )}
+
+            {/* Indicateur de progres de l'upload */}
+            {uploadingImage && (
+              <View style={styles.uploadingContainer}>
+                <Text style={styles.uploadingText}>Téléchargement de l'image...</Text>
               </View>
             )}
           </View>
