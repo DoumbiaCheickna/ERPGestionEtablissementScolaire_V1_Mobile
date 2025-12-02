@@ -307,4 +307,43 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  statsText: {
+    fontSize: 13,
+    color: '#262626',
+    fontWeight: '600',
+  },
+    actionText: {
+    fontSize: 13,
+    color: '#262626',
+    fontWeight: '600',
+    marginLeft: 4,
+    textAlign: 'center',
+  },
+
+  postTextBackground: {
+    width: '100%',
+    minHeight: screenWidth,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 30,
+    backgroundColor: '#000000',
+  },
+
+  postContentCentered: {
+    fontSize: 32,
+    lineHeight: 42,
+    fontWeight: '700',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  userDetails: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  likedText: {
+    color: '#ed4956',
+  },
+
+
+  
 });

@@ -36,7 +36,6 @@ import { styles } from './styles';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-// Post interface
 interface Post {
   id: string;
   author_id: string;
@@ -49,6 +48,7 @@ interface Post {
   comments_count: number;
   created_at: any;
   updated_at?: any;
+  background_color?: string; 
 }
 
 // User interface
@@ -65,6 +65,20 @@ interface User {
   filiere_libelle?: string;
   niveau_libelle?: string;
 }
+
+  const BACKGROUND_COLORS = [
+    { id: 'none', name: 'None', color: 'transparent' },
+    { id: 'white', name: 'White', color: '#FFFFFF' },
+    { id: 'lightblue', name: 'Light Blue', color: '#4FC3F7' },
+    { id: 'pink', name: 'Pink', color: '#F48FB1' },
+    { id: 'darkblue', name: 'Dark Blue', color: '#1565C0' },
+    { id: 'black', name: 'Black', color: '#000000' },
+    { id: 'green', name: 'Green', color: '#66BB6A' },
+    { id: 'red', name: 'Red', color: '#EF5350' },
+    { id: 'yellow', name: 'Yellow', color: '#FFEE58' },
+    { id: 'beige', name: 'Beige', color: '#D7CCC8' },
+    { id: 'purple', name: 'Purple', color: '#AB47BC' },
+  ];
 
 type Props = NativeStackScreenProps<RootStackParamList, 'UserProfile'>;
 
@@ -250,14 +264,8 @@ export default function UserProfile({ navigation, route }: Props) {
     }
   };
 
-  // Modern Instagram-style PostCard
   const PostCard = ({ post }: { post: Post }) => {
     const [authorPhoto, setAuthorPhoto] = useState<string | null>(null)
-
-
-    const isLiked = post.likes.includes(currentUserId);
-    const isOwnPost = userId === currentUserId;
-
 
     useEffect(() => {
       const getAuthorPhoto = async () => {
@@ -278,30 +286,43 @@ export default function UserProfile({ navigation, route }: Props) {
         }
       }
 
-    getAuthorPhoto()
-    }, [post.author_id]);
+      getAuthorPhoto()
+    }, [post.author_id])
+
+    const isLiked = post.likes.includes(currentUserId);
+    const isOwnPost = post.author_id === currentUserId;
+    
+    // Get background color
+    const bgColorObj = BACKGROUND_COLORS.find(bg => bg.id === post.background_color);
+    const hasBackground = post.background_color && post.background_color !== 'none';
+    const backgroundColor = bgColorObj?.color || 'transparent';
+    
+    // Determine text color based on background
+    const isDarkBg = ['black', 'darkblue', 'purple', 'red', 'lightblue', 'green', 'pink'].includes(post.background_color || '');
+    const textColor = hasBackground ? (isDarkBg ? '#ffffff' : '#000000') : '#ffffff';
 
     return (
       <View style={styles.postCard}>
-        {/* Post Header */}
+        {/* Header with user info */}
         <View style={styles.postHeader}>
           <View style={styles.postHeaderLeft}>
             <View style={styles.avatarSmall}>
-               {authorPhoto ? (
-                  <Image
-                    source={{ uri: authorPhoto }}
-                    style={{ width: 36, height: 36, borderRadius: 18 }}
-                  />
-                ) : (
-                  <Text style={styles.avatarSmallText}>
-                    {post.author_role === 'professeur' ? '👨‍🏫' : '🎓'}
-                  </Text>
-                )}
+              {authorPhoto ? (
+                <Image
+                  source={{ uri: authorPhoto }}
+                  style={{ width: 36, height: 36, borderRadius: 18 }}
+                />
+              ) : (
+                <Text style={styles.avatarSmallText}>
+                  {post.author_role === 'professeur' ? '👨‍🏫' : '🎓'}
+                </Text>
+              )}
             </View>
-            <View>
+
+            <View style={styles.userDetails}>
               <Text style={styles.postAuthorName}>{post.author_name}</Text>
-              <Text style={styles.postTimestamp}>
-                {formatTimestamp(post.created_at)}
+              <Text style={styles.userRole}>
+                {post.author_role === 'professeur' ? 'Professeur' : 'Étudiant'}
               </Text>
             </View>
           </View>
@@ -317,12 +338,24 @@ export default function UserProfile({ navigation, route }: Props) {
           )}
         </View>
 
-        {/* Post Content */}
-        {post.content && (
+        {/* Post content - WITH BACKGROUND COLOR */}
+        {post.content && !post.image_url && hasBackground ? (
+          <View style={[styles.postTextBackground, { backgroundColor }]}>
+            <Text style={[styles.postContentCentered, { color: textColor }]}>
+              {post.content}
+            </Text>
+          </View>
+        ) : post.content && !post.image_url ? (
+          <View style={styles.postTextBackground}>
+            <Text style={[styles.postContentCentered, { color: '#ffffff' }]}>
+              {post.content}
+            </Text>
+          </View>
+        ) : post.content ? (
           <Text style={styles.postContent}>{post.content}</Text>
-        )}
+        ) : null}
 
-        {/* Post Image */}
+        {/* Post image */}
         {post.image_url && (
           <Image
             source={{ uri: post.image_url }}
@@ -331,15 +364,16 @@ export default function UserProfile({ navigation, route }: Props) {
           />
         )}
 
-        {/* Action Buttons */}
+        {/* Action buttons */}
         <View style={styles.postActions}>
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => handleLike(post.id, post.likes)}
             activeOpacity={0.6}
           >
-            <Text style={[styles.actionIcon, isLiked && styles.likedIcon]}>
+            <Text style={[styles.actionText, isLiked && styles.likedText]}>
               {isLiked ? '❤️' : '🤍'}
+              {post.likes.length > 0 && ` ${post.likes.length}`}              
             </Text>
           </TouchableOpacity>
 
@@ -348,44 +382,46 @@ export default function UserProfile({ navigation, route }: Props) {
             onPress={() => navigateToComments(post.id, post.comments_count)}
             activeOpacity={0.6}
           >
-            <Text style={styles.actionIcon}>💬</Text>
+            <Text style={styles.actionText}>💬{post.comments_count}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.actionButton}
             activeOpacity={0.6}
           >
-            <Text style={styles.actionIcon}>📤</Text>
+            <Text style={styles.actionText}>📤</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Stats */}
+        {/* Like and comment counts */}
         <View style={styles.postStats}>
           {post.likes.length > 0 && (
-            <Text style={styles.likesText}>
+            <Text style={styles.statsText}>
               {post.likes.length} {post.likes.length === 1 ? 'like' : 'likes'}
             </Text>
           )}
         </View>
 
-        {/* Comments Preview */}
+        {/* Comments preview */}
         {post.comments_count > 0 && (
           <TouchableOpacity 
-            style={styles.commentsPreview}
+            style={{ paddingHorizontal: 12, paddingBottom: 4 }}
             onPress={() => navigateToComments(post.id, post.comments_count)}
             activeOpacity={0.7}
           >
-            <Text style={styles.commentsPreviewText}>
-              Voir {post.comments_count > 1 
-                ? `les ${post.comments_count} commentaires` 
-                : 'le commentaire'}
+            <Text style={{ fontSize: 13, color: '#999' }}>
+              Voir {post.comments_count > 1 ? `les ${post.comments_count} commentaires` : 'le commentaire'}
             </Text>
           </TouchableOpacity>
         )}
+
+        {/* Timestamp */}
+        <Text style={styles.postTimestamp}>
+          {formatTimestamp(post.timestamp || post.created_at)}
+        </Text>
       </View>
     );
   };
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
