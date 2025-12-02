@@ -223,6 +223,7 @@ export default function ProfileProfesseur({ navigation }: Props) {
               await AsyncStorage.removeItem('classe_id');
               await AsyncStorage.removeItem('filiere');
               await AsyncStorage.removeItem('niveau');
+              await AsyncStorage.removeItem('userProfile');
               
               navigation.navigate('Login' as never);
             } catch (error) {
