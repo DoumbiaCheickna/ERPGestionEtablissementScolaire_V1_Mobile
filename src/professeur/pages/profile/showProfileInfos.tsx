@@ -210,7 +210,7 @@ export default function ProfileSettings({ navigation }: Props) {
             profilePhotoUrl: downloadURL
           }));
 
-          setToast({ message: 'Photo de profil mise à jour avec succès', type: 'success' });
+          Alert.alert('Photo de profil mise à jour avec succès');
         } else {
           Alert.alert('Erreur', 'Échec du téléchargement de la photo');
         }
@@ -330,45 +330,58 @@ export default function ProfileSettings({ navigation }: Props) {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Profile Avatar */}
-        <View style={{ position: 'relative' }}>
-          {profilePic || userInfo.profilePhotoUrl ? (
-            <Image 
-              source={{ uri: profilePic || userInfo.profilePhotoUrl }} 
-              style={styles.avatarImage} 
-            />
-          ) : (
-            <Image source={userInfo.avatar as any} style={styles.avatarImage} />
-          )}
-          
-          {/* Camera Button Overlay */}
-          <TouchableOpacity 
-            onPress={pickImage}
-            disabled={uploadLoading}
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              right: 0,
-              backgroundColor: '#3b82f6',
-              borderRadius: 20,
-              width: 40,
-              height: 40,
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderWidth: 3,
-              borderColor: '#fff',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.25,
-              shadowRadius: 3.84,
-              elevation: 5,
-            }}
-          >
-            {uploadLoading ? (
-              <ActivityIndicator size="small" color="#fff" />
+        <View style={styles.avatarContainer}>
+          <View style={{ position: 'relative' }}>
+            {profilePic || userInfo.profilePhotoUrl ? (
+              <Image 
+                source={{ uri: profilePic || userInfo.profilePhotoUrl }} 
+                style={styles.avatarImage} 
+              />
             ) : (
-              <Ionicons name="camera" size={20} color="#fff" />
+              <Image source={userInfo.avatar as any} style={styles.avatarImage} />
             )}
+            
+            {/* Camera Button Overlay */}
+            <TouchableOpacity 
+              onPress={pickImage}
+              disabled={uploadLoading}
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                right: 0,
+                backgroundColor: '#3b82f6',
+                borderRadius: 20,
+                width: 40,
+                height: 40,
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderWidth: 3,
+                borderColor: '#fff',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.25,
+                shadowRadius: 3.84,
+                elevation: 5,
+              }}
+            >
+              {uploadLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Ionicons name="camera" size={20} color="#fff" />
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity onPress={pickImage} style={styles.changeAvatarButton} disabled={uploadLoading}>
+            <Text style={styles.changeAvatarText}>
+              <Ionicons name='image' style={{color: '#ffff'}}>
+              </Ionicons>
+              {uploadLoading ? 'Téléchargement...' : 'Changer la photo'}
+            </Text>
           </TouchableOpacity>
+
+          <Text style={styles.fullName}>{userInfo.prenom} {userInfo.nom}</Text>
+          <Text style={styles.email}>{userInfo.email}</Text>
         </View>
 
         {/* Settings Options */}

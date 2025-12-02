@@ -159,7 +159,7 @@ export default function ProfileSettings({ navigation }: Props) {
             profilePhotoUrl: downloadURL
           }));
 
-          setToast({ message: 'Photo de profil mise à jour avec succès', type: 'success' });
+          Alert.alert('Photo de profil mise à jour avec succès');
         } else {
           Alert.alert('Erreur', 'Échec du téléchargement de la photo');
         }

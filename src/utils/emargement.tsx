@@ -15,7 +15,6 @@ import {
 import { db, findClasseName } from '../firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// In-memory tracking to prevent duplicate notifications within the same session
 const sentNotifications = new Set<string>();
 
 // --- Interfaces ---
