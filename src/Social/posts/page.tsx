@@ -192,7 +192,7 @@ export default function Posts({ navigation }: Props) {
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -206,7 +206,6 @@ export default function Posts({ navigation }: Props) {
       Alert.alert('Erreur', 'Impossible de sélectionner l\'image');
     }
   };
-
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -230,28 +229,28 @@ export default function Posts({ navigation }: Props) {
   };
 
 
-  const handleDeletePost = async (postId: string) => {
-    Alert.alert(
-      'Supprimer le post',
-      'Êtes-vous sûr de vouloir supprimer ce post ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Supprimer',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteDoc(doc(db, 'posts', postId));
-              Alert.alert('Succès', 'Post supprimé avec succès');
-            } catch (error) {
-              console.error('Error deleting post:', error);
-              Alert.alert('Erreur', 'Impossible de supprimer le post');
+    const handleDeletePost = async (postId: string) => {
+      Alert.alert(
+        'Supprimer le post',
+        'Êtes-vous sûr de vouloir supprimer ce post ?',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Supprimer',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteDoc(doc(db, 'posts', postId));
+                Alert.alert('Succès', 'Post supprimé avec succès');
+              } catch (error) {
+                console.error('Error deleting post:', error);
+                Alert.alert('Erreur', 'Impossible de supprimer le post');
+              }
             }
           }
-        }
-      ]
-    );
-  };
+        ]
+      );
+    };
 
   const handleCreatePost = async () => {
     if (!newPostContent.trim() && !selectedImage) {
@@ -268,7 +267,7 @@ export default function Posts({ navigation }: Props) {
 
       let imageUrl = null;
       
-      // Upload image si une image est sélectionnée
+      // Upload une image si sélectionnée
       if (selectedImage) {
         imageUrl = await uploadPostImage(selectedImage, currentUserId);
         if (!imageUrl) {
@@ -286,14 +285,14 @@ export default function Posts({ navigation }: Props) {
         comments_count: 0,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
-        background_color: selectedImage ? 'none' : selectedBgColor, 
-        ...(imageUrl && { image_url: imageUrl }), // Ajouter image_url seulement si disponible
+        background_color: selectedImage ? 'none' : selectedBgColor, // Pas de background si image sélectionnée
+        ...(imageUrl && { image_url: imageUrl }), // Ajouter l'URL de l'image si disponible
       };
 
       const postsRef = collection(db, "posts");
       await addDoc(postsRef, newPost);
 
-      // Reset tout les states
+      // Reset all states
       setNewPostContent('');
       setSelectedBgColor('none');
       setSelectedImage(null);
@@ -307,7 +306,6 @@ export default function Posts({ navigation }: Props) {
       setSubmittingPost(false);
     }
   };
-
 
   const navigateToComments = (postId: string, commentsCount: number) => {
     navigation.navigate('Comments', { postId, commentsCount });
@@ -680,7 +678,7 @@ export default function Posts({ navigation }: Props) {
               </View>
             )}
 
-            {/* Preview seulement si sans image*/}
+            {/* Preview - Only show if no image */}
             {!selectedImage && newPostContent.trim() && selectedBgColor !== 'none' && (
               <View style={styles.previewSection}>
                 <Text style={styles.previewTitle}>Aperçu:</Text>
@@ -698,7 +696,7 @@ export default function Posts({ navigation }: Props) {
               </View>
             )}
 
-            {/* Indicateur de progres de l'upload */}
+            {/* Upload Progress Indicator */}
             {uploadingImage && (
               <View style={styles.uploadingContainer}>
                 <Text style={styles.uploadingText}>Téléchargement de l'image...</Text>
