@@ -22,7 +22,7 @@ export const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-    marginBottom: 160,
+    marginBottom: 90,
   },
   headerSection: {
     backgroundColor: '#ffffff',

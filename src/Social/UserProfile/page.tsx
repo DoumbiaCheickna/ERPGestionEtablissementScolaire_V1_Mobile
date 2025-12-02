@@ -317,6 +317,7 @@ export default function UserProfile({ navigation, route }: Props) {
                   {post.author_role === 'professeur' ? '👨‍🏫' : '🎓'}
                 </Text>
               )}
+              
             </View>
 
             <View style={styles.userDetails}>
@@ -324,8 +325,14 @@ export default function UserProfile({ navigation, route }: Props) {
               <Text style={styles.userRole}>
                 {post.author_role === 'professeur' ? 'Professeur' : 'Étudiant'}
               </Text>
+              <Text style={styles.postTimestamp}>
+                {formatTimestamp(post.timestamp || post.created_at)}
+              </Text>
             </View>
+            
           </View>
+
+          
           
           {isOwnPost && (
             <TouchableOpacity
@@ -416,9 +423,7 @@ export default function UserProfile({ navigation, route }: Props) {
         )}
 
         {/* Timestamp */}
-        <Text style={styles.postTimestamp}>
-          {formatTimestamp(post.timestamp || post.created_at)}
-        </Text>
+
       </View>
     );
   };
@@ -551,33 +556,35 @@ export default function UserProfile({ navigation, route }: Props) {
           </View>
         </View>
 
-        {/* Posts List */}
-        {userPosts.length > 0 ? (
-          userPosts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>📝</Text>
-            <Text style={styles.emptyText}>
-              {isOwnProfile ? 'Aucun post pour le moment' : 'Aucun post'}
-            </Text>
-            <Text style={styles.emptySubtext}>
-              {isOwnProfile 
-                ? 'Commencez à partager vos idées !' 
-                : 'Cet utilisateur n\'a pas encore publié'}
-            </Text>
-            {isOwnProfile && (
-              <TouchableOpacity 
-                style={styles.createPostButton}
-                onPress={navigateToPostsFeed}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.createPostButtonText}>✏️ Créer un post</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
+        <View style={{ marginBottom: 100 }}>
+          {/* Posts List */}
+          {userPosts.length > 0 ? (
+            userPosts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>📝</Text>
+              <Text style={styles.emptyText}>
+                {isOwnProfile ? 'Aucun post pour le moment' : 'Aucun post'}
+              </Text>
+              <Text style={styles.emptySubtext}>
+                {isOwnProfile 
+                  ? 'Commencez à partager vos idées !' 
+                  : 'Cet utilisateur n\'a pas encore publié'}
+              </Text>
+              {isOwnProfile && (
+                <TouchableOpacity 
+                  style={styles.createPostButton}
+                  onPress={navigateToPostsFeed}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.createPostButtonText}>✏️ Créer un post</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        </View>
       </ScrollView>
 
       <BottomNavBar activeScreen="Posts" />

@@ -203,7 +203,9 @@ export const styles = StyleSheet.create({
   },
   postTimestamp: {
     fontSize: 11,
-    color: '#8e8e8e',
+    color: '#0c0c0cff',
+    marginVertical: -10,
+    fontWeight: '500',
   },
   deleteButton: {
     padding: 8,
@@ -322,7 +324,7 @@ export const styles = StyleSheet.create({
 
   postTextBackground: {
     width: '100%',
-    minHeight: screenWidth,
+    minHeight: 300,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 30,
