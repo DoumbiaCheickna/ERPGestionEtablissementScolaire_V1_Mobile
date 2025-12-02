@@ -380,7 +380,7 @@ export const styles = StyleSheet.create({
   },
   postTextBackground: {
     width: '100%',
-    minHeight: screenWidth, // Square like image posts
+    minHeight: 300, // Square like image posts
     justifyContent: 'center',
     alignItems: 'center',
     padding: 30,

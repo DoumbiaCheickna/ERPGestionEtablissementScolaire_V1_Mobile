@@ -48,6 +48,7 @@ interface JustificationModalProps {
   absence: AbsenceData | null;
   onClose: () => void;
   userMatricule: string;
+  refreshAbsences?: () => void;
 }
 
 interface AttachedDocument {
@@ -65,11 +66,12 @@ interface UploadedDocument {
   uploadedAt: string;
 }
 
-export default function AbsenceJustificationModal({ 
-  visible, 
-  absence, 
-  onClose, 
-  userMatricule 
+export default function AbsenceJustificationModal({
+  visible,
+  absence,
+  userMatricule,
+  onClose,
+  refreshAbsences
 }: JustificationModalProps) {
   const [justificationText, setJustificationText] = useState('');
   const [attachedDocuments, setAttachedDocuments] = useState<AttachedDocument[]>([]);
@@ -282,6 +284,7 @@ export default function AbsenceJustificationModal({
         [{ text: 'OK', onPress: handleClose }]
       );
 
+      
     } catch (error) {
       Alert.alert('Erreur', 'Impossible d\'envoyer la justification');
     } finally {
@@ -296,6 +299,7 @@ export default function AbsenceJustificationModal({
     setAttachedDocuments([]);
     setUploadProgress(0);
     onClose();
+    refreshAbsences && refreshAbsences();
   }, [onClose]);
 
   if (!absence) return null;

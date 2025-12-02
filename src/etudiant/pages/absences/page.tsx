@@ -65,6 +65,10 @@ export default function Absences({navigation}: Props) {
     const [userMatricule, setUserMatricule] = useState('');
 
 
+
+    const refreshAbsences = useCallback(() => {
+        getAbsences();
+    }, []);
     const getAbsences = useCallback(async () => {
         try {
             // First get the user's matricule
@@ -672,6 +676,7 @@ export default function Absences({navigation}: Props) {
                     absence={selectedAbsence}
                     onClose={handleCloseModal}
                     userMatricule={userMatricule}
+                    refreshAbsences={refreshAbsences}
                 />
             </SafeAreaView>
         </GestureHandlerRootView>

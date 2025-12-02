@@ -313,6 +313,7 @@ export default function Comments({ navigation, route }: Props) {
             comments.map((comment) => (
               <TouchableOpacity 
                 onPress={() => navigateToUserProfile(comment.author_id)}
+                key={comment.id}
               >
                 <CommentItem
                   key={comment.id}
@@ -325,7 +326,7 @@ export default function Comments({ navigation, route }: Props) {
             ))
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyIcon}>💬</Text>
+              <Text style={styles.emptyIcon}>💬</Text>  
               <Text style={styles.emptyText}>Aucun commentaire</Text>
               <Text style={styles.emptySubtext}>Soyez le premier à commenter !</Text>
             </View>
