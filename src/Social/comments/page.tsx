@@ -78,12 +78,10 @@ export default function Comments({ navigation, route }: Props) {
 
    useEffect(() => {
       const fetchPhotoCurrentUser = async () => {
-        const userRef = doc(db, 'users', currentUserId);
-        const userSnap = await getDoc(userRef);
-        let url = null;
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          url = userData.profilePhotoUrl;
+        const url = await AsyncStorage.getItem('userPhoto');
+        if (!url) {
+          setCurrentUserPhoto(null);
+          return;
         }
         setCurrentUserPhoto(url);
       };
