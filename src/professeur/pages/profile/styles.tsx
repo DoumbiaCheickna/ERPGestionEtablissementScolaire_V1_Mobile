@@ -15,10 +15,9 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingVertical: 20,
     backgroundColor: '#ffffff',
     borderBottomWidth: 0,
-    paddingTop: Platform.OS === 'ios' ? 50 : 30,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -26,7 +25,9 @@ export const styles = StyleSheet.create({
     },
     shadowOpacity: 0.05,
     shadowRadius: 8,
+    paddingBottom: 20,
     elevation: 3,
+    paddingTop: 70
   },
   backButton: {
     padding: 10,

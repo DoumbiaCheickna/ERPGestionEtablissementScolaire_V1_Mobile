@@ -492,9 +492,6 @@ export default function Posts({ navigation }: Props) {
       
       <ScrollView
         style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerSection}>
