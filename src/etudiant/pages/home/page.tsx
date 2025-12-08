@@ -674,7 +674,7 @@ export default function HomeStudent({ navigation }: Props) {
         end: course.end,
         enseignant: course.enseignant,
         class_ids: course.class_ids,
-        classes: course.classes,
+        classes: course.classes,    
         salle: course.salle
       }
     });

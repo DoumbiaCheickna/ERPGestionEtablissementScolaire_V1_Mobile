@@ -44,6 +44,7 @@ export const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '600',
         color: '#333',
+        marginRight: 150,
     },
     headerRight: {
         width: 40,
