@@ -9,7 +9,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
+  Image
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -24,7 +25,8 @@ import {
   serverTimestamp,
   doc,
   updateDoc,
-  deleteDoc
+  deleteDoc,
+  getDoc
 } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -38,6 +40,13 @@ interface Comment {
   timestamp: any;
   created_at: any;
 }
+
+type CommentItemProps = {
+  comment: Comment;
+  currentUserId: string;
+  handleDeleteComment: (commentId: string) => void;
+};
+
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Comments'>;
 
@@ -53,6 +62,9 @@ export default function Comments({ navigation, route }: Props) {
   const [currentUserRole, setCurrentUserRole] = useState<'etudiant' | 'professeur'>('etudiant');
   const [submitting, setSubmitting] = useState(false);
 
+  const [currentUserPhoto, setCurrentUserPhoto] = useState<string | null>(null);
+ 
+
   useEffect(() => {
     initializeUser();
   }, []);
@@ -63,6 +75,18 @@ export default function Comments({ navigation, route }: Props) {
       return unsubscribe;
     }
   }, [postId]);
+
+   useEffect(() => {
+      const fetchPhotoCurrentUser = async () => {
+        const url = await AsyncStorage.getItem('userPhoto');
+        if (!url) {
+          setCurrentUserPhoto(null);
+          return;
+        }
+        setCurrentUserPhoto(url);
+      };
+      fetchPhotoCurrentUser();
+    }, []);
 
   const initializeUser = async () => {
     try {
@@ -162,6 +186,74 @@ export default function Comments({ navigation, route }: Props) {
       setSubmitting(false);
     }
   };
+  const getCommentAuthorPhoto = async (author_id: string) => {
+    try {
+      const userRef = doc(db, 'users', author_id);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        return userData.profilePhotoUrl;
+      } 
+    } catch (error) {
+      console.error('Error fetching author photo:', error);
+    }
+  }
+
+  const CommentItem = ({ comment , currentUserId, handleDeleteComment }: CommentItemProps )=> {
+    const [photo, setPhoto] = useState<string | null>(null);
+
+    useEffect(() => {
+      const fetchPhoto = async () => {
+        const p = await getCommentAuthorPhoto(comment.author_id);
+        setPhoto(p || null);
+      };
+      fetchPhoto();
+    }, [comment.author_id]);
+
+    return (
+      <View style={styles.commentItem}>
+        <View style={styles.commentAvatarContainer}>
+          {photo ? (
+            <Image
+              source={{ uri: photo }}
+              style={{ width: 40, height: 40, borderRadius: 20 }}
+            />
+          ) : (
+            <Text style={styles.commentAvatar}>
+              {comment.author_role === 'professeur' ? '👨‍🏫' : '🎓'}
+            </Text>
+          )}
+        </View>
+
+        <View style={styles.commentDetailsContainer}>
+          <View style={styles.commentHeader}>
+            <Text style={styles.commentAuthorName}>{comment.author_name}</Text>
+
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Text style={styles.commentTime}>
+                {formatTimestamp(comment.created_at)}
+              </Text>
+
+              {comment.author_id === currentUserId && (
+                <TouchableOpacity onPress={() => handleDeleteComment(comment.id)}>
+                  <Text style={{ color: "red", fontSize: 20,  marginTop:-20 }}>...</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          <Text style={styles.commentContent}>{comment.content}</Text>
+        </View>
+      </View>
+    );
+};
+
+  const navigateToUserProfile = (userId: string) => {
+    navigation.navigate('UserProfile', { userId });
+  };
+
+
+
 
   const formatTimestamp = (timestamp: any) => {
     if (!timestamp) return '';
@@ -216,39 +308,27 @@ export default function Comments({ navigation, route }: Props) {
           keyboardDismissMode="interactive"
         >
           {comments.length > 0 ? (
-              comments.map((comment) => (
-                <View key={comment.id} style={styles.commentItem}>
-                  <View style={styles.commentAvatarContainer}>
-                    <Text style={styles.commentAvatar}>
-                      {comment.author_role === 'professeur' ? '👨‍🏫' : '🎓'}
-                    </Text>
-                  </View>
-                  <View style={styles.commentDetailsContainer}>
-                    <View style={styles.commentHeader}>
-                      <Text style={styles.commentAuthorName}>{comment.author_name}</Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Text style={styles.commentTime}>{formatTimestamp(comment.created_at)}</Text>
-                        {comment.author_id === currentUserId && (
-                          <TouchableOpacity 
-                            style={{ marginLeft: 10 }}
-                            onPress={() => handleDeleteComment(comment.id)}
-                          >
-                            <Text style={{ color: 'red', fontWeight: 'bold', top: -7, fontSize: 20}}>...</Text>
-                          </TouchableOpacity>
-                        )}
-                      </View>
-                    </View>
-                    <Text style={styles.commentContent}>{comment.content}</Text>
-                  </View>
-                </View>
-              ))
-            ) : (
-              <View style={styles.emptyState}>
-                <Text style={styles.emptyIcon}>💬</Text>
-                <Text style={styles.emptyText}>Aucun commentaire</Text>
-                <Text style={styles.emptySubtext}>Soyez le premier à commenter !</Text>
-              </View>
-            )}
+            comments.map((comment) => (
+              <TouchableOpacity 
+                onPress={() => navigateToUserProfile(comment.author_id)}
+                key={comment.id}
+              >
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
+                  currentUserId={currentUserId}
+                  handleDeleteComment={handleDeleteComment}
+                />
+              </TouchableOpacity>
+
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>💬</Text>  
+              <Text style={styles.emptyText}>Aucun commentaire</Text>
+              <Text style={styles.emptySubtext}>Soyez le premier à commenter !</Text>
+            </View>
+          )}
         </ScrollView>
       )}
 
@@ -257,9 +337,16 @@ export default function Comments({ navigation, route }: Props) {
         { paddingBottom: Math.max(insets.bottom, 10) }
       ]}>
         <View style={styles.avatarContainerSmall}>
-          <Text style={styles.avatarSmall}>
-            {currentUserRole === 'professeur' ? '👨‍🏫' : '🎓'}
-          </Text>
+          {currentUserPhoto ? (
+            <Image
+              source={{ uri: currentUserPhoto }}
+              style={{ width: 40, height: 40, borderRadius: 20 }}
+            />
+          ) : (
+            <Text style={styles.commentAvatar}>
+              {currentUserRole=== 'professeur' ? '👨‍🏫' : '🎓'}
+            </Text>
+          )}
         </View>
         <View style={styles.inputWrapper}>
           <TextInput

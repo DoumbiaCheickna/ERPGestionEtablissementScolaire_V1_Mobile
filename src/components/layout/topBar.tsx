@@ -7,7 +7,9 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db, getUserData, getUserSnapchot } from '../../firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from './navStyles'
+
 
 export interface TopNavBarRef {
   refreshData: () => Promise<void>;

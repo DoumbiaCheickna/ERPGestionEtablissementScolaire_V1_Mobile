@@ -216,13 +216,12 @@ export const styles = StyleSheet.create({
     color: '#262626',
     fontWeight: '600',
   },
-   postContent: {
-    fontSize: 20,
-    lineHeight: 20,
+  postContent: {
+    fontSize: 12,
     color: '#262626',
     paddingHorizontal: 15,
     marginBottom: 8,
-    padding: 10,
+    marginTop: -15
   },
   postImage: {
     width: '100%',

@@ -43,7 +43,7 @@ import LottieView from 'lottie-react-native';
 import { MatieresStyles } from '../../etudiant/pages/matieres/styles';
 import { styles } from '../posts/styles';
 import * as ImagePicker from 'expo-image-picker';
-import { useUploadPostImage } from '../../components/hooks/UploadingFiles';
+import { useUploadPostImage } from '../../components/hooks/useUploadPostImage';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -75,11 +75,6 @@ export default function Posts({ navigation }: Props) {
   const [newPostContent, setNewPostContent] = useState('');
   const [submittingPost, setSubmittingPost] = useState(false);
   const [selectedBgColor, setSelectedBgColor] = useState('none');
-
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const { uploadPostImage, loading: uploadingImage } = useUploadPostImage();
-  
-
 
 
 
@@ -189,24 +184,6 @@ export default function Posts({ navigation }: Props) {
     });
   };
 
-  const pickImage = async () => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setSelectedImage(result.assets[0].uri);
-      }
-    } catch (error) {
-      console.error('Error picking image:', error);
-      Alert.alert('Erreur', 'Impossible de sélectionner l\'image');
-    }
-  };
-
   const handleRefresh = () => {
     setRefreshing(true);
   };
@@ -229,32 +206,32 @@ export default function Posts({ navigation }: Props) {
   };
 
 
-    const handleDeletePost = async (postId: string) => {
-      Alert.alert(
-        'Supprimer le post',
-        'Êtes-vous sûr de vouloir supprimer ce post ?',
-        [
-          { text: 'Annuler', style: 'cancel' },
-          {
-            text: 'Supprimer',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                await deleteDoc(doc(db, 'posts', postId));
-                Alert.alert('Succès', 'Post supprimé avec succès');
-              } catch (error) {
-                console.error('Error deleting post:', error);
-                Alert.alert('Erreur', 'Impossible de supprimer le post');
-              }
+  const handleDeletePost = async (postId: string) => {
+    Alert.alert(
+      'Supprimer le post',
+      'Êtes-vous sûr de vouloir supprimer ce post ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteDoc(doc(db, 'posts', postId));
+              Alert.alert('Succès', 'Post supprimé avec succès');
+            } catch (error) {
+              console.error('Error deleting post:', error);
+              Alert.alert('Erreur', 'Impossible de supprimer le post');
             }
           }
-        ]
-      );
-    };
+        }
+      ]
+    );
+  };
 
   const handleCreatePost = async () => {
-    if (!newPostContent.trim() && !selectedImage) {
-      Alert.alert('Erreur', 'Veuillez ajouter du contenu ou une image');
+    if (!newPostContent.trim()) {
+      Alert.alert('Erreur', 'Veuillez saisir du contenu pour votre post');
       return;
     }
 
@@ -263,16 +240,6 @@ export default function Posts({ navigation }: Props) {
     try {
       if (!currentUserId) {
         throw new Error("Utilisateur non authentifié");
-      }
-
-      let imageUrl = null;
-      
-      // Upload une image si sélectionnée
-      if (selectedImage) {
-        imageUrl = await uploadPostImage(selectedImage, currentUserId);
-        if (!imageUrl) {
-          throw new Error("Échec du téléchargement de l'image");
-        }
       }
 
       const newPost = {
@@ -285,17 +252,14 @@ export default function Posts({ navigation }: Props) {
         comments_count: 0,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
-        background_color: selectedImage ? 'none' : selectedBgColor, // Pas de background si image sélectionnée
-        ...(imageUrl && { image_url: imageUrl }), // Ajouter l'URL de l'image si disponible
+        background_color: selectedBgColor, 
       };
 
       const postsRef = collection(db, "posts");
       await addDoc(postsRef, newPost);
 
-      // Reset all states
       setNewPostContent('');
-      setSelectedBgColor('none');
-      setSelectedImage(null);
+      setSelectedBgColor('none'); // RESET BACKGROUND COLOR
       setShowCreateModal(false);
       Alert.alert('Succès', 'Post créé avec succès !');
 
@@ -306,6 +270,7 @@ export default function Posts({ navigation }: Props) {
       setSubmittingPost(false);
     }
   };
+
 
   const navigateToComments = (postId: string, commentsCount: number) => {
     navigation.navigate('Comments', { postId, commentsCount });
@@ -529,9 +494,6 @@ export default function Posts({ navigation }: Props) {
       
       <ScrollView
         style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerSection}>
@@ -615,71 +577,39 @@ export default function Posts({ navigation }: Props) {
               {newPostContent.length}/500
             </Text>
 
-            {/* Image Picker Button */}
-            <TouchableOpacity
-              style={styles.imagePickerButton}
-              onPress={pickImage}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.imagePickerIcon}>🖼️</Text>
-              <Text style={styles.imagePickerText}>
-                {selectedImage ? 'Changer l\'image' : 'Ajouter une image'}
-              </Text>
-            </TouchableOpacity>
+            {/* Background Color Picker */}
+            <View style={styles.colorPickerSection}>
+              <Text style={styles.colorPickerTitle}>Couleur de fond:</Text>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                style={styles.colorPickerScroll}
+              >
+                {BACKGROUND_COLORS.map((bg) => (
+                  <TouchableOpacity
+                    key={bg.id}
+                    style={[
+                      styles.colorOption,
+                      { backgroundColor: bg.color === 'transparent' ? '#1a1a1a' : bg.color },
+                      bg.color === 'transparent' && styles.colorOptionNone,
+                      selectedBgColor === bg.id && styles.colorOptionSelected
+                    ]}
+                    onPress={() => setSelectedBgColor(bg.id)}
+                    activeOpacity={0.7}
+                  >
+                    {selectedBgColor === bg.id && (
+                      <Text style={styles.colorCheckmark}>✓</Text>
+                    )}
+                    {bg.id === 'none' && (
+                      <Text style={styles.colorNoneText}>∅</Text>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
 
-            {/* Selected Image Preview */}
-            {selectedImage && (
-              <View style={styles.selectedImageContainer}>
-                <Image
-                  source={{ uri: selectedImage }}
-                  style={styles.selectedImagePreview}
-                  resizeMode="cover"
-                />
-                <TouchableOpacity
-                  style={styles.removeImageButton}
-                  onPress={() => setSelectedImage(null)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.removeImageText}>✕</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* Background Color Picker - Only show if no image */}
-            {!selectedImage && (
-              <View style={styles.colorPickerSection}>
-                <Text style={styles.colorPickerTitle}>Couleur de fond:</Text>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.colorPickerScroll}
-                >
-                  {BACKGROUND_COLORS.map((bg) => (
-                    <TouchableOpacity
-                      key={bg.id}
-                      style={[
-                        styles.colorOption,
-                        { backgroundColor: bg.color === 'transparent' ? '#1a1a1a' : bg.color },
-                        bg.color === 'transparent' && styles.colorOptionNone,
-                        selectedBgColor === bg.id && styles.colorOptionSelected
-                      ]}
-                      onPress={() => setSelectedBgColor(bg.id)}
-                      activeOpacity={0.7}
-                    >
-                      {selectedBgColor === bg.id && (
-                        <Text style={styles.colorCheckmark}>✓</Text>
-                      )}
-                      {bg.id === 'none' && (
-                        <Text style={styles.colorNoneText}>∅</Text>
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-
-            {/* Preview - Only show if no image */}
-            {!selectedImage && newPostContent.trim() && selectedBgColor !== 'none' && (
+            {/* Preview */}
+            {newPostContent.trim() && selectedBgColor !== 'none' && (
               <View style={styles.previewSection}>
                 <Text style={styles.previewTitle}>Aperçu:</Text>
                 <View style={[
@@ -693,13 +623,6 @@ export default function Posts({ navigation }: Props) {
                     {newPostContent}
                   </Text>
                 </View>
-              </View>
-            )}
-
-            {/* Upload Progress Indicator */}
-            {uploadingImage && (
-              <View style={styles.uploadingContainer}>
-                <Text style={styles.uploadingText}>Téléchargement de l'image...</Text>
               </View>
             )}
           </View>

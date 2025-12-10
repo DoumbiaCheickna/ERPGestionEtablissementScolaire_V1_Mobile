@@ -482,7 +482,6 @@ export default function HomeProfesseur({ navigation }: Props) {
         const edtData = edtDoc.data();
         const slots = edtData.slots || [];
 
-        // Find the matching slot index
         const slotIndex = slots.findIndex((slot: any) => 
           slot.day == currentDay &&
           slot.start == course.start &&
@@ -491,7 +490,6 @@ export default function HomeProfesseur({ navigation }: Props) {
           slot.matiere_libelle == course.matiere_libelle
         );
 
-        // If matching slot found, update only that slot
         if (slotIndex !== -1) {
           if(slots[slotIndex].indisponible != 1) {
             Alert.alert('Information', 'Ce cours est déjà disponible.');
@@ -500,7 +498,6 @@ export default function HomeProfesseur({ navigation }: Props) {
           slots[slotIndex] = { ...slots[slotIndex], indisponible: 0 };
           updatedCount++;
 
-          // Update the document with the modified slots array
           await updateDoc(doc(db, 'edts', edtDoc.id), {
             slots: slots
           });

@@ -307,12 +307,11 @@ export const styles = StyleSheet.create({
   },
   
   postContent: {
-    fontSize: 20,
-    lineHeight: 20,
+    fontSize: 12,
     color: '#262626',
     paddingHorizontal: 15,
     marginBottom: 8,
-    padding: 10,
+    marginTop: -15
   },
   
   postImage: {
@@ -381,7 +380,7 @@ export const styles = StyleSheet.create({
   },
   postTextBackground: {
     width: '100%',
-    minHeight: screenWidth, // Square like image posts
+    minHeight: 300, // Square like image posts
     justifyContent: 'center',
     alignItems: 'center',
     padding: 30,
@@ -559,4 +558,21 @@ export const styles = StyleSheet.create({
     color: '#666',
     fontWeight: '500',
   },
+
+
+  textWithImage: {
+  fontSize: 14,
+  textAlign: "left",
+  color: '#000000',
+  },
+
+  textWithoutImage: {
+    fontSize: 16,
+    textAlign: "center",
+  },
+
+  baseText: {
+    lineHeight: 20,
+  },
+
 })

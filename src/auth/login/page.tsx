@@ -474,6 +474,7 @@ export default function Login({ navigation }: Props) {
         await AsyncStorage.setItem('userLogin', username.trim());
         await AsyncStorage.setItem('userRole', roleName);
         await AsyncStorage.setItem('userEmail', email);
+        await AsyncStorage.setItem('userPhoto', userDoc.profilePhotoUrl || '');
 
         if (otherRoleId && otherRoleName) {
           await AsyncStorage.setItem('otherRoleLibelle', otherRoleName);
@@ -494,7 +495,7 @@ export default function Login({ navigation }: Props) {
         } else if (roleName === 'professeur') {
           await AsyncStorage.setItem('specialite', userDoc.specialite || '');
           await AsyncStorage.setItem('statut', userDoc.statut || '');
-          await AsyncStorage.setItem('auth_uid', userDoc.auth_uid || '');
+          await AsyncStorage.setItem('auth_uid', userDoc.auth_uid || ''); 
           await AsyncStorage.removeItem('classe_id');
           await AsyncStorage.removeItem('filiere');
           await AsyncStorage.removeItem('niveau');

@@ -48,8 +48,7 @@ const BottomNavBar = ({ activeScreen }: Props) => {
 
   const studentItems = [
     { name: 'HomeStudent', icon: 'home-outline', screen: 'HomeStudent', libelle: 'Accueil' },
-    { name: 'AllCoursesStudent', icon: 'calendar-outline', screen: 'AllCoursesStudent', libelle: 'Emploi du temps' },
-    { name: 'Posts', icon: 'create-outline', screen: 'Posts', libelle: 'Posts' },
+    { name: 'AllCoursesStudent', icon: 'calendar-outline', screen: 'AllCoursesStudent', libelle: 'Emploi du temps'},
     { name: 'VoirNote', icon: 'document-text-outline', screen: 'VoirNote', libelle: 'Notes' },
     { name: 'ProfileStudent', icon: 'person-outline', screen: 'ProfileStudent', libelle: 'Profil' }, 
   ];
@@ -58,7 +57,6 @@ const BottomNavBar = ({ activeScreen }: Props) => {
     { name: 'HomeProfesseur', icon: 'home-outline', screen: 'HomeProfesseur', libelle: 'Accueil' },
     { name: 'AllCoursesProfesseur', icon: 'calendar-outline', screen: 'AllCoursesProfesseur', libelle: 'Cours' },
     { name: 'Evaluations', icon: 'document-text-outline', screen: 'Evaluations', libelle: 'Évaluations' },
-    { name: 'Posts', icon: 'create-outline', screen: 'Posts', libelle: 'Posts' },
     { name: 'ProfileProfesseur', icon: 'person-outline', screen: 'ProfileProfesseur', libelle: 'Profil' },
   ];
 
@@ -122,6 +120,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   button: {
+    marginTop: 5,
     padding: 10,
     alignItems: 'center',
   },
