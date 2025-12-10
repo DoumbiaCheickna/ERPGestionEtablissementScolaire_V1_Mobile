@@ -27,7 +27,7 @@ import { styles } from './styles'
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import LottieView from 'lottie-react-native';
-import { usersWallpapers } from '../../../components/hooks/usersWallpapers';
+import { usersWallpapers } from '../../../components/hooks/UploadingFiles';
 
 
 interface UserProfileInfo {

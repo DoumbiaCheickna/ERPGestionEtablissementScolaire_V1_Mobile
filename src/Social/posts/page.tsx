@@ -43,7 +43,7 @@ import LottieView from 'lottie-react-native';
 import { MatieresStyles } from '../../etudiant/pages/matieres/styles';
 import { styles } from '../posts/styles';
 import * as ImagePicker from 'expo-image-picker';
-import { useUploadPostImage } from '../../components/hooks/useUploadPostImage';
+import { useUploadPostImage } from '../../components/hooks/UploadingFiles';
 
 const { width: screenWidth } = Dimensions.get('window');
 

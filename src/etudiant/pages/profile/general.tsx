@@ -13,7 +13,7 @@ import { generalStyles } from './styles';
 import LottieView from 'lottie-react-native';
 import { useStudentMatieres } from '../../../components/hooks/matieresStudent';
 import { useStudentCourses } from '../../../components/hooks/coursStudent';
-import { usersWallpapers } from '../../../components/hooks/usersWallpapers';
+import { usersWallpapers } from '../../../components/hooks/UploadingFiles';
 import UserProfile from '../../../Social/UserProfile/page';
 
 const profileActions = [
