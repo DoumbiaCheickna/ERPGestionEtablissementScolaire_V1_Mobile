@@ -144,7 +144,10 @@ const LandingPage = ({ navigation }: Props) => {
               <View style={[styles.featureIcon, { backgroundColor: 'rgba(138, 43, 226, 0.2)' }]}>
                 <Text style={styles.featureEmoji}>📍</Text>
               </View>
-              <Text style={styles.featureTitle}>Géolocalisation</Text>
+              <Text style={[styles.featureTitle, { fontSize: 12 }]}>
+                Géolocalisation
+              </Text>
+
               <Text style={styles.featureDesc}>Émargement sécurisé</Text>
             </View>
 
