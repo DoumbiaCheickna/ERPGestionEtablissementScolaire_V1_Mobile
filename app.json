@@ -16,7 +16,7 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.iibs.schoolmanagement",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
