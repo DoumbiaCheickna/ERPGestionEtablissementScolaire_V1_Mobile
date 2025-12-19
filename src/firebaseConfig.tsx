@@ -8,6 +8,7 @@ import {
  } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from "react-native";
+import { saveData, getData, deleteData, clearAllData } from './components/utils/secureStorage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAk9ReRsOP3615ysayTcfdEpXyIHv4eCAE",
@@ -27,9 +28,12 @@ export const auth = initializeAuth(app, {
 });
 export const storage = getStorage(app);
 
+
+
+
 export const getUserSnapchot = async (): Promise<QuerySnapshot<DocumentData> | null> => {
         
-  const userLogin = await AsyncStorage.getItem('userLogin');
+  const userLogin = await getData('userLogin');
 
   if (!userLogin) {
     return null;
@@ -97,7 +101,7 @@ export const getMatiereSnapshot = async (
 
 
 export const getFiliereSnapshot = async (): Promise<QuerySnapshot<DocumentData> | null> => {
-  const filiereId = await AsyncStorage.getItem('filiere');
+  const filiereId = await getData('filiere');
 
   if (!filiereId) {
     Alert.alert('Aucune filière trouvée');
@@ -113,7 +117,7 @@ export const getFiliereSnapshot = async (): Promise<QuerySnapshot<DocumentData> 
 };
 
 export const getNiveauSnapshot = async (): Promise<QuerySnapshot<DocumentData> | null> => {
-  const niveauId = await AsyncStorage.getItem('niveau');
+  const niveauId = await getData('niveau');
 
   if (!niveauId) {
     Alert.alert('Aucun niveau trouvé');
@@ -190,7 +194,7 @@ export async function updateUserLogin(newLogin: string, userId: string | null) {
     await updateDoc(userDocRef, { login: newLogin });
 
     // Update AsyncStorage
-    await AsyncStorage.setItem("userLogin", newLogin);
+    await saveData("userLogin", newLogin);
 
     Alert.alert("Succès", "Nom d'utilisateur mis à jour avec succès");
     return true;

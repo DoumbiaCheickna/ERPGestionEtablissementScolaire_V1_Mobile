@@ -1,6 +1,6 @@
 import { Alert, Linking } from 'react-native';
 import * as Location from "expo-location";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../../components/utils/secureStorage';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 
@@ -118,7 +118,7 @@ export const isCourseNotStarted = (startTime: string) => {
 // Professor presence checking
 export const isProfesseurEmargedForCourse = async (matiereId: string, startTime: string, endTime: string): Promise<boolean> => {
   try {
-    const userLogin = await AsyncStorage.getItem('userLogin');
+    const userLogin = await getData('userLogin');
     if (!userLogin) {
       return false;
     }
@@ -156,7 +156,7 @@ export const isProfesseurEmargedForCourse = async (matiereId: string, startTime:
 // Student presence checking
 export const isStudentEmargedForCourse = async (matiereId: string): Promise<boolean> => {
   try {
-    const userLogin = await AsyncStorage.getItem('userLogin');
+    const userLogin = await getData('userLogin');
     if (!userLogin) {
       return false;
     }
@@ -192,7 +192,7 @@ export const isStudentEmargedForCourse = async (matiereId: string): Promise<bool
 // Student absence checking
 export const isStudentAbsentForCourse = async (matiereId: string): Promise<boolean> => {
   try {
-    const userLogin = await AsyncStorage.getItem('userLogin');
+    const userLogin = await getData('userLogin');
     if (!userLogin) {
       return false;
     }

@@ -21,7 +21,7 @@ import {
   where,
   getDocs,
 } from 'firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../../../components/utils/secureStorage';
 import LottieView from 'lottie-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {  Cstyles as styles } from '../../../professeur/pages/enseignments/styles'; 
@@ -75,7 +75,7 @@ export default function VoirNote({ navigation }: Props) {
 
   const initializeUser = async () => {
     try {
-      const userLogin = await AsyncStorage.getItem('userLogin');
+      const userLogin = await getData('userLogin');
       if (userLogin) {
         const usersRef = collection(db, 'users');
         const q = query(usersRef, where('login', '==', userLogin));
@@ -98,7 +98,7 @@ export default function VoirNote({ navigation }: Props) {
     }
 
     try {
-      const classe_id = await AsyncStorage.getItem("classe_id");
+      const classe_id = await getData("classe_id");
       
       if (!classe_id) {
         Alert.alert("Erreur", "Classe non trouvée");

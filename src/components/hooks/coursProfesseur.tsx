@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDoc, collection, query, where, getDocs, doc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'; 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../../components/utils/secureStorage';
 
 export interface Slot {
   day: number;
@@ -37,10 +37,10 @@ export const useProfesseurCourses = () => {
   const [loading, setLoading] = useState(!coursesLoaded);
   const [error, setError] = useState<string | null>(null);
 
-  // Get user document ID from AsyncStorage and users collection
+  // Get user document ID from SecureStorage and users collection
   const getUserDocId = async () => {
     try {
-      const userLogin = await AsyncStorage.getItem('userLogin');
+      const userLogin = await getData('userLogin');
       if (!userLogin) return null;
 
       const usersRef = collection(db, 'users');

@@ -3,16 +3,10 @@ import { View, Text, StyleSheet, Image, ActivityIndicator, TouchableOpacity, Ale
 import TopNavBar from '../../../components/layout/topBar';
 import BottomNavBar from '../../../components/layout/bottomBar';
 import MatiereDetailsModal from '../../../components/modals/MatiereDetailsModal';
-import { theme } from '../../../styles/globalStyles';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../navigation/index';
 import { useStudentMatieres } from '../../../components/hooks/matieresStudent';
 import { Slot, useStudentCourses } from '../../../components/hooks/coursStudent'; 
-import { Cstyles } from '../allCourses/styles';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Location from "expo-location";
-import { styles as eStyles } from '../allCourses/styles'
-import { getUserSnapchot } from '../../../firebaseConfig';
 import { MatieresStyles } from './styles';
 import LottieView from 'lottie-react-native';
 

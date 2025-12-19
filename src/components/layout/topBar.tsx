@@ -6,7 +6,7 @@ import { theme } from '../../styles/globalStyles';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db, getUserData, getUserSnapchot } from '../../firebaseConfig';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../../components/utils/secureStorage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { styles } from './navStyles'
 
@@ -33,13 +33,13 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
 
   useEffect(() => {
     (async () => {
-      const savedRole = await AsyncStorage.getItem("userRole");
+      const savedRole = await getData("userRole");
       setRole(savedRole);
     })();
   }, []);
   const getUserName = async () => {
     try {
-      const login = await AsyncStorage.getItem("userLogin");
+      const login = await getData("userLogin");
       if (login) {
         setUserLogin(login);
       }
@@ -102,7 +102,7 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
   // Function to get absent courses count
   const getAbsentCount = async () => {
     try {
-      const userLogin = await AsyncStorage.getItem('userLogin')
+      const userLogin = await getData('userLogin')
       const studentsRef = collection(db, 'users');
       const q = query(studentsRef, where('login', '==', userLogin));
       const querySnapshot = await getDocs(q);
@@ -149,7 +149,7 @@ const TopNavBar = forwardRef<TopNavBarRef, TopNavBarProps>(({ onRefreshHome }, r
   // Handle logo press - navigate to Home or refresh if already on Home
   const handleLogoPress = async () => {
 
-    const userRole = await AsyncStorage.getItem("userRole");
+    const userRole = await getData("userRole");
    
     if(userRole?.toLocaleLowerCase() == 'etudiant'){
       navigation.navigate('HomeStudent' as never);

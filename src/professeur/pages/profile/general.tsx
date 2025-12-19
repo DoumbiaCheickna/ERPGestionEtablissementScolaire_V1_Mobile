@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, Image, TouchableOpacity, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db, getUserSnapchot } from '../../../firebaseConfig';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../../../components/utils/secureStorage';
 import TopNavBar from '../../../components/layout/topBar';
 import BottomNavBar from '../../../components/layout/bottomBar';
 import { Ionicons } from '@expo/vector-icons';
@@ -218,12 +218,12 @@ export default function ProfileProfesseur({ navigation }: Props) {
           style: 'destructive',
           onPress: async () => {
             try {
-              await AsyncStorage.removeItem('userLogin');
-              await AsyncStorage.removeItem('userRole');
-              await AsyncStorage.removeItem('classe_id');
-              await AsyncStorage.removeItem('filiere');
-              await AsyncStorage.removeItem('niveau');
-              await AsyncStorage.removeItem('userProfile');
+              await deleteData('userLogin');
+              await deleteData('userRole');
+              await deleteData('classe_id');
+              await deleteData('filiere');
+              await deleteData('niveau');
+              await deleteData('userProfile');
               
               navigation.navigate('Login' as never);
             } catch (error) {

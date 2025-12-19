@@ -5,8 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../../styles/globalStyles';
 import { Cstyles } from '../../etudiant/pages/allCourses/styles';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { saveData, getData, deleteData, clearAllData } from '../../components/utils/secureStorage';
 interface Props {
   activeScreen: string;
 }
@@ -22,7 +21,7 @@ const BottomNavBar = ({ activeScreen }: Props) => {
   // Load userRole from storage
   useEffect(() => {
     (async () => {
-      const savedRole = await AsyncStorage.getItem("userRole");
+      const savedRole = await getData("userRole");
       setRole(savedRole);
     })();
 
@@ -36,7 +35,7 @@ const BottomNavBar = ({ activeScreen }: Props) => {
   }, []);
 
   const getUserPhoto = async () => {
-    const storedProfile = await AsyncStorage.getItem('userProfile');
+    const storedProfile = await getData('userProfile');
 
     if (storedProfile) {
       const user = JSON.parse(storedProfile);

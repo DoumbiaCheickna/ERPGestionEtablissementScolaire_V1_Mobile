@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import LottieView from 'lottie-react-native';
 import { RootStackParamList } from '../navigation';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../components/utils/secureStorage';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -60,8 +60,8 @@ const LandingPage = ({ navigation }: Props) => {
   };
 
   const isAlreadyLoggedIn = async () => {
-    const userLogin = await AsyncStorage.getItem('userLogin');
-    const userRole = await AsyncStorage.getItem('userRole');
+    const userLogin = await getData('userLogin');
+    const userRole = await getData('userRole');
 
     if(userLogin){
       if(userRole === 'etudiant') navigation.navigate('HomeStudent' as never);

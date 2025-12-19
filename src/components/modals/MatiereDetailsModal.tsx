@@ -1,4 +1,3 @@
-// src/components/modals/MatiereDetailsModal.tsx
 import React from 'react';
 import {
   Modal,

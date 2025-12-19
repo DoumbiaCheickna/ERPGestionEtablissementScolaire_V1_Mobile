@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { db } from '../../firebaseConfig';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../../components/utils/secureStorage';
 
 export type Matiere = {
   id: string;
@@ -28,10 +28,10 @@ export const useProfesseurMatieres = () => {
   
   const [loadingClasses, setLoadingClasses] = useState(true);
 
-  // Get user document ID from AsyncStorage and users collection
+  // Get user document ID from SecureStorage and users collection
   const getUserDocId = async () => {
     try {
-      const userLogin = await AsyncStorage.getItem('userLogin');
+      const userLogin = await getData('userLogin');
       if (!userLogin) return null;
 
       const usersRef = collection(db, 'users');

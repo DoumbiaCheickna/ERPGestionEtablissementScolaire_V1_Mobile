@@ -18,7 +18,7 @@ import {
 import { collection, getDocs, query, where, doc, getDoc, updateDoc } from "firebase/firestore";
 import { db, auth } from '../../firebaseConfig';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../../components/utils/secureStorage';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { localStyles } from './styles';
@@ -80,12 +80,12 @@ export default function Login({ navigation }: Props) {
   };
 
   const checkLoggedIn = async () => {
-    const loggedIn = await AsyncStorage.getItem("userLogin");
+    const loggedIn = await getData("userLogin");
     if (loggedIn) {
-      const roleName = await AsyncStorage.getItem("userRole") || '';
-      const otherRoleName = await AsyncStorage.getItem("otherRoleLibelle") || '';
-      const email = await AsyncStorage.getItem("userEmail") || '';
-      const classeId = await AsyncStorage.getItem("classe_id") || '';
+      const roleName = await getData("userRole") || '';
+      const otherRoleName = await getData("otherRoleLibelle") || '';
+      const email = await getData("userEmail") || '';
+      const classeId = await getData("classe_id") || '';
 
       if (otherRoleName) {
         navigation.replace('ChooseScreen', {
@@ -284,10 +284,10 @@ export default function Login({ navigation }: Props) {
 
   const getDeviceId = async (): Promise<string> => {
     try {
-      let deviceId = await AsyncStorage.getItem('device_id');
+      let deviceId = await getData('device_id');
       if (!deviceId) {
         deviceId = `${Platform.OS}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        await AsyncStorage.setItem('device_id', deviceId);
+        await saveData('device_id', deviceId);
       }
       return deviceId;
     } catch (error) {
@@ -470,35 +470,34 @@ export default function Login({ navigation }: Props) {
 
         const roleName = roleData.libelle?.toLowerCase() || '';
 
-        // STEP 4: Store user data in AsyncStorage
-        await AsyncStorage.setItem('userLogin', username.trim());
-        await AsyncStorage.setItem('userRole', roleName);
-        await AsyncStorage.setItem('userEmail', email);
-        await AsyncStorage.setItem('userPhoto', userDoc.profilePhotoUrl || '');
+        await saveData('userLogin', username.trim());
+        await saveData('userRole', roleName);
+        await saveData('userEmail', email);
+        await saveData('userPhoto', userDoc.profilePhotoUrl || '');
 
         if (otherRoleId && otherRoleName) {
-          await AsyncStorage.setItem('otherRoleLibelle', otherRoleName);
+          await saveData('otherRoleLibelle', otherRoleName);
         } else {
-          await AsyncStorage.removeItem('otherRoleLibelle');
+          await deleteData('otherRoleLibelle');
         }
 
         if (roleName === 'etudiant') {
-          await AsyncStorage.setItem('classe_id', userDoc.classe_id || '');
+          await saveData('classe_id', userDoc.classe_id || '');
 
           if (userDoc.classe2_id && userDoc.classe2_id.trim() !== '') {
-            await AsyncStorage.setItem('classe2_id', userDoc.classe2_id);
+            await saveData('classe2_id', userDoc.classe2_id);
           }
 
-          await AsyncStorage.setItem('filiere', userDoc.filiere_id || '');
-          await AsyncStorage.setItem('niveau', userDoc.niveau_id || '');
+          await saveData('filiere', userDoc.filiere_id || '');
+          await saveData('niveau', userDoc.niveau_id || '');
 
         } else if (roleName === 'professeur') {
-          await AsyncStorage.setItem('specialite', userDoc.specialite || '');
-          await AsyncStorage.setItem('statut', userDoc.statut || '');
-          await AsyncStorage.setItem('auth_uid', userDoc.auth_uid || ''); 
-          await AsyncStorage.removeItem('classe_id');
-          await AsyncStorage.removeItem('filiere');
-          await AsyncStorage.removeItem('niveau');
+          await saveData('specialite', userDoc.specialite || '');
+          await saveData('statut', userDoc.statut || '');
+          await saveData('auth_uid', userDoc.auth_uid || ''); 
+          await deleteData('classe_id');
+          await deleteData('filiere');
+          await deleteData('niveau');
         }
 
         // STEP 5: Offer to enable biometric if not already enabled

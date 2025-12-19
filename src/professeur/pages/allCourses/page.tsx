@@ -9,7 +9,7 @@ import { useProfesseurCourses, Slot } from '../../../components/hooks/coursProfe
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../navigation/index';
 import { Cstyles, styles } from './styles';
-import { getCoursStatus } from '../home/page';
+import { getCoursStatus } from '../../../components/utils/sharedHomeUtils';
 import { HomeStyles } from '../home/styles';
 import { MatieresStyles } from '../enseignments/styles';
 import LottieView from 'lottie-react-native';

@@ -13,7 +13,6 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db, findClasseName } from '../firebaseConfig';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const sentNotifications = new Set<string>();
 

@@ -38,12 +38,12 @@ import {
   getDocs,
   getDoc
 } from 'firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../../components/utils/secureStorage';
 import LottieView from 'lottie-react-native';
 import { MatieresStyles } from '../../etudiant/pages/matieres/styles';
 import { styles } from '../posts/styles';
 import * as ImagePicker from 'expo-image-picker';
-import { useUploadPostImage } from '../../components/hooks/UploadingFiles';
+import { useUploadPostImage } from '../../components/utils/UploadingFiles';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -134,8 +134,8 @@ export default function Posts({ navigation }: Props) {
 
   const initializeUser = async () => {
     try {
-      const userLogin = await AsyncStorage.getItem('userLogin');
-      const userRole = await AsyncStorage.getItem('userRole');
+      const userLogin = await getData('userLogin');
+      const userRole = await getData('userRole');
       
       if (userLogin && userRole) {
         const usersRef = collection(db, 'users');
@@ -155,8 +155,8 @@ export default function Posts({ navigation }: Props) {
           setCurrentUserRole(userRole as 'etudiant' | 'professeur');
           
           // Store for Comments screen
-          await AsyncStorage.setItem('userId', userId);
-          await AsyncStorage.setItem('userName', userName);
+          await saveData('userId', userId);
+          await saveData('userName', userName);
         }
       }
     } catch (error) {

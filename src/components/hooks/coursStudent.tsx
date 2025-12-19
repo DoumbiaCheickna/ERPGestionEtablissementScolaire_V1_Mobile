@@ -2,8 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDoc, collection, query, where, getDocs, doc, Timestamp } from 'firebase/firestore';
 import { db, getClasseSnapshot, getUserSnapchot } from '../../firebaseConfig'; 
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { saveData, getData, deleteData, clearAllData } from '../../components/utils/secureStorage';
 export interface Slot {
   day: number;
   start: string;
@@ -44,7 +43,7 @@ export const useStudentCourses = () => {
     setError(null);
 
     try {
-      const userLogin = await AsyncStorage.getItem('userLogin');
+      const userLogin = await getData('userLogin');
 
       if (!userLogin || userLogin.trim() === '') {
         const emptyResult: DayCourses[] = [];
@@ -77,11 +76,11 @@ export const useStudentCourses = () => {
       let activeClass = userClasseId;
 
       if (userClasseId2) {
-        const savedActive = await AsyncStorage.getItem('active_classe_id');
+        const savedActive = await getData('active_classe_id');
         if (savedActive && savedActive.trim() !== '') {
           activeClass = savedActive;
         } else {
-          await AsyncStorage.setItem('active_classe_id', userClasseId);
+          await saveData('active_classe_id', userClasseId);
         }
       }
 
