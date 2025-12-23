@@ -361,7 +361,7 @@ export default function HomeProfesseur({ navigation }: Props) {
 
   const goToQRCode = (matiereId: string, courseLibelle: string) => {
     if (!matiereId) return Alert.alert('Erreur', 'ID du cours manquant');
-    navigation.navigate('QRCodeScreen', { matiereId, courseLibelle });
+    navigation.navigate('QRCodeScreenProf', { matiereId, courseLibelle });
   };
 
   const loading = matieresLoading || coursesLoading;

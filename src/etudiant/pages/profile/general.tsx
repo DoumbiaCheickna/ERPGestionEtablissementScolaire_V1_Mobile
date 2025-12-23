@@ -226,7 +226,7 @@ export default function ProfileStudent({ navigation }: Props) {
 
               navigation.reset({
                 index: 0,
-                routes: [{ name: 'Landing' as never }],
+                routes: [{ name: 'Login' as never }],
               });
             } catch (error) {
               console.error('Logout error:', error);

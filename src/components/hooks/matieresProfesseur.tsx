@@ -73,7 +73,7 @@ export const useProfesseurMatieres = () => {
         setMatieres(emptyResult);
         matieresCache = emptyResult;
         matieresLoaded = true;
-        setLoading(false);
+        setLoading(false); 
         return;
       }
 
@@ -104,12 +104,22 @@ export const useProfesseurMatieres = () => {
           }
 
           // Find which classes this matiere is taught in
-          const matiereClasses = classes.filter((classe: any) => 
-            classe.matieres_ids && classe.matieres_ids.includes(matiereId)
-          ).map((classe: any) => ({
-            classe_id: classe.classe_id,
-            classe_libelle: classe.classe_libelle
-          }));
+          const matiereClasses = Array.from(
+            new Map(
+              classes
+                .filter((classe: any) =>
+                  classe.matieres_ids && classe.matieres_ids.includes(matiereId)
+                )
+                .map((classe: any) => [
+                  classe.classe_id,
+                  {
+                    classe_id: classe.classe_id,
+                    classe_libelle: classe.classe_libelle,
+                  },
+                ])
+            ).values()
+          );
+
 
           // Get professor info (the current user)
           const userDocRef = doc(db, "users", profDocId);
@@ -128,14 +138,19 @@ export const useProfesseurMatieres = () => {
             ? `${professeurInfo.prenom} ${professeurInfo.nom}`
             : professeurInfo.nom || professeurInfo.prenom || "Professeur";
 
-          matièresData.push({
-            id: matiereId,
-            title: matiereTitle,
-            professeurNom: professeurInfo.nom,
-            professeurPrenom: professeurInfo.prenom,
-            professeurFullName: fullName,
-            classes: matiereClasses,
-          });
+          const alreadyExists = matièresData.some(m => m.id === matiereId);
+
+          if (!alreadyExists) {
+            matièresData.push({
+              id: matiereId,
+              title: matiereTitle,
+              professeurNom: professeurInfo.nom,
+              professeurPrenom: professeurInfo.prenom,
+              professeurFullName: fullName,
+              classes: matiereClasses as any,
+            });
+          }
+
         } catch (err) {
           console.error("Error fetching matiere", matiereId, err);
         }
