@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, Image, TouchableOpacity, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db, getUserSnapchot } from '../../../firebaseConfig';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../../../components/utils/secureStorage';
 import TopNavBar from '../../../components/layout/topBar';
 import BottomNavBar from '../../../components/layout/bottomBar';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,7 +13,7 @@ import { generalStyles } from './styles';
 import LottieView from 'lottie-react-native';
 import { useStudentMatieres } from '../../../components/hooks/matieresStudent';
 import { useStudentCourses } from '../../../components/hooks/coursStudent';
-import { usersWallpapers } from '../../../components/hooks/UploadingFiles';
+import { usersWallpapers } from '../../../components/utils/UploadingFiles';
 import UserProfile from '../../../Social/UserProfile/page';
 
 const profileActions = [
@@ -105,7 +105,6 @@ export default function ProfileStudent({ navigation }: Props) {
     loadCachedUserOrFetch();
   }, []);
 
-  // Load heavy data only after user is ready
   useEffect(() => {
     if (user && !dataLoaded) {
       setDataLoaded(true);
@@ -117,18 +116,15 @@ export default function ProfileStudent({ navigation }: Props) {
       setLoading(true);
       setError(null);
 
-      // Try to load from cache first
-      const cachedUser = await AsyncStorage.getItem('userProfile');
+      const cachedUser = await getData('userProfile');
       
       if (cachedUser) {
         const parsedUser = JSON.parse(cachedUser);
         setUser(parsedUser);
         setLoading(false);
         
-        // Fetch fresh data in background
         fetchUserInfo(true);
       } else {
-        // No cache, fetch immediately
         await fetchUserInfo(false);
       }
 
@@ -171,7 +167,7 @@ export default function ProfileStudent({ navigation }: Props) {
       setUser(userData);
       
       // Cache user data
-      await AsyncStorage.setItem('userProfile', JSON.stringify(userData));
+      await saveData('userProfile', JSON.stringify(userData));
 
     } catch (error) {
       console.error('Fetch error:', error);
@@ -223,9 +219,9 @@ export default function ProfileStudent({ navigation }: Props) {
           onPress: async () => {
             try {
               // Only clear auth-related data, keep cache
-              await AsyncStorage.removeItem('userToken');
-              await AsyncStorage.removeItem('userId');
-              await AsyncStorage.removeItem('userLogin');
+              await deleteData('userToken');
+              await deleteData('userId');
+              await deleteData('userLogin');
               // Keep userProfile, matieres, courses cached for faster re-login
 
               navigation.reset({

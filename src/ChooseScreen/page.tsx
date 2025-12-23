@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../components/utils/secureStorage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChooseScreen'>;
 
@@ -17,8 +17,8 @@ export default function ChooseScreen({ navigation, route }: Props) {
 
   const handleSelectRole = async (selectedRole: 'etudiant' | 'professeur') => {
     try {
-      // Update AsyncStorage with selected role
-      await AsyncStorage.setItem('userRole', selectedRole);
+      // Update secureStorage with selected role
+      await saveData('userRole', selectedRole);
 
       if (selectedRole === 'etudiant') {
         navigation.replace('HomeStudent', {

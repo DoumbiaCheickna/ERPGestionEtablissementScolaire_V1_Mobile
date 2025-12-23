@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { collection, query, where, getDocs, doc, DocumentReference } from 'firebase/firestore';
+import { saveData, getData, deleteData, clearAllData } from '../../components/utils/secureStorage';import { collection, query, where, getDocs, doc, DocumentReference } from 'firebase/firestore';
 import { db } from '../../firebaseConfig'; // Remove getUserSnapchot import
 
 const useUserRef = () => {
@@ -13,7 +12,7 @@ const useUserRef = () => {
       setLoading(true);
       setError(null);
 
-      const userLogin = await AsyncStorage.getItem('userLogin');
+      const userLogin = await getData('userLogin');
       
       if (!userLogin) {
         throw new Error('Utilisateur non trouvé');

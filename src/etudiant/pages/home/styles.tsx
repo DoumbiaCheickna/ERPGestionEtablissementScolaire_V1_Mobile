@@ -11,6 +11,18 @@ container: {
     flex: 1,
   },
 
+   button: {
+    backgroundColor: '#2563eb', // blue
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 14,
+    elevation: 4,
+  },
+  text: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   scrollContent: {
     paddingHorizontal: 20,
     paddingTop: 10,

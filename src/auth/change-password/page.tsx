@@ -18,7 +18,7 @@ import {
 import { collection, getDocs, query, where, doc, updateDoc, getDoc } from "firebase/firestore";
 import { db, auth } from '../../firebaseConfig';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from "firebase/auth";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../../components/utils/secureStorage';
 import { useNavigation } from '@react-navigation/native';
 import { globalStyles, theme } from '../../styles/globalStyles';
 import { Ionicons } from '@expo/vector-icons';
@@ -65,7 +65,7 @@ export default function ChangePassword() {
 
   useEffect(() => {
     async function loadLogin() {
-      const login = await AsyncStorage.getItem('userLogin');
+      const login = await getData('userLogin');
       if (login) {
         setUserLogin(login);
         setShowLoginField(false);
@@ -134,7 +134,7 @@ export default function ChangePassword() {
           }
         }
 
-        await AsyncStorage.setItem("userLogin", login);
+        await saveData("userLogin", login);
         showSuccessToast("Mot de passe changé avec succès !");
         
         // Get role info like in Login screen
@@ -207,7 +207,7 @@ export default function ChangePassword() {
                 style={localStyles.backButton}
                 onPress={() => {
                   navigation.navigate('Login' as never);
-                  AsyncStorage.clear();
+                  clearAllData();
                 }}
                 disabled={loading}
               >

@@ -35,7 +35,7 @@ import {
   getDoc,
   addDoc
 } from 'firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../../../../components/utils/secureStorage';
 import LottieView from 'lottie-react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute } from '@react-navigation/native';
@@ -209,7 +209,7 @@ export default function AddNote({ navigation }: Props) {
 
   const initializeUser = async () => {
     try {
-      const userLogin = await AsyncStorage.getItem('userLogin');
+      const userLogin = await getData('userLogin');
       if (userLogin) {
         const usersRef = collection(db, 'users');
         const q = query(usersRef, where('login', '==', userLogin));

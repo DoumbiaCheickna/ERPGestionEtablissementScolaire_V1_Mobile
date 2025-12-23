@@ -7,7 +7,6 @@ import {
   Dimensions, 
   StatusBar, 
   Animated,
-  
   Image,
   Platform
 } from 'react-native';
@@ -15,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import LottieView from 'lottie-react-native';
 import { RootStackParamList } from '../navigation';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../components/utils/secureStorage';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -61,8 +60,8 @@ const LandingPage = ({ navigation }: Props) => {
   };
 
   const isAlreadyLoggedIn = async () => {
-    const userLogin = await AsyncStorage.getItem('userLogin');
-    const userRole = await AsyncStorage.getItem('userRole');
+    const userLogin = await getData('userLogin');
+    const userRole = await getData('userRole');
 
     if(userLogin){
       if(userRole === 'etudiant') navigation.navigate('HomeStudent' as never);
@@ -144,7 +143,10 @@ const LandingPage = ({ navigation }: Props) => {
               <View style={[styles.featureIcon, { backgroundColor: 'rgba(138, 43, 226, 0.2)' }]}>
                 <Text style={styles.featureEmoji}>📍</Text>
               </View>
-              <Text style={styles.featureTitle}>Géolocalisation</Text>
+              <Text style={[styles.featureTitle, { fontSize: 12 }]}>
+                Géolocalisation
+              </Text>
+
               <Text style={styles.featureDesc}>Émargement sécurisé</Text>
             </View>
 

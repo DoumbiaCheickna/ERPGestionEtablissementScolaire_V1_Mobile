@@ -28,7 +28,7 @@ import {
   deleteDoc,
   getDoc
 } from 'firebase/firestore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../../components/utils/secureStorage';
 
 interface Comment {
   id: string;
@@ -78,7 +78,7 @@ export default function Comments({ navigation, route }: Props) {
 
    useEffect(() => {
       const fetchPhotoCurrentUser = async () => {
-        const url = await AsyncStorage.getItem('userPhoto');
+        const url = await getData('userPhoto');
         if (!url) {
           setCurrentUserPhoto(null);
           return;
@@ -90,9 +90,9 @@ export default function Comments({ navigation, route }: Props) {
 
   const initializeUser = async () => {
     try {
-      const userId = await AsyncStorage.getItem('userId');
-      const userName = await AsyncStorage.getItem('userName');
-      const userRole = await AsyncStorage.getItem('userRole');
+      const userId = await getData('userId');
+      const userName = await getData('userName');
+      const userRole = await getData('userRole');
       
       if (userId && userName && userRole) {
         setCurrentUserId(userId);

@@ -8,6 +8,7 @@ import ShowProfileInfosStudent from '../etudiant/pages/profile/showProfileInfos'
 import ShowProfileInfosProfesseur from '../professeur/pages/profile/showProfileInfos';
 import Scanner from '../components/scanner';
 import QRCodeScreen from '../etudiant/pages/qrcode/page';
+import QRCodeScreenPRof from '../professeur/pages/qrcode/page';
 import NotificationsInfos from '../NotificationsInfos/page';
 import HomeStudent from '../etudiant/pages/home/page';
 import MatieresStudent from '../etudiant/pages/matieres/page';

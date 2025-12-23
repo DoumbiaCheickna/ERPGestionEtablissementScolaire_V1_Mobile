@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { collection, getDocs, query, where, updateDoc, doc } from "firebase/firestore";
 import { auth, db, updateUserLogin } from '../../../firebaseConfig';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../../../components/utils/secureStorage';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../../styles/globalStyles';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -27,7 +27,7 @@ import { styles } from './styles'
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import LottieView from 'lottie-react-native';
-import { usersWallpapers } from '../../../components/hooks/UploadingFiles';
+import { usersWallpapers } from '../../../components/utils/UploadingFiles';
 
 
 interface UserProfileInfo {
@@ -205,7 +205,7 @@ export default function ProfileSettings({ navigation }: Props) {
           setUserInfo(prev => prev ? { ...prev, profilePhotoUrl: downloadURL } : prev);
 
           // Update cached user data
-          await AsyncStorage.setItem('userProfile', JSON.stringify({
+          await saveData('userProfile', JSON.stringify({
             ...userInfo,
             profilePhotoUrl: downloadURL
           }));

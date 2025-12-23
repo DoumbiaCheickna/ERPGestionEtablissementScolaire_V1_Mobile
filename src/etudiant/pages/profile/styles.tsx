@@ -106,6 +106,7 @@ export const styles = StyleSheet.create({
     color: '#1e293b',
     marginBottom: 6,
     letterSpacing: -0.5,
+    textAlign: 'center',
   },
   email: {
     fontSize: 16,

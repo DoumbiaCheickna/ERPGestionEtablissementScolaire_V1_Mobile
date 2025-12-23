@@ -1,48 +1,37 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ActivityIndicator, TouchableOpacity, Alert, ScrollView, Linking, Platform, Dimensions, Button } from 'react-native';
+import { View, Text, Image, Alert, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import TopNavBar from '../../../components/layout/topBar';
 import BottomNavBar from '../../../components/layout/bottomBar';
-import { theme } from '../../../styles/globalStyles';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../navigation/index';
 import { useProfesseurMatieres } from '../../../components/hooks/matieresProfesseur';
 import { Slot, useProfesseurCourses } from '../../../components/hooks/coursProfesseur'; 
 import { Cstyles } from '../allCourses/styles';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Location from "expo-location";
+import { saveData, getData, deleteData, clearAllData } from '../../../components/utils/secureStorage';
 import { HomeStyles } from "./styles";
 import { styles as eStyles } from '../allCourses/styles'
 import { db } from '../../../firebaseConfig';
 import { MatieresStyles } from '../enseignments/styles';
-import { collection, getDocs, query, where, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, updateDoc } from 'firebase/firestore';
 import LottieView from 'lottie-react-native';
 import CahierTexteModal from '../../../components/modals/CahierTexteModal';
-
-export const getCoursStatus = (startTime: string, endTime: string) => {
-  const now = new Date();
-  const currentTime = now.getHours() * 60 + now.getMinutes();
-
-  const [startHour, startMinute] = startTime.split(':').map(Number);
-  const [endHour, endMinute] = endTime.split(':').map(Number);
-
-  const coursStartTime = startHour * 60 + startMinute;
-  const coursEndTime = endHour * 60 + endMinute;
-
-  if (currentTime < coursStartTime) {
-    return { label: 'Pas commencé', type: 'warning' };
-  } else if (currentTime >= coursStartTime && currentTime <= coursEndTime) {
-    return { label: 'En cours', type: 'primary' };
-  } else {
-    return { label: 'Terminé', type: 'success' };
-  }
-};
+import {
+  getCoursStatus,
+  requestLocationPermission,
+  handleLocationPermissionDenied,
+  checkIfNearSchool,
+  isCourseTimeExpired,
+  isCourseNotStarted,
+  isProfesseurEmargedForCourse,
+  getTodayInfo,
+  findNextCourse
+} from '../../../components/utils/sharedHomeUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'HomeProfesseur'>;
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get('window');
 
 export default function HomeProfesseur({ navigation }: Props) {
-
   const { matieres, loading: matieresLoading, refreshMatieres, userDocId } = useProfesseurMatieres();
   const { coursesByDay, loading: coursesLoading, refreshCourses } = useProfesseurCourses(); 
   const [locationPermissionGranted, setLocationPermissionGranted] = useState(false);
@@ -56,129 +45,34 @@ export default function HomeProfesseur({ navigation }: Props) {
   const refreshData = () => {
     refreshCourses();
     refreshMatieres();
-  }
-
-  const SCHOOL_COORDINATES = {
-    latitude: 14.717022,
-    longitude: -17.4674526,
-    radius: 40
   };
 
   const isCourseTimePassed = (endTime: string): boolean => {
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
-    const [endHour, endMinute] = endTime.split(':').map(Number);
-    const coursEndTime = endHour * 60 + endMinute;
-    return currentTime > coursEndTime;
+    return isCourseTimeExpired(endTime);
   };
 
   const handleOpenCahierTexte = (course: any) => {
     setSelectedCourse(course);
     setCahierTexteModalVisible(true);
   };
+
   useEffect(() => {
     const initApp = async () => {
       await getProfessorInfo();
-      await requestLocationPermission();
+      await requestLocationPermission(setLocationPermissionGranted, getCurrentLocation);
     };
     
     initApp();
   }, []);
 
-  const today = new Date();
-  const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-  const todayDayName = dayNames[today.getDay()];
-  const currentTime = today.getHours() * 60 + today.getMinutes();
-  const todayStr = `${today.getDate().toString().padStart(2,'0')}/${(today.getMonth()+1).toString().padStart(2,'0')}/${today.getFullYear()}`;
+  const { today, dayNames, todayDayName, currentTime, todayStr } = getTodayInfo();
   const todayCourses = coursesByDay.filter((d:any)=>d.title==todayDayName).flatMap((d:any)=>d.data) || [];
 
-  // Find next course
   useEffect(() => {
-
-    let closestCourse: any = null;
-    let minTimeDifference = Infinity;
-
-    todayCourses.forEach(course => {
-      try {
-        const timeParts = course.start.split(':');
-        const startHours = parseInt(timeParts[0]);
-        const startMinutes = parseInt(timeParts[1]);
-        
-        if (isNaN(startHours)) {
-          return;
-        }
-        
-        const courseStartTime = startHours * 60 + startMinutes;
-        const timeDifference = courseStartTime - currentTime;
-
-        // Only consider future courses (timeDifference > 0)
-        if (timeDifference > 0 && timeDifference < minTimeDifference) {
-          minTimeDifference = timeDifference;
-          closestCourse = course;
-        }
-      } catch (error) {
-        console.error("Error parsing course time:", course.start, error);
-      }
-    });
-    
-    // If no upcoming courses found for today, look for next day's courses
-    if (!closestCourse) {
-      const dayOrder = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-      const currentDayIndex = dayOrder.indexOf(todayDayName);
-      
-      // Search through the next 7 days
-      for (let dayOffset = 1; dayOffset <= 7; dayOffset++) {
-        const nextDayIndex = (currentDayIndex + dayOffset) % 7;
-        const nextDayName = dayOrder[nextDayIndex];
-        
-        const nextDayCourses = coursesByDay
-          .filter((d: any) => d.title === nextDayName)
-          .flatMap((d: any) => d.data) || [];
-        
-        if (nextDayCourses.length > 0) {
-          // Find the earliest course of the next day
-          let earliestCourse: any = null;
-          let earliestTime = Infinity;
-          
-          nextDayCourses.forEach(course => {
-            try {
-              const timeParts = course.start.split(':');
-              const startHours = parseInt(timeParts[0]);
-              const startMinutes = parseInt(timeParts[1]);
-              
-              if (isNaN(startHours)) {
-                return;
-              }
-              
-              const courseStartTime = startHours * 60 + startMinutes;
-              
-              if (courseStartTime < earliestTime) {
-                earliestTime = courseStartTime;
-                earliestCourse = { ...course, day: nextDayName };
-              }
-            } catch (error) {
-              console.error("Error parsing course time:", course.start, error);
-            }
-          });
-          
-          if (earliestCourse) {
-            closestCourse = earliestCourse;
-            break; 
-          }
-        }
-      }
-    } else {
-      closestCourse = { ...closestCourse, day: todayDayName };
-    }
-    
-    if (!closestCourse && todayCourses.length > 0) {
-      closestCourse = { ...todayCourses[0], day: todayDayName };
-    }
-    
+    const closestCourse = findNextCourse(coursesByDay, todayDayName, currentTime, todayCourses);
     setNextCourse(closestCourse);
   }, [coursesByDay, coursesLoading]);
 
-  // Load professor presence status for courses
   useEffect(() => {
     const loadPresenceStatus = async () => {
       if (!userDocId || todayCourses.length === 0) return;
@@ -212,9 +106,8 @@ export default function HomeProfesseur({ navigation }: Props) {
 
       locationInterval = setInterval(() => {
         getCurrentLocation();
-      }, 10 * 60 * 1000); // Check every 10 minutes for professors
+      }, 10 * 60 * 1000);
 
-      // run immediately
       getCurrentLocation();
     };
 
@@ -225,75 +118,22 @@ export default function HomeProfesseur({ navigation }: Props) {
     };
   }, [locationPermissionGranted, todayCourses, nextCourse]);
 
-  const requestLocationPermission = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
-        setLocationPermissionGranted(true);
-        getCurrentLocation();
-      } else if (status === 'denied') {
-        handleLocationPermissionDenied();
-      }
-    } catch (error) {
-      handleLocationPermissionDenied();
-    }
-  };
-
-  const handleLocationPermissionDenied = () => {
-    Alert.alert(
-      'Permission requise',
-      'La permission de localisation est recommandée pour vérifier que vous êtes sur le campus IIBS.',
-      [
-        {
-          text: 'Réessayer',
-          onPress: () => requestLocationPermission()
-        },
-        {
-          text: 'Paramètres',
-          onPress: () => Linking.openSettings()
-        },
-        {
-          text: 'Continuer sans',
-          style: 'cancel'
-        }
-      ]
-    );
-  };
-
   const getCurrentLocation = async () => {
     try {
-      const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const Location = require('expo-location');
+      const location = await Location.getCurrentPositionAsync({ 
+        accuracy: Location.Accuracy.Balanced 
+      });
       const { latitude, longitude } = location.coords;
-      checkIfNearSchool(latitude, longitude);
+      checkIfNearSchool(latitude, longitude, setIsNearSchool);
     } catch (error) {
       setIsNearSchool(false);
     }
   };
 
-  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371e3;
-    const φ1 = lat1 * Math.PI/180;
-    const φ2 = lat2 * Math.PI/180;
-    const Δφ = (lat2-lat1) * Math.PI/180;
-    const Δλ = (lon2-lon1) * Math.PI/180;
-
-    const a = Math.sin(Δφ/2) ** 2 +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ/2) ** 2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  };
-
-  const checkIfNearSchool = (userLat: number, userLon: number) => {
-    const distance = calculateDistance(userLat, userLon, SCHOOL_COORDINATES.latitude, SCHOOL_COORDINATES.longitude);
-    const nearSchool = distance <= SCHOOL_COORDINATES.radius;
-    setIsNearSchool(nearSchool);
-  };
-
   const getProfessorInfo = async () => {
-
     try {
-      const userLogin = await AsyncStorage.getItem('userLogin');
+      const userLogin = await getData('userLogin');
       if (!userLogin) return;
 
       const usersRef = collection(db, 'users');
@@ -313,75 +153,19 @@ export default function HomeProfesseur({ navigation }: Props) {
     }
   };
 
-  const isProfesseurEmargedForCourse = async (matiereId: string, startTime: string, endTime: string): Promise<boolean> => {
-    try {
-      const userLogin = await AsyncStorage.getItem('userLogin');
-      if (!userLogin) {
-        return false;
-      }
-
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('login', '==', userLogin));
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
-        return false;
-      }
-
-      const userDoc = querySnapshot.docs[0];
-      const userData = userDoc.data();
-      const emargements: any[] = userData.emargements || [];
-
-      const today = new Date().toDateString();
-
-      const hasPresence = emargements.some(emargement =>
-        emargement.type == 'presence_prof' &&
-        emargement.matiere_id == matiereId &&
-        emargement.date == today &&
-        emargement.start == startTime &&
-        emargement.end == endTime
-      );
-      return hasPresence;
-
-    } catch (error) {
-      console.error('Error checking professor presence:', error);
-      return false; 
-    }
-  };
-
   const isProfesseurEmargedForCourseSync = (matiereId: string, startTime: string, endTime: string): boolean => {
     const courseKey = `${matiereId}-${startTime}-${endTime}`;
     return courseEmargedStatus[courseKey] || false;
   };
 
-  const isCourseTimeExpired = (startTime: string) => {
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
-    const [startHour, startMinute] = startTime.split(':').map(Number);
-    const courseStartTime = startHour * 60 + startMinute;
-    
-    const minutesSinceStart = currentTime - courseStartTime;
-    return minutesSinceStart > 30;
-  };
-
-
-  const isCourseNotStarted = (startTime: string) => {
-    const now = new Date();
-    const currentTime = now.getHours() * 60 + now.getMinutes();
-    const [startHour, startMinute] = startTime.split(':').map(Number);
-    const courseStartTime = startHour * 60 + startMinute;
-    return currentTime < courseStartTime;
-  };
-
   const canEmarger = (matiereId: string, endTime: string, startTime: string) => {
     const isAlreadyEmarged = isProfesseurEmargedForCourseSync(matiereId, startTime, endTime);
-    const isTimeExpired = isCourseTimeExpired(startTime);
+    const isTimeExpired = isCourseTimeExpired(endTime);
     return !isAlreadyEmarged && !isTimeExpired;
   };
 
-  // FIXED: Using same logic as student version
   const getEmargerButtonStatus = (matiereId: string, endTime: string, startTime: string, indisponible: number) => {
-     if (!userDocId) {
+    if (!userDocId) {
       return { 
         text: 'Chargement...', 
         style: HomeStyles.expiredButton, 
@@ -392,7 +176,7 @@ export default function HomeProfesseur({ navigation }: Props) {
 
     const isAvailable = indisponible != 1;
     const isAlreadyEmarged = isProfesseurEmargedForCourseSync(matiereId, startTime, endTime);
-    const isTimeExpired = isCourseTimeExpired(startTime); 
+    const isTimeExpired = isCourseTimeExpired(endTime);
     const isNotStarted = isCourseNotStarted(startTime);
     
     if (!isAvailable) return {
@@ -432,9 +216,8 @@ export default function HomeProfesseur({ navigation }: Props) {
   };
 
   const handleEmargerPress = async (matiereId: string, endTime: string, courseLibelle: string, course: any, startTime: string) => {
-    
     if (!locationPermissionGranted) {
-      Alert.alert('Permission requise', 'Veuillez accorder la permission de localisation pour continuer.', [{ text: 'Accorder permission', onPress: () => requestLocationPermission() }]);
+      Alert.alert('Permission requise', 'Veuillez accorder la permission de localisation pour continuer.', [{ text: 'Accorder permission', onPress: () => requestLocationPermission(setLocationPermissionGranted, getCurrentLocation) }]);
       return;
     }
     if (!isNearSchool) {
@@ -454,8 +237,8 @@ export default function HomeProfesseur({ navigation }: Props) {
         end: course.end,
         enseignant: professorName,
         salle: course.salle,
-        classes: course.combined_classes || course.classe_libelle, 
-        class_ids: course.class_ids || [course.class_id] 
+        classes: course.combined_classes || course.classe_libelle,
+        class_ids: course.class_ids || [course.class_id]
       }
     });
   };
@@ -472,7 +255,6 @@ export default function HomeProfesseur({ navigation }: Props) {
       const today = new Date();
       const currentDay = today.getDay() === 0 ? 7 : today.getDay();
 
-      // Query edts collection
       const edtsRef = collection(db, 'edts');
       const edtsSnapshot = await getDocs(edtsRef);
 
@@ -513,7 +295,6 @@ export default function HomeProfesseur({ navigation }: Props) {
       } else {
         Alert.alert('Information', 'Aucun cours correspondant trouvé dans les emplois du temps.');
       }
-
     } catch (error) {
       console.error('Error making course available:', error);
       Alert.alert('Erreur', 'Impossible de rendre le cours disponible. Veuillez réessayer.');
@@ -527,14 +308,11 @@ export default function HomeProfesseur({ navigation }: Props) {
     ]);
   };
 
-
   const rendreIndisponible = async (course: any) => {
-
     try {
       const today = new Date();
       const currentDay = today.getDay() === 0 ? 7 : today.getDay();
 
-      // Query edts collection
       const edtsRef = collection(db, 'edts');
       const edtsSnapshot = await getDocs(edtsRef);
 
@@ -544,7 +322,6 @@ export default function HomeProfesseur({ navigation }: Props) {
         const edtData = edtDoc.data();
         const slots = edtData.slots || [];
 
-        // Find the matching slot index
         const slotIndex = slots.findIndex((slot: any) => 
           slot.day == currentDay &&
           slot.start == course.start &&
@@ -553,7 +330,6 @@ export default function HomeProfesseur({ navigation }: Props) {
           slot.matiere_libelle == course.matiere_libelle
         );
 
-        // If matching slot found, update only that slot
         if (slotIndex !== -1) {
           if(slots[slotIndex].indisponible == 1) {
             Alert.alert('Information', 'Ce cours est déjà marqué comme indisponible.');
@@ -562,7 +338,6 @@ export default function HomeProfesseur({ navigation }: Props) {
           slots[slotIndex] = { ...slots[slotIndex], indisponible: 1 };
           updatedCount++;
 
-          // Update the document with the modified slots array
           await updateDoc(doc(db, 'edts', edtDoc.id), {
             slots: slots
           });
@@ -578,15 +353,12 @@ export default function HomeProfesseur({ navigation }: Props) {
       } else {
         Alert.alert('Information', 'Aucun cours correspondant trouvé dans les emplois du temps.');
       }
-
     } catch (error) {
       console.error('Error making course unavailable:', error);
       Alert.alert('Erreur', 'Impossible de rendre le cours indisponible. Veuillez réessayer.');
     }
   };
 
-
-  
   const goToQRCode = (matiereId: string, courseLibelle: string) => {
     if (!matiereId) return Alert.alert('Erreur', 'ID du cours manquant');
     navigation.navigate('QRCodeScreenProf', { matiereId, courseLibelle });
@@ -620,13 +392,11 @@ export default function HomeProfesseur({ navigation }: Props) {
         contentContainerStyle={HomeStyles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header Section */}
         <View style={HomeStyles.headerSection}>
           <Text style={HomeStyles.welcomeText}>Accueil Professeur</Text>
           <Text style={HomeStyles.dateText}>Aujourd'hui • {todayDayName} {todayStr}</Text>
           <Text style={HomeStyles.professorName}>Bienvenue, M. {professorName}</Text>
           
-          {/* Location Status Indicator */}
           <View style={HomeStyles.locationStatus}>
             <Text style={[
               HomeStyles.locationStatusText, 
@@ -640,7 +410,6 @@ export default function HomeProfesseur({ navigation }: Props) {
           </View>
         </View>
 
-        {/* Modern Hero Section with School Image */}
         <View style={{
           position: 'relative',
           borderRadius: 25,
@@ -651,7 +420,6 @@ export default function HomeProfesseur({ navigation }: Props) {
           shadowOpacity: 0.3,
           shadowRadius: 15,
         }}>
-          {/* Background Gradient Overlay */}
           <View style={{
             position: 'absolute',
             top: 0,
@@ -662,7 +430,6 @@ export default function HomeProfesseur({ navigation }: Props) {
             zIndex: 2,
           }} />
           
-          {/* School Image as Background */}
           <Image 
             source={require('../../../assets/school.png')} 
             style={{
@@ -673,7 +440,6 @@ export default function HomeProfesseur({ navigation }: Props) {
             resizeMode="cover"
           />
           
-          {/* Content Overlay */}
           <View style={{
             position: 'absolute',
             bottom: 0,
@@ -705,7 +471,6 @@ export default function HomeProfesseur({ navigation }: Props) {
                 Institut Informatique Business School
               </Text>
               
-              {/* Quick Stats Row */}
               <View style={{
                 flexDirection: 'row',
                 justifyContent: 'space-around',
@@ -794,7 +559,6 @@ export default function HomeProfesseur({ navigation }: Props) {
           </View>
         </View>
           
-        {/* Today Courses Section */}
         {todayCourses.length > 0 && (
           <View style={HomeStyles.courseGrid}>
             {todayCourses.map((item: any, index: number) => {
@@ -806,20 +570,17 @@ export default function HomeProfesseur({ navigation }: Props) {
                   MatieresStyles.matiereCard,
                   index % 2 === 0 ? MatieresStyles.matiereCardLeft : MatieresStyles.matiereCardRight
                 ]}>
-                  {/* Card Header */}
                   <View style={MatieresStyles.cardHeader}>
                     <View style={MatieresStyles.matiereIconContainer}>
                       <Text style={MatieresStyles.matiereIcon}>🎓</Text>
                     </View>
                   </View>
 
-                  {/* Card Content */}
                   <View style={MatieresStyles.cardContent}>
                     <Text style={MatieresStyles.matiereTitle} numberOfLines={2}>
                       {item.matiere_libelle}
                     </Text>
                     
-                    {/* Class Info */}
                     <View style={MatieresStyles.professorInfo}>
                       <Text style={MatieresStyles.professorIcon}>👨‍🎓</Text>
                       <Text style={{fontSize: 12}}>
@@ -827,9 +588,6 @@ export default function HomeProfesseur({ navigation }: Props) {
                       </Text>
                     </View>
 
-                    
-
-                    {/* Schedule */}
                     <View style={MatieresStyles.matiereStats}>
                       <View style={MatieresStyles.statChip}>
                         <Text style={MatieresStyles.statChipText}>🕐 {item.start} - {item.end}</Text>
@@ -841,7 +599,6 @@ export default function HomeProfesseur({ navigation }: Props) {
                       </View>
                     </View>
 
-                    {/* Action Buttons */}
                       <TouchableOpacity 
                         style={[emargerButtonStatus.style]} 
                         onPress={() => handleEmargerPress(
@@ -873,7 +630,6 @@ export default function HomeProfesseur({ navigation }: Props) {
                     </Text>
                   </TouchableOpacity>
 
-                  {/* Cahier de Texte Button */}
                   <TouchableOpacity 
                     style={[
                       HomeStyles.cahierTexteButton,
@@ -889,7 +645,6 @@ export default function HomeProfesseur({ navigation }: Props) {
 
                   </View>
 
-                  {/* Card Footer */}
                   <View style={MatieresStyles.cardFooter}>
                     <TouchableOpacity 
                       style={MatieresStyles.viewCoursesButton}
@@ -897,7 +652,6 @@ export default function HomeProfesseur({ navigation }: Props) {
                     >
                       <Text style={MatieresStyles.viewCoursesText}>Générer QR Code</Text>
                       <Text style={MatieresStyles.arrowIcon}>→</Text>
-                      
                     </TouchableOpacity>
                     {item.class_ids && item.class_ids.length > 1 && (
                     <View style={{
@@ -917,11 +671,9 @@ export default function HomeProfesseur({ navigation }: Props) {
                         {item.class_ids.length} 
                         classes combinées
                       </Text>
-                      
                     </View>
                   )}
                   
-                    {/* Status label */}
                     <Text style={
                       coursStatus.type == 'warning' ? HomeStyles.statusWarning :
                       coursStatus.type == 'primary' ? HomeStyles.statusPrimary :
@@ -930,15 +682,12 @@ export default function HomeProfesseur({ navigation }: Props) {
                       {coursStatus.label}
                     </Text>
                   </View>
-
-                  
                 </View>
               );
             })}
           </View>
         )}
 
-        {/* Show message if no courses today */}
         {todayCourses.length === 0 && (
           <View style={HomeStyles.sectionContainer}>
             <View style={HomeStyles.emptyState}>

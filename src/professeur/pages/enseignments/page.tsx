@@ -10,6 +10,7 @@ import { useProfesseurCourses } from '../../../components/hooks/coursProfesseur'
 import { MatieresStyles } from './styles';
 import LottieView from 'lottie-react-native';
 import StudentsModal from './StudentsModal';
+import { useMemo } from 'react';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MatieresClassesProfesseur'>;
 
@@ -71,6 +72,34 @@ const handleCloseStudentsModal = () => {
     refreshCourses();
     refreshMatieres()
   }
+
+  const uniqueMatieres = useMemo(() => {
+    const map = new Map<string, Matiere>();
+
+    matieres.forEach((matiere) => {
+      if (map.has(matiere.id)) {
+        const existing = map.get(matiere.id)!;
+
+        // merge classes without duplicates
+        const mergedClasses = [
+          ...(existing.classes || []),
+          ...(matiere.classes || []),
+        ].filter(
+          (c, i, arr) =>
+            arr.findIndex(x => x.classe_id === c.classe_id) === i
+        );
+
+        map.set(matiere.id, {
+          ...existing,
+          classes: mergedClasses,
+        });
+      } else {
+        map.set(matiere.id, matiere);
+      }
+    });
+
+    return Array.from(map.values());
+  }, [matieres]);
 
   // Get today's date info
   const today = new Date();
@@ -305,7 +334,7 @@ const handleCloseStudentsModal = () => {
               
               <View style={MatieresStyles.statsRow}>
                 <View style={MatieresStyles.statItem}>
-                  <Text style={MatieresStyles.statNumber}>{matieres.length}</Text>
+                  <Text style={MatieresStyles.statNumber}>{uniqueMatieres.length}</Text>
                   <Text style={MatieresStyles.statLabel}>Matières</Text>
                 </View>
                 <View style={MatieresStyles.statItem}>
@@ -372,7 +401,7 @@ const handleCloseStudentsModal = () => {
                 </View>
                 <Text style={MatieresStyles.badgeText}>Toutes les Matières</Text>
                 <View style={MatieresStyles.badgeCount}>
-                  <Text style={MatieresStyles.badgeCountText}>{matieres.length}</Text>
+                  <Text style={MatieresStyles.badgeCountText}>{uniqueMatieres.length}</Text>
                 </View>
               </View>
             </View>
@@ -385,9 +414,9 @@ const handleCloseStudentsModal = () => {
               <Text style={MatieresStyles.refreshButtonText}>🔄 Actualiser Les données</Text>
             </TouchableOpacity>
 
-            {matieres.length > 0 ? (
+            {uniqueMatieres.length > 0 ? (
               <View style={MatieresStyles.matieresGrid}>
-                {matieres.map((matiere, index) => {
+                {uniqueMatieres.map((matiere, index) => {
                   const stats = getMatiereStats(matiere.id);
                   const nextCourse: Course | null = getNextCourseForMatiere(matiere.id);
                   
@@ -405,7 +434,7 @@ const handleCloseStudentsModal = () => {
                         <View style={MatieresStyles.matiereIconContainer}>
                           <Text style={MatieresStyles.matiereIcon}>
                             {index % 6 === 0 ? '💻' : 
-                             index % 6 === 1 ? '📊' : 
+                             index % 6 === 1 ? '📊' :   
                              index % 6 === 2 ? '🔬' : 
                              index % 6 === 3 ? '🎨' : 
                              index % 6 === 4 ? '📐' : '📚'}
@@ -432,7 +461,7 @@ const handleCloseStudentsModal = () => {
 
                         <View style={MatieresStyles.classInfo}>
                           <Text style={MatieresStyles.className}>
-                            {matiere.classes.map(c => c.classe_libelle).join(', ')}
+                            {matiere.classes?.map(c => c.classe_libelle).join(', ')}
                           </Text>
                         </View>
 

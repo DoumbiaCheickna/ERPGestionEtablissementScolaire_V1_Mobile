@@ -2,8 +2,7 @@
 import { useState, useEffect } from 'react';
 import { collection, getDocs, query, where, doc, getDoc, QuerySnapshot, DocumentData } from "firebase/firestore";
 import { db, getUserSnapchot } from '../../firebaseConfig';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { saveData, getData, deleteData, clearAllData } from '../../components/utils/secureStorage';
 export type Matiere = {
   id: string;
   title: string;

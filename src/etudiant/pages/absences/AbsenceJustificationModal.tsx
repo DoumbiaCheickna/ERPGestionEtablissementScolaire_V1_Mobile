@@ -17,7 +17,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../firebaseConfig';
 import LottieView from 'lottie-react-native';
-import { useUploadAbsenceDocuments } from '../../../components/hooks/UploadingFiles';
+import { useUploadAbsenceDocuments } from '../../../components/utils/UploadingFiles';
 import { styles } from '../absences/absencesStyles';
 
 const { width, height } = Dimensions.get('window');

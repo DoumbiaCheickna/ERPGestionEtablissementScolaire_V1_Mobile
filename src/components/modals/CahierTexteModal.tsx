@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { collection, addDoc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { saveData, getData, deleteData, clearAllData } from '../../components/utils/secureStorage';
 
 interface CahierTexteModalProps {
   visible: boolean;
@@ -83,7 +83,7 @@ export default function CahierTexteModal({ visible, onClose, course }: CahierTex
     setLoading(true);
 
     try {
-        const userLogin = await AsyncStorage.getItem('userLogin');
+        const userLogin = await getData('userLogin');
         let professorName = '';
         if (!userLogin) return;
       
