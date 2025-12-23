@@ -283,14 +283,9 @@ export default function Scanner({ navigation, route }: Props) {
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
     const currentTime = Date.now();
-    
-    if (scanned || isProcessing) {
-      return;
-    }
 
-    if (currentTime - lastScanTime.current < SCAN_COOLDOWN) {
-      return;
-    }
+    if (scanned || isProcessing) return;
+    if (currentTime - lastScanTime.current < SCAN_COOLDOWN) return;
 
     setScanned(true);
     setIsProcessing(true);
@@ -298,32 +293,49 @@ export default function Scanner({ navigation, route }: Props) {
 
     try {
       if (data.startsWith('EMARGER:')) {
+        const parts = data.split(':');
+        const qrRole = parts[2];
+
+        if (!qrRole) {
+          Alert.alert('QR code invalide');
+          resetScanStates();
+          return;
+        }
+
+        if (qrRole.toLowerCase() !== userRole.toLowerCase()) {
+          Alert.alert(
+            'Accès refusé',
+            `Ce QR code est réservé au rôle ${qrRole}`
+          );
+          resetScanStates();
+          return;
+        }
+
         const finalCourseInfo = courseInfo || {
           matiere_id: matiereId,
           libelle: courseLibelle || 'Cours',
           start: routeCourseInfo?.start || '08:00',
           end: routeCourseInfo?.end || '10:00',
           enseignant: routeCourseInfo?.enseignant || 'Enseignant',
-          salle: routeCourseInfo?.salle || ''
+          salle: routeCourseInfo?.salle || '',
         };
-        
+
         setCourseInfo(finalCourseInfo);
 
-        // Save based on user role
-        if (userRole.toLowerCase() == 'etudiant') {
+        if (userRole.toLowerCase() === 'etudiant') {
           await saveEmargedCourseStudent(
-            finalCourseInfo.matiere_id, 
-            finalCourseInfo.libelle, 
-            finalCourseInfo.start, 
-            finalCourseInfo.end, 
+            finalCourseInfo.matiere_id,
+            finalCourseInfo.libelle,
+            finalCourseInfo.start,
+            finalCourseInfo.end,
             finalCourseInfo.salle
           );
-        } else if (userRole.toLowerCase() == 'professeur') {
+        } else if (userRole.toLowerCase() === 'professeur') {
           await saveEmargedCourseProfessor(
-            finalCourseInfo.matiere_id, 
-            finalCourseInfo.libelle, 
-            finalCourseInfo.start, 
-            finalCourseInfo.end, 
+            finalCourseInfo.matiere_id,
+            finalCourseInfo.libelle,
+            finalCourseInfo.start,
+            finalCourseInfo.end,
             finalCourseInfo.salle
           );
         }
@@ -335,10 +347,11 @@ export default function Scanner({ navigation, route }: Props) {
       }
     } catch (error) {
       console.error('Emargement error:', error);
-      Alert.alert('Erreur lors de l\'émargement');
+      Alert.alert("Erreur lors de l'émargement");
       resetScanStates();
     }
   };
+
 
   const resetScanStates = () => {
     setScanned(false);

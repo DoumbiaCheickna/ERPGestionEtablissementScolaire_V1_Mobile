@@ -3,12 +3,12 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../../navigation';
-import QRCodeGenerator from '../../../components/QRCodeGenerator';
+import QRCodeGenerator from '../../../components/QRCodeProfGenerator';
 import { Ionicons } from '@expo/vector-icons';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'QRCodeScreen'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'QRCodeScreenProf'>;
 
-export default function QRCodeScreen({ navigation, route }: Props) {
+export default function QRCodeScreenProf({ navigation, route }: Props) {
   const { matiereId, courseLibelle } = route.params;
 
   if (!matiereId) {

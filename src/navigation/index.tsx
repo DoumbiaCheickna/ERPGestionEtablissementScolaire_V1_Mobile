@@ -27,6 +27,7 @@ import VoirNote from '../etudiant/pages/voirNote/page';
 import Comments from '../Social/comments/page';
 import ChooseScreen from '../ChooseScreen/page';
 import AdminPanel from '../adminPanel/page';
+import QRCodeScreenProf from '../professeur/pages/qrcode/page';
 
 export type RootStackParamList = {
   Login: { userLogin: string; userRole: string; firstLogin: number };
@@ -69,6 +70,7 @@ export type RootStackParamList = {
     matieres?: any[];
   }
   QRCodeScreen: { matiereId: string, courseLibelle: string};
+  QRCodeScreenProf: { matiereId: string, courseLibelle: string};
   Absences: undefined;
   Posts: undefined;
   UserProfile: { userId: string };
@@ -95,11 +97,11 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function AppNavigator() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Landing" screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Landing" component={Landing} />
+      <Stack.Navigator initialRouteName="Login" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="Scanner" component={Scanner} />
         <Stack.Screen name="QRCodeScreen" component={QRCodeScreen} />
+        <Stack.Screen name="QRCodeScreenProf" component={QRCodeScreenProf} />
         <Stack.Screen name="NotificationsInfos" component={NotificationsInfos} />
         <Stack.Screen name="ChangePassword" component={ChangePassword} />
         <Stack.Screen name="Absences" component={Absences} />

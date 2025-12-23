@@ -355,12 +355,14 @@ export default function HomeProfesseur({ navigation }: Props) {
     return courseEmargedStatus[courseKey] || false;
   };
 
-  const isCourseTimeExpired = (endTime: string) => {
+  const isCourseTimeExpired = (startTime: string) => {
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes();
-    const [endHour, endMinute] = endTime.split(':').map(Number);
-    const coursEndTime = endHour * 60 + endMinute;
-    return currentTime > coursEndTime;
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const courseStartTime = startHour * 60 + startMinute;
+    
+    const minutesSinceStart = currentTime - courseStartTime;
+    return minutesSinceStart > 30;
   };
 
   const isCourseNotStarted = (startTime: string) => {
@@ -373,13 +375,13 @@ export default function HomeProfesseur({ navigation }: Props) {
 
   const canEmarger = (matiereId: string, endTime: string, startTime: string) => {
     const isAlreadyEmarged = isProfesseurEmargedForCourseSync(matiereId, startTime, endTime);
-    const isTimeExpired = isCourseTimeExpired(endTime);
+    const isTimeExpired = isCourseTimeExpired(startTime);
     return !isAlreadyEmarged && !isTimeExpired;
   };
 
   // FIXED: Using same logic as student version
   const getEmargerButtonStatus = (matiereId: string, endTime: string, startTime: string, indisponible: number) => {
-    if (!userDocId) {
+     if (!userDocId) {
       return { 
         text: 'Chargement...', 
         style: HomeStyles.expiredButton, 
@@ -390,7 +392,7 @@ export default function HomeProfesseur({ navigation }: Props) {
 
     const isAvailable = indisponible != 1;
     const isAlreadyEmarged = isProfesseurEmargedForCourseSync(matiereId, startTime, endTime);
-    const isTimeExpired = isCourseTimeExpired(endTime);
+    const isTimeExpired = isCourseTimeExpired(startTime); 
     const isNotStarted = isCourseNotStarted(startTime);
     
     if (!isAvailable) return {
@@ -589,7 +591,7 @@ export default function HomeProfesseur({ navigation }: Props) {
   
   const goToQRCode = (matiereId: string, courseLibelle: string) => {
     if (!matiereId) return Alert.alert('Erreur', 'ID du cours manquant');
-    navigation.navigate('QRCodeScreen', { matiereId, courseLibelle });
+    navigation.navigate('QRCodeScreenProf', { matiereId, courseLibelle });
   };
 
   const loading = matieresLoading || coursesLoading;

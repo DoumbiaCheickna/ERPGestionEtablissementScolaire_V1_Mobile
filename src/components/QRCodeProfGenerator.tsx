@@ -8,8 +8,8 @@ type Props = {
   courseLibelle: string
 };
 
-export default function QRCodeGenerator() {
-  const qrValue = `EMARGER:iibs_emargements:Etudiant`;
+export default function QRCodeProfGenerator() {
+  const qrValue = `EMARGER:iibs_emargements:Professeur`;
   
 
   return (
