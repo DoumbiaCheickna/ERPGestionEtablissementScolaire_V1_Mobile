@@ -63,7 +63,6 @@ export const useProfesseurMatieres = () => {
 
       setLoading(true);
 
-      // Find the affectation document for this professor
       const affectationsRef = collection(db, "affectations_professeurs");
       const affectationQuery = query(affectationsRef, where("prof_doc_id", "==", profDocId));
       const affectationSnapshot = await getDocs(affectationQuery);
