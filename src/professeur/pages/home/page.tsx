@@ -446,18 +446,16 @@ export default function HomeProfesseur({ navigation }: Props) {
       return;
     }
 
-  // Navigate to scanner with success callback and course information
     navigation.navigate('Scanner', { 
       matiereId, 
       courseLibelle,
-      // Pass additional course information for the modal
       courseInfo: {
         start: course.start,
         end: course.end,
         enseignant: professorName,
         salle: course.salle,
-        classes: course.combined_classes || course.classe_libelle, // Combined classes
-        class_ids: course.class_ids || [course.class_id] // All class IDs
+        classes: course.combined_classes || course.classe_libelle, 
+        class_ids: course.class_ids || [course.class_id] 
       }
     });
   };
