@@ -129,7 +129,6 @@ export const useProfesseurMatieres = () => {
               matiereTitle = matiereData.libelle || "Matière sans nom";
             }
 
-            // Check if we've already processed a matiere with this TITLE
             if (matieresMap.has(matiereTitle)) {
               // Add this matiere ID and class to the existing entry
               const existingMatiere = matieresMap.get(matiereTitle)!;
