@@ -5,10 +5,10 @@
     "scheme": "iibsapp",
     "version": "1.0.2",
     "orientation": "portrait",
-    "icon": "./src/assets/logo8.png",
+    "icon": "./src/assets/2_IIBS.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./src/assets/logo8.png",
+      "image": "./src/assets/2_IIBS.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -22,7 +22,19 @@
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [
           "fetch"
-        ]
+        ],
+        "NSLocationWhenInUseUsageDescription": "IIBS Link utilise votre localisation uniquement pour vérifier que vous êtes sur le campus lors de l'émargement aux cours. Votre position n'est jamais enregistrée, suivie ou partagée avec des tiers.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "IIBS Link utilise votre localisation uniquement pour vérifier que vous êtes sur le campus lors de l'émargement aux cours. Votre position n'est jamais enregistrée, suivie ou partagée avec des tiers.",
+        "NSLocationAlwaysUsageDescription": "IIBS Link utilise votre localisation uniquement pour vérifier que vous êtes sur le campus lors de l'émargement aux cours. Votre position n'est jamais enregistrée, suivie ou partagée avec des tiers.",
+        "NSFaceIDUsageDescription": "IIBS Link utilise Face ID pour sécuriser votre compte étudiant/professeur et empêcher le partage de compte. Vos données biométriques restent sur votre appareil et ne sont jamais envoyées à nos serveurs.",
+        "NSCameraUsageDescription": "IIBS Link utilise la caméra uniquement pour scanner les codes QR de présence aux cours. Aucune photo n'est enregistrée ou partagée.",
+        "NSPhotoLibraryUsageDescription": "IIBS Link accède à vos photos uniquement pour vous permettre de choisir une photo de profil. Nous ne partageons jamais vos photos.",
+        "NSPhotoLibraryAddUsageDescription": "IIBS Link peut enregistrer des images dans votre bibliothèque uniquement si vous le souhaitez.",
+        "NSMicrophoneUsageDescription": "IIBS Link n'utilise pas le microphone.",
+        "NSContactsUsageDescription": "IIBS Link n'accède pas à vos contacts.",
+        "NSCalendarsUsageDescription": "IIBS Link n'accède pas à votre calendrier.",
+        "NSRemindersUsageDescription": "IIBS Link n'accède pas à vos rappels.",
+        "NSMotionUsageDescription": "IIBS Link n'utilise pas les données de mouvement."
       }
     },
     "android": {
@@ -31,8 +43,15 @@
         "backgroundColor": "#ffffff"
       },
       "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT",
         "RECEIVE_BOOT_COMPLETED",
-        "WAKE_LOCK"
+        "WAKE_LOCK",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
       ],
       "package": "com.iibs.schoolmanagement",
       "useNextNotificationsApi": true
@@ -58,12 +77,86 @@
         }
       ],
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "IIBS Link utilise votre localisation uniquement pour vérifier que vous êtes sur le campus lors de l'émargement aux cours. Votre position n'est jamais enregistrée, suivie ou partagée.",
+          "locationAlwaysPermission": "IIBS Link utilise votre localisation uniquement pour vérifier que vous êtes sur le campus lors de l'émargement aux cours. Votre position n'est jamais enregistrée, suivie ou partagée.",
+          "locationWhenInUsePermission": "IIBS Link utilise votre localisation uniquement pour vérifier que vous êtes sur le campus lors de l'émargement aux cours. Votre position n'est jamais enregistrée, suivie ou partagée."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "IIBS Link utilise Face ID pour sécuriser votre compte et empêcher le partage de compte. Vos données biométriques restent sur votre appareil."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "IIBS Link utilise la caméra uniquement pour scanner les codes QR de présence aux cours. Aucune photo n'est enregistrée."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "IIBS Link accède à vos photos uniquement pour vous permettre de choisir une photo de profil.",
+          "cameraPermission": "IIBS Link utilise la caméra uniquement pour prendre une photo de profil si vous le souhaitez."
+        }
+      ]
     ],
     "extra": {
       "eas": {
         "projectId": "49efc7ef-8348-4eff-b9e6-f10db029161b"
       }
+    },
+    "privacy": {
+      "analyticsEnabled": false
+    },
+    "privacyManifests": {
+      "NSPrivacyTracking": false,
+      "NSPrivacyTrackingDomains": [],
+      "NSPrivacyCollectedDataTypes": [
+        {
+          "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeName",
+          "NSPrivacyCollectedDataTypeLinked": true,
+          "NSPrivacyCollectedDataTypeTracking": false,
+          "NSPrivacyCollectedDataTypePurposes": [
+            "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+          ]
+        },
+        {
+          "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeEmailAddress",
+          "NSPrivacyCollectedDataTypeLinked": true,
+          "NSPrivacyCollectedDataTypeTracking": false,
+          "NSPrivacyCollectedDataTypePurposes": [
+            "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+          ]
+        },
+        {
+          "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypePreciseLocation",
+          "NSPrivacyCollectedDataTypeLinked": false,
+          "NSPrivacyCollectedDataTypeTracking": false,
+          "NSPrivacyCollectedDataTypePurposes": [
+            "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+          ]
+        }
+      ],
+      "NSPrivacyAccessedAPITypes": [
+        {
+          "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+          "NSPrivacyAccessedAPITypeReasons": [
+            "CA92.1"
+          ]
+        },
+        {
+          "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+          "NSPrivacyAccessedAPITypeReasons": [
+            "C617.1"
+          ]
+        }
+      ]
     }
   }
 }

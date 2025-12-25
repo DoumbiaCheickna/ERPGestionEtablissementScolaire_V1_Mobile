@@ -23,6 +23,8 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { localStyles } from './styles';
 import { RootStackParamList } from '../../navigation';
+import PrivacyConsentScreen from '../../components/layout/PrivacyConsentScreen';
+
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -35,6 +37,8 @@ export default function Login({ navigation }: Props) {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [biometricAvailable, setBiometricAvailable] = useState<boolean>(false);
   const [biometricType, setBiometricType] = useState<string>('');
+  const [showPrivacyConsent, setShowPrivacyConsent] = useState(false);
+  const [privacyChecked, setPrivacyChecked] = useState(false);
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -53,7 +57,48 @@ export default function Login({ navigation }: Props) {
   useEffect(() => {
     checkBiometricAvailability();
     checkLoggedIn();
+    checkPrivacyConsent();
   }, []);
+
+
+    const checkPrivacyConsent = async () => {
+    try {
+      const accepted = await getData('privacy_accepted');
+      if (!accepted) {
+        // First time user - show privacy consent
+        setShowPrivacyConsent(true);
+      } else {
+        setPrivacyChecked(true);
+      }
+    } catch (error) {
+      console.error('Error checking privacy consent:', error);
+      setShowPrivacyConsent(true);
+    }
+  };
+
+  const handlePrivacyAccept = () => {
+    setShowPrivacyConsent(false);
+    setPrivacyChecked(true);
+  };
+
+  const handlePrivacyDecline = () => {
+    Alert.alert(
+      'Impossible de continuer',
+      'L\'application nécessite votre accord pour fonctionner. Si vous avez des questions sur nos pratiques de confidentialité, contactez privacy@iibs.sn',
+      [
+        { text: 'Revoir la politique', onPress: () => {} },
+        { 
+          text: 'Quitter l\'app', 
+          onPress: () => {
+            // On mobile, you can't force close the app
+            // But you can show the consent again
+            setShowPrivacyConsent(true);
+          }
+        }
+      ]
+    );
+  };
+
 
   const checkBiometricAvailability = async () => {
     try {
@@ -603,6 +648,16 @@ export default function Login({ navigation }: Props) {
       setLoading(false);
     }
   };
+
+   if (!privacyChecked) {
+    return (
+      <PrivacyConsentScreen
+        visible={showPrivacyConsent}
+        onAccept={handlePrivacyAccept}
+        onDecline={handlePrivacyDecline}
+      />
+    );
+  }
 
   return (
     <>
