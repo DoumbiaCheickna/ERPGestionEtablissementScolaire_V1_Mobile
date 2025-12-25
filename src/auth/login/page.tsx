@@ -88,10 +88,9 @@ export default function Login({ navigation }: Props) {
       [
         { text: 'Revoir la politique', onPress: () => {} },
         { 
-          text: 'Quitter l\'app', 
+          text: 'Je préfère me retirer', 
           onPress: () => {
-            // On mobile, you can't force close the app
-            // But you can show the consent again
+
             setShowPrivacyConsent(true);
           }
         }
