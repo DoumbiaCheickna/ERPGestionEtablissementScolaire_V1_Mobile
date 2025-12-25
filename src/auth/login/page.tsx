@@ -131,6 +131,26 @@ export default function Login({ navigation }: Props) {
       const email = await getData("userEmail") || '';
       const classeId = await getData("classe_id") || '';
 
+      const userSnapShot = await getDocs(query(
+        collection(db, "users"),
+        where("login", "==", loggedIn)
+      ));
+
+      let getFirstLogin = 0;
+      if (!userSnapShot.empty) {
+        const userDoc = userSnapShot.docs[0].data();
+        getFirstLogin = userDoc.first_login || 0;
+      }
+
+      if (getFirstLogin === 1) {
+        navigation.replace('ChangePassword', {
+          userLogin: loggedIn,
+          userRole: roleName,
+          firstLogin: getFirstLogin,
+        });
+        return;
+      }
+
       if (otherRoleName) {
         navigation.replace('ChooseScreen', {
           userLogin: loggedIn,
