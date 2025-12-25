@@ -23,18 +23,18 @@
         "UIBackgroundModes": [
           "fetch"
         ],
-        "NSLocationWhenInUseUsageDescription": "IIBS Link utilise votre localisation uniquement pour vérifier que vous êtes sur le campus lors de l'émargement aux cours. Votre position n'est jamais enregistrée, suivie ou partagée avec des tiers.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "IIBS Link utilise votre localisation uniquement pour vérifier que vous êtes sur le campus lors de l'émargement aux cours. Votre position n'est jamais enregistrée, suivie ou partagée avec des tiers.",
-        "NSLocationAlwaysUsageDescription": "IIBS Link utilise votre localisation uniquement pour vérifier que vous êtes sur le campus lors de l'émargement aux cours. Votre position n'est jamais enregistrée, suivie ou partagée avec des tiers.",
-        "NSFaceIDUsageDescription": "IIBS Link utilise Face ID pour sécuriser votre compte étudiant/professeur et empêcher le partage de compte. Vos données biométriques restent sur votre appareil et ne sont jamais envoyées à nos serveurs.",
-        "NSCameraUsageDescription": "IIBS Link utilise la caméra uniquement pour scanner les codes QR de présence aux cours. Aucune photo n'est enregistrée ou partagée.",
-        "NSPhotoLibraryUsageDescription": "IIBS Link accède à vos photos uniquement pour vous permettre de choisir une photo de profil. Nous ne partageons jamais vos photos.",
-        "NSPhotoLibraryAddUsageDescription": "IIBS Link peut enregistrer des images dans votre bibliothèque uniquement si vous le souhaitez.",
-        "NSMicrophoneUsageDescription": "IIBS Link n'utilise pas le microphone.",
-        "NSContactsUsageDescription": "IIBS Link n'accède pas à vos contacts.",
-        "NSCalendarsUsageDescription": "IIBS Link n'accède pas à votre calendrier.",
-        "NSRemindersUsageDescription": "IIBS Link n'accède pas à vos rappels.",
-        "NSMotionUsageDescription": "IIBS Link n'utilise pas les données de mouvement."
+        "NSLocationWhenInUseUsageDescription": "IIBS Link a besoin de votre position pour vérifier que vous êtes physiquement présent sur le campus de l'école (dans un rayon de 500 mètres) avant de valider votre émargement aux cours. Par exemple, lorsque vous scannez le QR code d'un cours à 10h00, l'app vérifie que vous êtes bien à l'école et non chez vous. Votre position exacte n'est jamais enregistrée, seulement la distance par rapport au campus est calculée.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "IIBS Link a besoin de votre position pour vérifier que vous êtes physiquement présent sur le campus de l'école (dans un rayon de 500 mètres) avant de valider votre émargement aux cours. Par exemple, lorsque vous scannez le QR code d'un cours à 10h00, l'app vérifie que vous êtes bien à l'école et non chez vous. Votre position exacte n'est jamais enregistrée, seulement la distance par rapport au campus est calculée.",
+        "NSLocationAlwaysUsageDescription": "IIBS Link a besoin de votre position pour vérifier que vous êtes physiquement présent sur le campus de l'école (dans un rayon de 500 mètres) avant de valider votre émargement aux cours. Par exemple, lorsque vous scannez le QR code d'un cours à 10h00, l'app vérifie que vous êtes bien à l'école et non chez vous. Votre position exacte n'est jamais enregistrée, seulement la distance par rapport au campus est calculée.",
+        "NSFaceIDUsageDescription": "IIBS Link utilise Face ID pour vous permettre de vous connecter rapidement et de manière sécurisée à votre compte étudiant sans avoir à saisir votre mot de passe à chaque fois. Par exemple, au lieu de taper votre mot de passe tous les matins, vous pouvez simplement regarder votre téléphone pour vous connecter. Vos données biométriques (Face ID) restent uniquement sur votre iPhone et ne sont jamais envoyées à nos serveurs. Cette fonctionnalité est entièrement optionnelle.",
+        "NSCameraUsageDescription": "IIBS Link utilise votre caméra uniquement pour scanner les codes QR de présence affichés en classe par vos professeurs. Par exemple, lorsque votre professeur affiche un QR code au début du cours de Mathématiques à 10h00, vous scannez ce code pour confirmer votre présence. Aucune photo ou vidéo n'est enregistrée pendant ce processus.",
+        "NSPhotoLibraryUsageDescription": "IIBS Link a besoin d'accéder à vos photos uniquement si vous souhaitez personnaliser votre profil avec une photo de profil. Par exemple, vous pouvez choisir une photo de vous depuis votre bibliothèque pour l'afficher sur votre compte étudiant. Nous ne partageons jamais vos photos et vous pouvez utiliser l'app sans ajouter de photo de profil.",
+        "NSPhotoLibraryAddUsageDescription": "IIBS Link peut sauvegarder dans votre bibliothèque des documents scolaires (emploi du temps, relevés de notes) uniquement si vous choisissez de les télécharger. Par exemple, vous pouvez sauvegarder votre emploi du temps en image pour le consulter hors ligne.",
+        "NSMicrophoneUsageDescription": "IIBS Link n'utilise pas votre microphone et ne vous demandera jamais d'autorisation pour y accéder.",
+        "NSContactsUsageDescription": "IIBS Link n'accède pas à vos contacts et ne vous demandera jamais d'autorisation pour les consulter.",
+        "NSCalendarsUsageDescription": "IIBS Link n'accède pas à votre calendrier et ne vous demandera jamais d'autorisation pour le modifier.",
+        "NSRemindersUsageDescription": "IIBS Link n'accède pas à vos rappels et ne vous demandera jamais d'autorisation pour les consulter.",
+        "NSMotionUsageDescription": "IIBS Link n'utilise pas les données de mouvement de votre appareil (accéléromètre, gyroscope) et ne vous demandera jamais d'autorisation pour y accéder."
       }
     },
     "android": {
@@ -81,28 +81,28 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "IIBS Link utilise votre localisation uniquement pour vérifier que vous êtes sur le campus lors de l'émargement aux cours. Votre position n'est jamais enregistrée, suivie ou partagée.",
-          "locationAlwaysPermission": "IIBS Link utilise votre localisation uniquement pour vérifier que vous êtes sur le campus lors de l'émargement aux cours. Votre position n'est jamais enregistrée, suivie ou partagée.",
-          "locationWhenInUsePermission": "IIBS Link utilise votre localisation uniquement pour vérifier que vous êtes sur le campus lors de l'émargement aux cours. Votre position n'est jamais enregistrée, suivie ou partagée."
+          "locationAlwaysAndWhenInUsePermission": "IIBS Link a besoin de votre position pour vérifier que vous êtes physiquement présent sur le campus de l'école (dans un rayon de 500 mètres) avant de valider votre émargement aux cours. Par exemple, lorsque vous scannez le QR code d'un cours à 10h00, l'app vérifie que vous êtes bien à l'école et non chez vous. Votre position exacte n'est jamais enregistrée.",
+          "locationAlwaysPermission": "IIBS Link a besoin de votre position pour vérifier que vous êtes physiquement présent sur le campus de l'école (dans un rayon de 500 mètres) avant de valider votre émargement aux cours. Par exemple, lorsque vous scannez le QR code d'un cours à 10h00, l'app vérifie que vous êtes bien à l'école et non chez vous. Votre position exacte n'est jamais enregistrée.",
+          "locationWhenInUsePermission": "IIBS Link a besoin de votre position pour vérifier que vous êtes physiquement présent sur le campus de l'école (dans un rayon de 500 mètres) avant de valider votre émargement aux cours. Par exemple, lorsque vous scannez le QR code d'un cours à 10h00, l'app vérifie que vous êtes bien à l'école et non chez vous. Votre position exacte n'est jamais enregistrée."
         }
       ],
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "IIBS Link utilise Face ID pour sécuriser votre compte et empêcher le partage de compte. Vos données biométriques restent sur votre appareil."
+          "faceIDPermission": "IIBS Link utilise Face ID pour vous permettre de vous connecter rapidement et de manière sécurisée à votre compte étudiant sans avoir à saisir votre mot de passe à chaque fois. Par exemple, au lieu de taper votre mot de passe tous les matins, vous pouvez simplement regarder votre téléphone pour vous connecter. Vos données biométriques restent uniquement sur votre iPhone."
         }
       ],
       [
         "expo-camera",
         {
-          "cameraPermission": "IIBS Link utilise la caméra uniquement pour scanner les codes QR de présence aux cours. Aucune photo n'est enregistrée."
+          "cameraPermission": "IIBS Link utilise votre caméra uniquement pour scanner les codes QR de présence affichés en classe par vos professeurs. Par exemple, lorsque votre professeur affiche un QR code au début du cours de Mathématiques à 10h00, vous scannez ce code pour confirmer votre présence. Aucune photo n'est enregistrée."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "IIBS Link accède à vos photos uniquement pour vous permettre de choisir une photo de profil.",
-          "cameraPermission": "IIBS Link utilise la caméra uniquement pour prendre une photo de profil si vous le souhaitez."
+          "photosPermission": "IIBS Link a besoin d'accéder à vos photos uniquement si vous souhaitez personnaliser votre profil avec une photo de profil. Par exemple, vous pouvez choisir une photo de vous depuis votre bibliothèque pour l'afficher sur votre compte étudiant. Nous ne partageons jamais vos photos.",
+          "cameraPermission": "IIBS Link utilise la caméra pour vous permettre de prendre une photo de profil directement depuis l'app. Cette fonctionnalité est optionnelle et la photo reste privée sur votre compte."
         }
       ]
     ],
