@@ -3,7 +3,7 @@
     "name": "IIBS Link",
     "slug": "iibs-link",
     "scheme": "iibsapp",
-    "version": "1.0.2",
+    "version": "1.0.7",
     "orientation": "portrait",
     "icon": "./src/assets/2_IIBS.png",
     "userInterfaceStyle": "light",
@@ -18,6 +18,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.iibs.schoolmanagement",
+      "buildNumber": "1.0.7",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [
@@ -43,15 +44,21 @@
         "backgroundColor": "#ffffff"
       },
       "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "CAMERA",
-        "USE_BIOMETRIC",
-        "USE_FINGERPRINT",
-        "RECEIVE_BOOT_COMPLETED",
-        "WAKE_LOCK",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.WAKE_LOCK",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ],
       "package": "com.iibs.schoolmanagement",
       "useNextNotificationsApi": true
@@ -106,11 +113,6 @@
         }
       ]
     ],
-    "extra": {
-      "eas": {
-        "projectId": "49efc7ef-8348-4eff-b9e6-f10db029161b"
-      }
-    },
     "privacy": {
       "analyticsEnabled": false
     },
@@ -157,6 +159,11 @@
           ]
         }
       ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a50f911c-9c42-43fa-a1a4-4dfdfcbe34c9"
+      }
     }
   }
 }

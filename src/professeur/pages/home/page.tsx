@@ -359,10 +359,6 @@ export default function HomeProfesseur({ navigation }: Props) {
     }
   };
 
-  const goToQRCode = (matiereId: string, courseLibelle: string) => {
-    if (!matiereId) return Alert.alert('Erreur', 'ID du cours manquant');
-    navigation.navigate('QRCodeScreenProf', { matiereId, courseLibelle });
-  };
 
   const loading = matieresLoading || coursesLoading;
 
@@ -646,13 +642,6 @@ export default function HomeProfesseur({ navigation }: Props) {
                   </View>
 
                   <View style={MatieresStyles.cardFooter}>
-                    <TouchableOpacity 
-                      style={MatieresStyles.viewCoursesButton}
-                      onPress={() => goToQRCode(item.matiere_id, item.matiere_libelle)}
-                    >
-                      <Text style={MatieresStyles.viewCoursesText}>Générer QR Code</Text>
-                      <Text style={MatieresStyles.arrowIcon}>→</Text>
-                    </TouchableOpacity>
                     {item.class_ids && item.class_ids.length > 1 && (
                     <View style={{
                       backgroundColor: '#E3F2FD',
