@@ -223,7 +223,8 @@ export default function ProfileProfesseur({ navigation }: Props) {
               await deleteData('classe_id');
               await deleteData('filiere');
               await deleteData('niveau');
-              await deleteData('userProfile');
+
+              await deleteData('privacy_accepted')
               
               navigation.navigate('Login' as never);
             } catch (error) {

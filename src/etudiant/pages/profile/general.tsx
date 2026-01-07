@@ -223,6 +223,7 @@ export default function ProfileStudent({ navigation }: Props) {
               await deleteData('userId');
               await deleteData('userLogin');
               // Keep userProfile, matieres, courses cached for faster re-login
+              await deleteData('privacy_accepted')
 
               navigation.reset({
                 index: 0,

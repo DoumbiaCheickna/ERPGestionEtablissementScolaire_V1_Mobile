@@ -23,11 +23,12 @@ import { RootStackParamList } from '../../../navigation/index';
 import { updatePassword } from "firebase/auth";
 import { getUserSnapchot, FindUserClassName } from '../../../firebaseConfig';
 import Toast from '../../../components/layout/toast';
-import { styles } from './styles'
+import { generalStyles, styles } from './styles'
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import LottieView from 'lottie-react-native';
 import { usersWallpapers } from '../../../components/utils/UploadingFiles';
+import { handleDeleteMyAccount } from '../../../components/utils/AccountDeletion';
 
 
 interface UserProfileInfo {
@@ -89,7 +90,7 @@ export default function ProfileSettings({ navigation }: Props) {
 
         setUserInfo({
           id: userId,
-          nom: userData.nom || '',
+          nom:  userData.nom || '',
           prenom: userData.prenom || '',
           email: userData.email || '',
           login: userData.login || '',
@@ -451,6 +452,62 @@ export default function ProfileSettings({ navigation }: Props) {
             <View style={styles.infoValueContainer}>
               <Text style={styles.infoValue}>{userInfo.specialite}</Text>
             </View>
+          </View>
+
+          <View style={styles.infoItem}>
+            <Text style={{
+                fontSize: 14,
+                color: '#ef4444',
+                marginBottom: 12,
+                fontWeight: '600',
+                textTransform: 'uppercase',
+                letterSpacing: 0.8,
+            }}>
+                <Ionicons name='trash' size={18} style={{color: '#ef4444'}}>
+              </Ionicons>Suppression de compte</Text>
+            <TouchableOpacity 
+              style={[
+                generalStyles.actionItemEnhanced,
+                generalStyles.logoutItem
+              ]} 
+              activeOpacity={0.7}
+              onPress={() => handleDeleteMyAccount(navigation)}
+            >
+              <View style={[
+                generalStyles.actionIconContainer,
+                generalStyles.logoutIconContainer
+              ]}>
+                <Ionicons
+                  name='trash'
+                  size={18}
+                  color='#ef4444'
+                >
+                </Ionicons>
+              </View>
+              
+              <View style={generalStyles.actionText}>
+                <Text style={[
+                  generalStyles.actionTitle,
+                  generalStyles.logoutTitle
+                ]}>
+                  Supprimer Mon Compte
+                </Text>
+              </View>
+                
+              <Text>
+              </Text>
+
+              <Ionicons 
+                name="chevron-forward-outline" 
+                size={18} 
+                color="#cbd5e1" 
+                style={{
+                  right: 0
+                }}
+              />
+
+            
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>

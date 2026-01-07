@@ -120,6 +120,34 @@ export default function PrivacyConsentScreen({
             </View>
           </View>
 
+
+           <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <MaterialCommunityIcons name="lock" size={24} color="#2196F3" />
+              <Text style={styles.sectionTitle}>Mon Compte</Text>
+            </View>
+            <View style={styles.bulletPoint}>
+              <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+              <Text style={styles.text}>
+                Vous avez la possibilité de Supprimer votre compte
+              </Text>
+
+            </View>
+            <View style={styles.bulletPoint}>
+              <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+              <Text style={styles.text}>
+                Toutes vos données sera effacées après suppression du compte
+              </Text>
+            </View>
+
+            <View style={styles.bulletPoint}>
+              <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
+              <Text style={styles.text}>
+                Vous pouvez effectuer cette action à partie de Profil et puis Mon Profil
+              </Text>
+            </View>
+          </View>
+
           <View style={styles.card}>
             <View style={styles.cardHeader}>
               <MaterialIcons name="block" size={24} color="#e53e3e" />
