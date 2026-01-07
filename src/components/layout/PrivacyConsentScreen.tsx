@@ -136,7 +136,7 @@ export default function PrivacyConsentScreen({
             <View style={styles.bulletPoint}>
               <Ionicons name="checkmark-circle" size={16} color="#4CAF50" />
               <Text style={styles.text}>
-                Toutes vos données sera effacées après suppression du compte
+                Toutes vos données seront effacées après suppression du compte
               </Text>
             </View>
 
