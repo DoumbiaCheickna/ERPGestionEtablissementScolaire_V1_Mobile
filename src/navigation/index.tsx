@@ -70,7 +70,7 @@ export type RootStackParamList = {
   MatieresStudent: {
     matieres?: any[];
   }
-  QRCodeScreen: { matiereId: string, courseLibelle: string};
+  QRCodeScreen: { userMatricule: string; matiereId: string, courseLibelle: string};
   QRCodeScreenProf: { matiereId: string, courseLibelle: string};
   Absences: undefined;
   Posts: undefined;

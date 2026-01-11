@@ -9,6 +9,7 @@ import { EmargementSuccessModal } from './EmargementSuccessModal';
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, query, where, getDocs, serverTimestamp, addDoc } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getData } from '../utils/secureStorage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Scanner'>;
 
@@ -75,7 +76,7 @@ export default function Scanner({ navigation, route }: Props) {
 
   const getUserInfo = async () => {
     try {
-      const userLogin = await AsyncStorage.getItem('userLogin');
+      const userLogin = await getData('userLogin');
       if (!userLogin) return;
 
       const usersRef = collection(db, 'users');
@@ -98,14 +99,6 @@ export default function Scanner({ navigation, route }: Props) {
     }
   };
 
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
-    setToast({ visible: true, message, type });
-  };
-
-  const hideToast = () => {
-    setToast(null);
-  };
-
   if (!permission) {
     return <View />;
   }
@@ -125,6 +118,7 @@ export default function Scanner({ navigation, route }: Props) {
   }
 
   const saveEmargedCourseStudent = async (
+    userMatricule: string,
     matiere_id: string,
     matiere_libelle: string,
     start: string,
@@ -133,11 +127,8 @@ export default function Scanner({ navigation, route }: Props) {
   ) => {
     try {
 
-      const userLogin = await AsyncStorage.getItem("userLogin");
-      if (!userLogin) throw new Error("No user matricule found");
-
       const usersRef = collection(db, "users");
-      const q = query(usersRef, where("login", "==", userLogin));
+      const q = query(usersRef, where("matricule", "==", userMatricule));
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
@@ -302,15 +293,6 @@ export default function Scanner({ navigation, route }: Props) {
           return;
         }
 
-        if (qrRole.toLowerCase() !== userRole.toLowerCase()) {
-          Alert.alert(
-            'Accès refusé',
-            `Ce QR code est réservé au rôle ${qrRole}`
-          );
-          resetScanStates();
-          return;
-        }
-
         const finalCourseInfo = courseInfo || {
           matiere_id: matiereId,
           libelle: courseLibelle || 'Cours',
@@ -324,6 +306,7 @@ export default function Scanner({ navigation, route }: Props) {
 
         if (userRole.toLowerCase() === 'etudiant') {
           await saveEmargedCourseStudent(
+            parts[3],
             finalCourseInfo.matiere_id,
             finalCourseInfo.libelle,
             finalCourseInfo.start,

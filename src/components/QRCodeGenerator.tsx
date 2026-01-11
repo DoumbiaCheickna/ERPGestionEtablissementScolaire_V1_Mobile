@@ -4,19 +4,23 @@ import { View, StyleSheet, Text } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 type Props = {
+  userMatricule: string;
   courseId: string;
   courseLibelle: string
 };
 
-export default function QRCodeGenerator() {
-  const qrValue = `EMARGER:iibs_emargements:Etudiant`;
-  
+export default function QRCodeGenerator({ userMatricule }: Props) {
+  const qrValue = `EMARGER:iibs_emargements:Etudiant:${userMatricule}`;
 
   return (
-    <View style={styles.container}>
+    <View style={[
+      styles.container, 
+      { alignItems: 'center', marginVertical: 20, maxWidth: '90%' }
+      ]}
+    >
       <QRCode 
         value={qrValue} 
-        size={200}
+        size={400}
         color="black"
         backgroundColor="white"
       />
